@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/state.json
+data/history.json
+data/restore-points/
+.hl-cache/
+*.log
+.DS_Store
+.vite/
+coverage/
