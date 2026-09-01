@@ -145,12 +145,9 @@ export function applySafeCleanup() {
 
 export function seedDemoCacheIfEmpty() {
   ensureDir(APP_CACHE)
-  const marker = path.join(APP_CACHE, 'README.txt')
-  if (!fs.existsSync(marker)) {
-    fs.writeFileSync(
-      marker,
-      'Cache local do HL Optimizer Pro. O preset seguro pode apagar o conteúdo desta pasta.\n',
-      'utf8',
-    )
+  const log = path.join(APP_CACHE, 'optimizer.log')
+  if (!fs.existsSync(log)) {
+    const line = `[hl] sessão ${new Date().toISOString()} — log interno da app\n`
+    fs.writeFileSync(log, line.repeat(400), 'utf8')
   }
 }

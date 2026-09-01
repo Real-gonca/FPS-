@@ -43,6 +43,15 @@ button { cursor: pointer; }
   display: grid;
   place-items: center;
 }
+.desktop.max { padding: 0; }
+.desktop.max .window { width: 100%; height: 100%; border-radius: 0; }
+
+.window.theme-midnight {
+  background: linear-gradient(180deg, #070b16, #05070e);
+}
+.window.theme-graphite {
+  background: linear-gradient(180deg, #1a1d24, #12141a);
+}
 
 .window {
   width: min(1440px, 100%);
@@ -549,6 +558,33 @@ button { cursor: pointer; }
   display: grid;
   place-items: center;
   color: var(--muted);
+}
+
+.job-steps { display: grid; gap: 8px; margin: 12px 0 16px; }
+.job-steps div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--muted);
+}
+.job-steps div.on { color: var(--text); }
+.job-steps div.done { color: #86efac; }
+
+.splash {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 12px;
+}
+.splash .logo { width: 56px; height: 56px; font-size: 18px; margin: 0 auto 8px; }
+.splash h1 { font-size: 22px; font-weight: 650; }
+.splash p { color: var(--muted); font-size: 13px; }
+
+.proc-mini { max-height: 220px; overflow: auto; }
+
+@media (max-width: 1180px) {
+  .right-inline { display: block; margin-top: 18px; }
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }

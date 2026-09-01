@@ -19,6 +19,8 @@ import {
 import { discover, applySafeCleanup, seedDemoCacheIfEmpty } from './cleanup.js'
 import { loadState, mutate } from './store.js'
 import { WINDOWS_SERVICES, STARTUP_CANDIDATES, DNS_PROVIDERS, REPAIR_JOBS } from './servicesCatalog.js'
+import { listProcesses } from './processes.js'
+import { buildApplyScript } from './exportScript.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -692,6 +694,69 @@ app.post('/api/reports/rollback', (req, res) => {
     return s
   })
   res.json({ ok: true, dashboard: buildDashboard(), reports: { history: loadState().history } })
+})
+
+app.get('/api/processes', (_req, res) => {
+  res.json(listProcesses(40))
+})
+
+app.post('/api/optimize-now', (req, res) => {
+  try {
+    const hw = collectHardware()
+    const state = loadState()
+    const beforeDash = buildDashboard()
+    const presetId = state.aggressionByTier?.[hw.tier] || defaultPresetForTier(hw.tier)
+    const list = resolvePresetTweaks(decorateTweaks(state, hw.tier), presetId, hw.tier)
+    const confirmAdvanced = Boolean(req.body?.confirmAdvanced)
+    const pendingConfirm = list.filter((t) => presetRequiresConfirmation(presetId, t) && !confirmAdvanced)
+    if (pendingConfirm.length) {
+      return res.status(409).json({
+        error: 'Confirmação item a item necessária para Avançado/Debloat.',
+        presetId,
+        pending: pendingConfirm.map((t) => ({ id: t.id, name: t.name, category: t.category, risk: t.risk })),
+      })
+    }
+    const toApply = list.filter((t) => !t.applied).map((t) => t.id)
+    const presetResult = applyTweakList(toApply, {
+      confirmAdvanced: true,
+      label: `Otimizar Agora — ${PRESET_META[presetId].name}`,
+    })
+    const cleanupResult = applySafeCleanup()
+    mutate((s) => {
+      s.lastCleanup = cleanupResult
+      s.presetPreference = presetId
+      return s
+    })
+    const ram = executeCommand({ type: 'ram-trim' }, { windows: hw.windows })
+    mutate((s) => {
+      s.lastRamBoost = { freedBytes: ram.freedBytes, finishedAt: new Date().toISOString(), note: ram.note }
+      return s
+    })
+    const afterDash = buildDashboard()
+    res.json({
+      presetId,
+      applied: presetResult.applied,
+      cleanup: { freedBytes: cleanupResult.freedBytes },
+      ram: { freedBytes: ram.freedBytes },
+      beforeScore: beforeDash.score,
+      afterScore: afterDash.score,
+      dashboard: afterDash,
+    })
+  } catch (err) {
+    res.status(400).json({ error: err.message })
+  }
+})
+
+app.get('/api/export/script', (_req, res) => {
+  const state = loadState()
+  const hw = collectHardware()
+  const script = buildApplyScript({
+    appliedIds: state.appliedIds,
+    dnsPreference: state.dnsPreference,
+    mode: state.modeOverride || hw.suggestedMode,
+  })
+  res.setHeader('Content-Disposition', 'attachment; filename="HL-Optimizer-Apply.ps1"')
+  res.type('text/plain').send(script)
 })
 
 app.post('/api/scan', (_req, res) => {

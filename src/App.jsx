@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { api } from './api.js'
 import { formatBytes, formatDuration, formatImpact, timeAgo } from './format.js'
 
@@ -83,12 +83,35 @@ function Badge({ risk, children }) {
   return <span className={`badge ${cls}`}>{children}</span>
 }
 
+function JobOverlay({ job }) {
+  if (!job) return null
+  return (
+    <div className="modal-back">
+      <div className="modal">
+        <h3>{job.title}</h3>
+        <p>{job.subtitle}</p>
+        <div className="job-steps">
+          {(job.steps || []).map((s) => (
+            <div key={s.id} className={s.state}>
+              <span>{s.label}</span>
+              <span>{s.state === 'done' ? 'ok' : s.state === 'on' ? '…' : ''}</span>
+            </div>
+          ))}
+        </div>
+        <div className="progress"><i style={{ width: `${job.pct || 8}%` }} /></div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [page, setPage] = useState('dashboard')
   const [dash, setDash] = useState(null)
   const [toast, setToast] = useState(null)
   const [modal, setModal] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [job, setJob] = useState(null)
+  const [maximized, setMaximized] = useState(true)
 
   const refresh = useCallback(async () => {
     const d = await api.dashboard()
@@ -136,11 +159,106 @@ export default function App() {
     }
   }
 
+  const optimizeNow = async () => {
+    setBusy(true)
+    setJob({
+      title: 'A otimizar o sistema',
+      subtitle: 'Ponto de restauro automático antes de qualquer alteração.',
+      pct: 12,
+      steps: [
+        { id: 'preset', label: 'Preset do seu PC', state: 'on' },
+        { id: 'clean', label: 'Limpeza segura', state: '' },
+        { id: 'ram', label: 'Memória (trim)', state: '' },
+      ],
+    })
+    try {
+      const result = await api.optimizeNow()
+      setJob((j) => ({
+        ...j,
+        pct: 100,
+        subtitle: `Score ${result.beforeScore}% → ${result.afterScore}%. Disco ${formatBytes(result.cleanup.freedBytes)} · RAM ${formatBytes(result.ram.freedBytes)}.`,
+        steps: [
+          { id: 'preset', label: `Preset ${result.presetId} (${result.applied.length} tweaks)`, state: 'done' },
+          { id: 'clean', label: 'Limpeza segura', state: 'done' },
+          { id: 'ram', label: 'Memória (trim)', state: 'done' },
+        ],
+      }))
+      setDash(result.dashboard)
+      notify('Otimização concluída. Tudo revertível em Relatórios.')
+    } catch (err) {
+      if (err.status === 409 && err.payload?.pending) {
+        setJob(null)
+        setModal({
+          title: 'Confirmar itens avançados',
+          body: 'O preset deste PC inclui tweaks de risco. Confirme para continuar — com restore point.',
+          pending: err.payload.pending,
+          onConfirm: async () => {
+            setModal(null)
+            setBusy(true)
+            try {
+              const result = await api.optimizeNow({ confirmAdvanced: true })
+              setDash(result.dashboard)
+              notify('Otimização concluída com confirmação.')
+            } catch (e) {
+              notify(e.message)
+            } finally {
+              setBusy(false)
+            }
+          },
+        })
+      } else {
+        notify(err.message)
+        setJob(null)
+      }
+    } finally {
+      setBusy(false)
+      setTimeout(() => setJob(null), 1600)
+    }
+  }
+
+  const deepScan = async () => {
+    setBusy(true)
+    setJob({
+      title: 'Análise completa',
+      subtitle: 'A medir hardware, temporários, processos e tweaks pendentes.',
+      pct: 30,
+      steps: [
+        { id: 'hw', label: 'Hardware', state: 'on' },
+        { id: 'tmp', label: 'Ficheiros temporários', state: '' },
+        { id: 'rec', label: 'Recomendações', state: '' },
+      ],
+    })
+    try {
+      const result = await api.scan()
+      setDash(result.dashboard)
+      setJob({
+        title: 'Análise completa',
+        subtitle: `${result.scan.findings} recomendação(ões) · ${formatBytes(result.scan.cleanupBytes)} em temporários seguros · ${result.scan.processes} processos.`,
+        pct: 100,
+        steps: [
+          { id: 'hw', label: 'Hardware', state: 'done' },
+          { id: 'tmp', label: 'Ficheiros temporários', state: 'done' },
+          { id: 'rec', label: 'Recomendações', state: 'done' },
+        ],
+      })
+      notify('Análise concluída com dados medidos.')
+    } catch (err) {
+      notify(err.message)
+    } finally {
+      setBusy(false)
+      setTimeout(() => setJob(null), 1400)
+    }
+  }
+
   if (!dash) {
     return (
-      <div className="desktop">
+      <div className="desktop max">
         <div className="window">
-          <div className="loading">A ler hardware real…</div>
+          <div className="splash">
+            <div className="logo">HL</div>
+            <h1>HL Optimizer Pro</h1>
+            <p>A ler o hardware deste PC…</p>
+          </div>
         </div>
       </div>
     )
@@ -149,8 +267,8 @@ export default function App() {
   const showRight = page === 'dashboard'
 
   return (
-    <div className="desktop">
-      <div className="window">
+    <div className={`desktop ${maximized ? 'max' : ''}`}>
+      <div className={`window theme-${dash.theme || 'navy-neon'}`}>
         <header className="titlebar">
           <div className="brand">
             <div className="logo">HL</div>
@@ -160,8 +278,8 @@ export default function App() {
             <span className="edition">{dash.tierLabel}</span>
           </div>
           <div className="win-controls">
-            <button className="win-btn" aria-label="Minimizar">─</button>
-            <button className="win-btn" aria-label="Maximizar">□</button>
+            <button className="win-btn" aria-label="Minimizar" onClick={() => setMaximized(false)}>─</button>
+            <button className="win-btn" aria-label="Maximizar" onClick={() => setMaximized((v) => !v)}>□</button>
             <button className="win-btn close" aria-label="Fechar">✕</button>
           </div>
         </header>
@@ -193,7 +311,15 @@ export default function App() {
 
           <main className="main">
             {page === 'dashboard' && (
-              <Dashboard dash={dash} busy={busy} run={run} go={go} setMode={(m) => run(() => api.setMode(m))} />
+              <Dashboard
+                dash={dash}
+                busy={busy}
+                run={run}
+                go={go}
+                setMode={(m) => run(() => api.setMode(m))}
+                optimizeNow={optimizeNow}
+                deepScan={deepScan}
+              />
             )}
             {page === 'quick' && <QuickPage dash={dash} busy={busy} run={run} setModal={setModal} notify={notify} />}
             {page === 'cleanup' && <CleanupPage busy={busy} run={run} />}
@@ -236,6 +362,7 @@ export default function App() {
         </div>
 
         {toast && <div className="toast">{toast}</div>}
+        <JobOverlay job={job} />
         {modal && (
           <div className="modal-back" onClick={() => setModal(null)}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -264,9 +391,13 @@ export default function App() {
   )
 }
 
-function Dashboard({ dash, busy, run, go, setMode }) {
+function Dashboard({ dash, busy, run, go, setMode, optimizeNow, deepScan }) {
   const hour = new Date().getHours()
   const greet = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
+  const [procs, setProcs] = useState(null)
+  useEffect(() => {
+    api.processes().then(setProcs).catch(() => {})
+  }, [dash.processCount, dash.stats.processCount])
   return (
     <>
       <div className="page-head">
@@ -291,9 +422,9 @@ function Dashboard({ dash, busy, run, go, setMode }) {
               </button>
             ))}
           </div>
-          <div className={`admin ${dash.elevated ? 'on' : ''}`}>
-            {dash.elevated ? 'A correr como Admin' : 'Sem elevação (uid ≠ 0)'}
-          </div>
+          <button type="button" className={`admin ${dash.elevated ? 'on' : ''}`} title="Estado real de elevação">
+            {dash.elevated ? 'A correr como Admin' : 'Executar como Admin'}
+          </button>
         </div>
       </div>
 
@@ -331,12 +462,12 @@ function Dashboard({ dash, busy, run, go, setMode }) {
         <div className="card stat">
           <div className="label">Processos em execução</div>
           <div className="value">{dash.stats.processCount}</div>
-          <div className="hint">contagem /proc ao vivo</div>
+          <div className="hint">contagem ao vivo neste PC</div>
         </div>
         <div className="card stat">
           <div className="label">Tempo ligado</div>
           <div className="value">{formatDuration(dash.stats.boot.uptimeSeconds)}</div>
-          <div className="hint">fonte {dash.stats.boot.source}</div>
+          <div className="hint">desde o arranque</div>
         </div>
       </div>
 
@@ -348,6 +479,24 @@ function Dashboard({ dash, busy, run, go, setMode }) {
         {dash.recommendations.length === 0 && (
           <div className="card empty">Nada a recomendar com os sinais atuais.</div>
         )}
+        {procs && (
+          <>
+            <div className="section-title" style={{ marginTop: 18 }}>
+              Processos em execução
+              <span>{procs.total} no total · top por RAM medida</span>
+            </div>
+            <div className="card proc-mini">
+              <table className="table">
+                <thead><tr><th>Processo</th><th>PID</th><th>RAM</th></tr></thead>
+                <tbody>
+                  {procs.items.slice(0, 8).map((p) => (
+                    <tr key={p.pid}><td>{p.name}</td><td>{p.pid}</td><td>{formatBytes(p.rssBytes)}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
         {dash.recommendations.map((rec) => (
           <div className="card rec" key={rec.id}>
             <div>
@@ -355,8 +504,19 @@ function Dashboard({ dash, busy, run, go, setMode }) {
               <p>{rec.reason}</p>
             </div>
             <div className="impact">{formatImpact(rec)}</div>
-            <button className="btn tiny" onClick={() => go(rec.action === 'privacy' ? 'privacy' : rec.action === 'startup' ? 'startup' : rec.action === 'performance' ? 'performance' : rec.action === 'ram-boost' ? 'tools' : rec.action === 'cleanup' ? 'cleanup' : 'dashboard')}>
-              Ver
+            <button
+              className="btn tiny primary"
+              disabled={busy}
+              onClick={() => {
+                if (rec.action === 'cleanup') return run(() => api.cleanup(), 'Limpeza segura concluída.')
+                if (rec.action === 'ram-boost') return run(() => api.ramBoost(), 'Trim de memória medido.')
+                if (rec.action === 'privacy') return go('privacy')
+                if (rec.action === 'startup') return go('startup')
+                if (rec.action === 'performance') return go('performance')
+                return go('quick')
+              }}
+            >
+              Aplicar
             </button>
           </div>
         ))}
@@ -871,7 +1031,10 @@ function ReportsPage({ notify, refresh }) {
             Histórico com rollback visível. Protegido: {data.protected ? 'sim' : 'não'} · {data.restorePoints.length} restore points.
           </div>
         </div>
-        <a className="btn" href="/api/reports/export" target="_blank" rel="noreferrer">Exportar JSON</a>
+        <div className="row">
+          <a className="btn" href="/api/reports/export">Exportar JSON</a>
+          <a className="btn primary" href="/api/export/script">Script Windows (.ps1)</a>
+        </div>
       </div>
       {data.history.length === 0 && <div className="card empty">Ainda não há otimizações. O primeiro apply cria o ponto de restauro.</div>}
       {data.history.map((h) => (

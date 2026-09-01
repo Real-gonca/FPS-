@@ -37,6 +37,8 @@ export const api = {
   reports: () => request('/api/reports'),
   rollback: (entryId) => request('/api/reports/rollback', { method: 'POST', body: JSON.stringify({ entryId }) }),
   scan: () => request('/api/scan', { method: 'POST', body: '{}' }),
+  optimizeNow: (body = {}) => request('/api/optimize-now', { method: 'POST', body: JSON.stringify(body) }),
+  processes: () => request('/api/processes'),
   settings: () => request('/api/settings'),
   saveSettings: (patch) => request('/api/settings', { method: 'POST', body: JSON.stringify(patch) }),
 }
