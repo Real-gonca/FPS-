@@ -440,10 +440,8 @@ function Dashboard({ dash, busy, run, go, setMode, optimizeNow, deepScan }) {
             Análise completa re-mede hardware, temporários e recomendações.
           </div>
           <div className="btns">
-            <button className="btn primary" disabled={busy} onClick={() => go('quick')}>Otimizar Agora</button>
-            <button className="btn" disabled={busy} onClick={() => run(() => api.scan(), 'Análise completa concluída.')}>
-              Análise Completa
-            </button>
+            <button className="btn primary" disabled={busy} onClick={optimizeNow}>Otimizar Agora</button>
+            <button className="btn" disabled={busy} onClick={deepScan}>Análise Completa</button>
           </div>
         </div>
       </div>
