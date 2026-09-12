@@ -1,0 +1,21 @@
+<Project>
+  <!--
+    Nexus Optimizer — propriedades partilhadas por todos os projetos.
+
+    Decisões (ver docs/DECISIONS.md):
+    - Domain/Application/Infrastructure compilam para net8.0 puro → testáveis em qualquer OS.
+    - Presentation é net8.0-windows (WPF). EnableWindowsTargeting permite
+      cross-compile do WPF a partir de Linux (apenas build; runtime só em Windows).
+  -->
+  <PropertyGroup>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Product>Nexus Optimizer</Product>
+    <Company>Nexus</Company>
+    <Version>0.1.0</Version>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>

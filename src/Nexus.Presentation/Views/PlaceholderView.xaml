@@ -1,0 +1,38 @@
+<UserControl x:Class="Nexus.Presentation.Views.PlaceholderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Placeholder HONESTO: mostra o que o módulo vai fazer e em que patch —
+         zero dados fictícios (spec §0.2). -->
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
+            <TextBlock Text="{Binding Glyph}"
+                       FontFamily="Segoe MDL2 Assets"
+                       FontSize="64"
+                       HorizontalAlignment="Center"
+                       Foreground="{StaticResource App.Accent.Brush}" />
+
+            <TextBlock Text="{Binding Title}"
+                       FontSize="24" FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       Margin="0,16,0,8" />
+
+            <TextBlock Text="{Binding Description}"
+                       TextWrapping="Wrap" TextAlignment="Center"
+                       FontSize="12.5"
+                       Foreground="{StaticResource App.TextSecondary.Brush}" />
+
+            <Border Margin="0,22,0,0"
+                    HorizontalAlignment="Center"
+                    Background="{StaticResource App.Surface.Brush}"
+                    BorderBrush="{StaticResource App.Border.Brush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="14,8">
+                <TextBlock Text="{Binding PatchRefText}"
+                           FontSize="11.5"
+                           Foreground="{StaticResource App.Cyan.Brush}" />
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

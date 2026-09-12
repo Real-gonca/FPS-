@@ -1,0 +1,261 @@
+<Window x:Class="Nexus.Presentation.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Nexus.Presentation.ViewModels"
+        xmlns:views="clr-namespace:Nexus.Presentation.Views"
+        xmlns:conv="clr-namespace:Nexus.Presentation.Converters"
+        Title="Nexus Optimizer"
+        Width="1320" Height="840"
+        MinWidth="1080" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource App.Background.Brush}"
+        TextElement.Foreground="{StaticResource App.TextPrimary.Brush}"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <!-- Title bar customizado (WindowChrome, sem moldura nativa — spec §3.2) -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="48"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      ResizeBorderThickness="6"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <conv:SegmentBrushConverter x:Key="SegmentBrushConverter" />
+        <conv:KindToBrushConverter x:Key="KindToBrushConverter" />
+        <conv:NullToVisibilityConverter x:Key="NullToVis" />
+        <conv:InverseBoolConverter x:Key="InverseBool" />
+
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PlaceholderViewModel}">
+            <views:PlaceholderView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Border BorderBrush="{StaticResource App.Border.Brush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ═══ TITLE BAR (header global — spec §3.3) ═══════════════════ -->
+            <Grid Grid.Row="0" Background="{StaticResource App.Sidebar.Brush}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Marca -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Path Width="18" Height="18" Stretch="Uniform"
+                          Fill="{StaticResource App.Accent.Brush}"
+                          Data="M12 2 L20.66 7 L20.66 17 L12 22 L3.34 17 L3.34 7 Z" />
+                    <TextBlock Text="NEXUS OPTIMIZER"
+                               FontSize="13" FontWeight="SemiBold"
+                               Margin="10,0,0,0" VerticalAlignment="Center" />
+                    <Border Background="#1E2540" CornerRadius="8" Padding="6,2"
+                            Margin="10,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="v0.1 · patch 1"
+                                   FontSize="10"
+                                   Foreground="{StaticResource App.TextSecondary.Brush}" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Controlos globais -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+
+                    <!-- Seletor de modo Simples/Avançado -->
+                    <Border Background="{StaticResource App.Surface.Brush}"
+                            BorderBrush="{StaticResource App.Border.Brush}"
+                            BorderThickness="1"
+                            CornerRadius="12" Padding="3" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Simples"
+                                    Tag="simple"
+                                    Style="{StaticResource SegmentButton}"
+                                    Click="ModeButton_Click"
+                                    Background="{Binding IsAdvanced, Converter={StaticResource SegmentBrushConverter}, ConverterParameter=simple}" />
+                            <Button Content="Avançado"
+                                    Tag="advanced"
+                                    Style="{StaticResource SegmentButton}"
+                                    Click="ModeButton_Click"
+                                    Background="{Binding IsAdvanced, Converter={StaticResource SegmentBrushConverter}, ConverterParameter=advanced}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Modo Desempenho Máximo -->
+                    <ToggleButton Style="{StaticResource MaxPerfToggle}"
+                                  IsChecked="{Binding IsMaxPerformance}"
+                                  Margin="0,0,10,0"
+                                  ToolTip="Aplica todas as tarefas seguras (baixo risco) registadas nesta versão.">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                       VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBlock Text="Desempenho Máximo" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
+
+                    <!-- Executar como Admin -->
+                    <Button Content="{Binding ElevationButtonText}"
+                            Style="{StaticResource GhostButton}"
+                            Command="{Binding RunAsAdminCommand}"
+                            IsEnabled="{Binding IsElevated, Converter={StaticResource InverseBool}}"
+                            Margin="0,0,10,0"
+                            ToolTip="{Binding ElevationHint}" />
+
+                    <!-- Indicador de score -->
+                    <Border Background="{StaticResource App.Surface.Brush}"
+                            BorderBrush="{Binding ScoreBrush, FallbackValue=Gray}"
+                            BorderThickness="1"
+                            CornerRadius="12" Padding="10,4"
+                            ToolTip="{Binding ScoreNote}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8"
+                                     Fill="{Binding ScoreBrush, FallbackValue=Gray}"
+                                     VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ScoreText}"
+                                       FontFamily="Consolas" FontSize="13" FontWeight="Bold"
+                                       Margin="6,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ScoreBand}"
+                                       FontSize="10"
+                                       Foreground="{StaticResource App.TextSecondary.Brush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Botões de janela -->
+                    <Button Style="{StaticResource WindowButton}"
+                            Content="&#xE949;" Click="MinimizeButton_Click"
+                            ToolTip="Minimizar" />
+                    <Button Style="{StaticResource WindowButton}"
+                            Content="&#xE922;" Click="MaximizeButton_Click"
+                            ToolTip="Maximizar" />
+                    <Button Style="{StaticResource WindowCloseButton}"
+                            Content="&#xE8BB;" Click="CloseButton_Click"
+                            ToolTip="Fechar" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ═══ CORPO: SIDEBAR + CONTEÚDO ══════════════════════════════ -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="236" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Sidebar -->
+                <Border Grid.Column="0"
+                        Background="{StaticResource App.Sidebar.Brush}"
+                        BorderBrush="{StaticResource App.Border.Brush}"
+                        BorderThickness="0,0,1,0">
+                    <DockPanel Margin="8,12,8,12">
+                        <TextBlock DockPanel.Dock="Top"
+                                   Text="NAVEGAÇÃO"
+                                   FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{StaticResource App.TextSecondary.Brush}"
+                                   Margin="12,0,0,8" />
+
+                        <TextBlock DockPanel.Dock="Bottom"
+                                   Text="Nenhum dado simulado — valores N/D quando não há fonte real."
+                                   FontSize="9.5" TextWrapping="Wrap"
+                                   Foreground="{StaticResource App.TextSecondary.Brush}"
+                                   Margin="12,8,8,0" Opacity="0.7" />
+
+                        <ListBox Style="{StaticResource NavListBox}"
+                                 ItemsSource="{Binding VisibleNavItems}"
+                                 SelectedItem="{Binding SelectedNav, Mode=TwoWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="28" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Glyph}"
+                                                   FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{StaticResource App.TextSecondary.Brush}" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Title}" FontSize="13" />
+                                            <TextBlock Text="{Binding PatchRef}"
+                                                       FontSize="9"
+                                                       Foreground="{StaticResource App.TextSecondary.Brush}"
+                                                       Visibility="{Binding PatchRef, Converter={StaticResource NullToVis}}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <!-- Conteúdo -->
+                <Grid Grid.Column="1">
+                    <ContentControl Content="{Binding CurrentView}" Focusable="False" />
+
+                    <!-- Notificações empilhadas (canto superior direito, glassmorphism subtil) -->
+                    <ItemsControl ItemsSource="{Binding Notifications.Items}"
+                                  HorizontalAlignment="Right" VerticalAlignment="Top"
+                                  Margin="0,12,16,0"
+                                  Focusable="False"
+                                  Panel.ZIndex="10">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel MaxWidth="390" />
+                            </ItemsPanelTemplate>
+                        </ItemsPanel.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource NotificationCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0"
+                                                Background="{Binding Kind, Converter={StaticResource KindToBrushConverter}}"
+                                                CornerRadius="1.5" />
+                                        <StackPanel Grid.Column="1" Margin="10,2,0,2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Glyph}"
+                                                           FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{Binding Kind, Converter={StaticResource KindToBrushConverter}}" />
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontWeight="SemiBold" FontSize="12.5"
+                                                           Margin="8,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="&#xE8BB;"
+                                                           FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                                           Foreground="{StaticResource App.TextSecondary.Brush}"
+                                                           Cursor="Hand"
+                                                           Padding="6,0,0,0"
+                                                           Margin="8,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           MouseLeftButtonDown="NotificationDismiss_Click"
+                                                           ToolTip="Dispensar" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Message}"
+                                                       FontSize="11.5" TextWrapping="Wrap"
+                                                       Foreground="{StaticResource App.TextSecondary.Brush}"
+                                                       Margin="22,4,0,0" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Camada Domain: zero dependências externas, net8.0 puro (testável em qualquer OS). -->
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Nexus.Domain</RootNamespace>
+  </PropertyGroup>
+
+</Project>

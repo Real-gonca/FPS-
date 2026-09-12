@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         NEXUS OPTIMIZER — Design System "Dark Neon" (spec §3.1)
+         Paleta canónica: TODOS os elementos de UI referenciam estas cores.
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- Paleta (cores) -->
+    <Color x:Key="App.Bg.Start.Color">#0B0E1A</Color>
+    <Color x:Key="App.Bg.End.Color">#12172B</Color>
+    <Color x:Key="App.Surface.Color">#161B2E</Color>
+    <Color x:Key="App.Border.Color">#232A45</Color>
+    <Color x:Key="App.Sidebar.Color">#0D1122</Color>
+    <Color x:Key="App.Accent.Color">#3B82F6</Color>
+    <Color x:Key="App.AccentLight.Color">#60A5FA</Color>
+    <Color x:Key="App.Cyan.Color">#22D3EE</Color>
+    <Color x:Key="App.Success.Color">#34D399</Color>
+    <Color x:Key="App.Warning.Color">#FBBF24</Color>
+    <Color x:Key="App.Danger.Color">#F87171</Color>
+    <Color x:Key="App.TextPrimary.Color">#E5E9F5</Color>
+    <Color x:Key="App.TextSecondary.Color">#8B93B0</Color>
+
+    <!-- Paleta (brushes) -->
+    <LinearGradientBrush x:Key="App.Background.Brush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource App.Bg.Start.Color}" Offset="0" />
+        <GradientStop Color="{StaticResource App.Bg.End.Color}" Offset="1" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="App.Surface.Brush" Color="{StaticResource App.Surface.Color}" />
+    <SolidColorBrush x:Key="App.Border.Brush" Color="{StaticResource App.Border.Color}" />
+    <SolidColorBrush x:Key="App.Sidebar.Brush" Color="{StaticResource App.Sidebar.Color}" />
+    <SolidColorBrush x:Key="App.Accent.Brush" Color="{StaticResource App.Accent.Color}" />
+    <SolidColorBrush x:Key="App.AccentLight.Brush" Color="{StaticResource App.AccentLight.Color}" />
+    <SolidColorBrush x:Key="App.Cyan.Brush" Color="{StaticResource App.Cyan.Color}" />
+    <SolidColorBrush x:Key="App.Success.Brush" Color="{StaticResource App.Success.Color}" />
+    <SolidColorBrush x:Key="App.Warning.Brush" Color="{StaticResource App.Warning.Color}" />
+    <SolidColorBrush x:Key="App.Danger.Brush" Color="{StaticResource App.Danger.Color}" />
+    <SolidColorBrush x:Key="App.TextPrimary.Brush" Color="{StaticResource App.TextPrimary.Color}" />
+    <SolidColorBrush x:Key="App.TextSecondary.Brush" Color="{StaticResource App.TextSecondary.Color}" />
+
+    <LinearGradientBrush x:Key="App.Accent.Gradient.Brush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource App.Accent.Color}" Offset="0" />
+        <GradientStop Color="{StaticResource App.AccentLight.Color}" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Tipografia: números de métricas em fonte tabular (monoespaçada) para alinhamento (spec §3.1) -->
+    <FontFamily x:Key="App.MetricFont">Consolas</FontFamily>
+
+</ResourceDictionary>

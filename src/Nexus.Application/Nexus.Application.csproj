@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Camada Application: casos de uso e orquestração. net8.0 puro,
+         sem dependências de UI → unit-testável em qualquer OS. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Nexus.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Domain\Nexus.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

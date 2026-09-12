@@ -1,0 +1,20 @@
+# Build
+bin/
+obj/
+artifacts/
+TestResults/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# Artefactos de entrega (ZIPs de patches — gerados localmente, fora do git)
+deliveries/
+
+# Dados locais
+*.db
+*.db-shm
+*.db-wal
+*.log

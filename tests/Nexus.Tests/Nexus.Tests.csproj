@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      net8.0 puro (não -windows): os testes correm em qualquer OS,
+      incluindo CI Linux. A camada Presentation (WPF) fica fora de teste
+      unitário por natureza — a lógica que importa vive em
+      Domain/Application/Infrastructure mockável.
+    -->
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Nexus.Domain\Nexus.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Nexus.Application\Nexus.Application.csproj" />
+    <ProjectReference Include="..\..\src\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
