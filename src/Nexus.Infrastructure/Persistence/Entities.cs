@@ -50,3 +50,17 @@ public sealed class SettingsRow
     public int ChartWindowHours { get; set; } = 12;
     public int NotificationAutoDismissSeconds { get; set; } = 6;
 }
+
+public sealed class BenchmarkRow
+{
+    public long Id { get; set; }
+    public DateTimeOffset TimestampUtc { get; set; }
+    public double? CpuIndex { get; set; }
+    public double? MemAllocMbPerSec { get; set; }
+    public double? DiskReadMbPerSec { get; set; }
+    public double? DiskWriteMbPerSec { get; set; }
+    public double DurationMs { get; set; }
+
+    /// <summary>Ex.: "quick-before", "quick-after" — contexto da medição.</summary>
+    public string Context { get; set; } = string.Empty;
+}

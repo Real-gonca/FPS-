@@ -11,6 +11,9 @@ public static class DependencyInjection
     {
         services.AddSingleton<NotificationCenter>();
         services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<QuickOptimizationViewModel>();
+        services.AddSingleton<ServicesViewModel>();
+        services.AddSingleton<PrivacyViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

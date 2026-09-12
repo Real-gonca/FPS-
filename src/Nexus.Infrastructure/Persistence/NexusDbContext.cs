@@ -20,6 +20,7 @@ public sealed class NexusDbContext : DbContext
     public DbSet<BackupRow> Backups => Set<BackupRow>();
     public DbSet<TelemetrySampleRow> TelemetrySamples => Set<TelemetrySampleRow>();
     public DbSet<SettingsRow> Settings => Set<SettingsRow>();
+    public DbSet<BenchmarkRow> Benchmarks => Set<BenchmarkRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

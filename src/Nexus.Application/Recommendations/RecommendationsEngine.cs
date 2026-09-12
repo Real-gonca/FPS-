@@ -111,4 +111,7 @@ public static class TaskKeys
     public const string CleanupTemp = "cleanup-temp";
     public const string RamTrim = "ram-trim";
     public const string AdvisoryThermal = "advisory-thermal";
+    public const string AdvertisingIdDisable = "advertising-id-disable";
+    public const string ServiceDiagTrackDisable = "service-diagtrack-disable";
+    public const string ServiceWmpNetworkDisable = "service-wmpnetworksvc-disable";
 }

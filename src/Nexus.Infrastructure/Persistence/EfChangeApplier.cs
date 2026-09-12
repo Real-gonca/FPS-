@@ -11,23 +11,33 @@ namespace Nexus.Infrastructure.Persistence;
 /// Backup/rollback por tipo de alteração (pipeline da spec §2.2).
 ///
 /// Registry (Patch 1): probe completo ANTES da escrita — o estado anterior
-/// (valor E tipo, ou a ausência do valor) fica em BackupRow.PayloadJson. O
-/// restauro re-aplica exatamente esse estado (incluindo "valor não existia").
+/// (valor E tipo, ou a ausência do valor) fica em BackupRow.PayloadJson.
 ///
-/// Service/File: planeados nos patches 2 e 4. Até lá, BackupAsync LANÇA para
-/// esses tipos — ou seja, nenhuma tarefa sem backup suportado chega a
-/// escrever algo (a reversibilidade total nunca fica em risco).
+/// Service (Patch 2): probe WMI ANTES da escrita — start mode + estado
+/// atuais ficam no payload; o restauro re-aplica o start mode via
+/// sc.exe (whitelist) e realinha o estado (start/stop) se necessário.
+///
+/// File: planeado no patch 4 (Limpeza Avançada).
 /// </summary>
 public sealed class EfChangeApplier : ScopedDbAccess, IChangeApplier
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
 
     private readonly IRegistryAccess _registry;
+    private readonly IServiceInspector _services;
+    private readonly ISystemCommandExecutor _executor;
 
-    public EfChangeApplier(IServiceScopeFactory scopes, ILogger<EfChangeApplier> log, IRegistryAccess registry)
+    public EfChangeApplier(
+        IServiceScopeFactory scopes,
+        ILogger<EfChangeApplier> log,
+        IRegistryAccess registry,
+        IServiceInspector services,
+        ISystemCommandExecutor executor)
         : base(scopes, log)
     {
         _registry = registry;
+        _services = services;
+        _executor = executor;
     }
 
     public async Task<IReadOnlyList<Guid>> BackupAsync(IEnumerable<ChangeDescriptor> changes, CancellationToken ct = default)
@@ -39,6 +49,7 @@ public sealed class EfChangeApplier : ScopedDbAccess, IChangeApplier
             string payload = change.Kind switch
             {
                 ChangeKind.Registry => await BackupRegistryAsync(change, ct),
+                ChangeKind.Service => await BackupServiceAsync(change, ct),
                 _ => throw new NotSupportedException(
                     $"Backup do tipo '{change.Kind}' não está implementado neste patch " +
                     "(roadmap: docs/patches). A tarefa é rejeitada ANTES de aplicar qualquer alteração."),
@@ -98,6 +109,13 @@ public sealed class EfChangeApplier : ScopedDbAccess, IChangeApplier
                         ConvertValue(payload), ct);
                 }
             }
+            else if (kind == nameof(ChangeKind.Service))
+            {
+                var payload = JsonSerializer.Deserialize<ServiceBackupPayload>(payloadJson, JsonOptions)
+                    ?? throw new InvalidOperationException($"Backup {id}: payload inválido.");
+
+                await RestoreServiceAsync(payload, ct);
+            }
             else
             {
                 throw new NotSupportedException($"Restauro do tipo '{kind}' não está implementado neste patch.");
@@ -152,6 +170,85 @@ public sealed class EfChangeApplier : ScopedDbAccess, IChangeApplier
         "binary" => Convert.FromBase64String(payload.ValueJson ?? string.Empty),
         _ => payload.ValueJson,
     };
+
+    // ── Serviços (Patch 2) ─────────────────────────────────────────────────
+
+    private async Task<string> BackupServiceAsync(ChangeDescriptor change, CancellationToken ct)
+    {
+        var probe = await _services.ProbeServiceAsync(change.Target, ct)
+            ?? throw new InvalidOperationException(
+                $"Não foi possível ler o serviço '{change.Target}' (WMI indisponível?). A alteração foi abortada antes de aplicar.");
+        if (!probe.Exists)
+            throw new InvalidOperationException($"O serviço '{change.Target}' não existe neste sistema. A alteração foi abortada.");
+
+        return JsonSerializer.Serialize(new ServiceBackupPayload
+        {
+            Name = probe.Name,
+            DisplayName = probe.DisplayName,
+            StartMode = probe.StartMode,
+            State = probe.State,
+        }, JsonOptions);
+    }
+
+    private async Task RestoreServiceAsync(ServiceBackupPayload payload, CancellationToken ct)
+    {
+        // 1) Devolver o start mode (se for definível via sc — Boot/System não são).
+        string? scMode = payload.StartMode switch
+        {
+            "Auto" => "auto",
+            "Manual" => "demand",
+            "Demand" => "demand",
+            "Disabled" => "disabled",
+            _ => null, // Boot/System/Unknown → não definível via sc; log e seguir
+        };
+        if (scMode is not null)
+        {
+            var changeResult = await _executor.RunAsync(
+                new CommandSpec("sc.exe", $"change {payload.Name} start={scMode}"), ct);
+            if (!changeResult.WasWhitelisted)
+                throw new InvalidOperationException($"Restauro de '{payload.Name}': {changeResult.RejectionReason}");
+            if (!changeResult.Succeeded)
+                throw new InvalidOperationException($"Restauro do start mode de '{payload.Name}' falhou (exit {changeResult.ExitCode}): {changeResult.StandardError}");
+        }
+        else
+        {
+            Log.LogWarning("Restauro de {Name}: start mode anterior ({Mode}) não é definível via sc.exe — apenas o estado foi realinhado.",
+                payload.Name, payload.StartMode);
+        }
+
+        // 2) Realinhar o estado (Running ↔ Stopped) se divergir do anterior.
+        var current = await _services.ProbeServiceAsync(payload.Name, ct);
+        if (current is null)
+            return; // WMI ficou indisponível a meio do restauro — o start mode já foi devolvido
+
+        bool wasRunning = string.Equals(payload.State, "Running", StringComparison.OrdinalIgnoreCase);
+        bool isRunning = string.Equals(current.State, "Running", StringComparison.OrdinalIgnoreCase);
+        if (wasRunning && !isRunning)
+        {
+            var r = await _executor.RunAsync(new CommandSpec("sc.exe", $"start {payload.Name}"), ct);
+            if (!r.WasWhitelisted)
+                throw new InvalidOperationException($"Restauro de '{payload.Name}': {r.RejectionReason}");
+            // 1056 = já estava em execução (idempotência) — tratado acima; erros reais lançam.
+            if (!r.Succeeded && r.ExitCode != 1056)
+                throw new InvalidOperationException($"Restauro do estado de '{payload.Name}' falhou (exit {r.ExitCode}): {r.StandardError}");
+        }
+        else if (!wasRunning && isRunning)
+        {
+            var r = await _executor.RunAsync(new CommandSpec("sc.exe", $"stop {payload.Name}"), ct);
+            if (!r.WasWhitelisted)
+                throw new InvalidOperationException($"Restauro de '{payload.Name}': {r.RejectionReason}");
+            if (!r.Succeeded && r.ExitCode != 1062)
+                throw new InvalidOperationException($"Restauro do estado de '{payload.Name}' falhou (exit {r.ExitCode}): {r.StandardError}");
+        }
+    }
+}
+
+internal sealed class ServiceBackupPayload
+{
+    public string Name { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string? StartMode { get; set; }
+    public string? State { get; set; }
 }
 
 internal sealed class RegistryBackupPayload

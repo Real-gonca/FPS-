@@ -1,0 +1,199 @@
+<UserControl x:Class="Nexus.Presentation.Views.QuickOptimizationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:Nexus.Presentation.Converters">
+
+    <!-- Otimização Rápida (spec §4.2): tweaks seguros num clique +
+         micro-benchmark REAL antes/depois + rollback individual. -->
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisConverter" />
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+        <conv:NullToVisibilityConverter x:Key="NullToVisConverter" />
+        <conv:RiskToBrushConverter x:Key="RiskToBrushConverter" />
+        <conv:RiskToBadgeBrushConverter x:Key="RiskToBadgeBrushConverter" />
+    </UserControl.Resources>
+
+    <Grid Margin="24,20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="420" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho -->
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Text="Otimização Rápida" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Text="· tweaks seguros num clique, medidos antes/depois"
+                       FontSize="12"
+                       Foreground="{StaticResource App.TextSecondary.Brush}"
+                       VerticalAlignment="Bottom" Margin="10,0,0,3" />
+        </StackPanel>
+
+        <!-- ═══ ESQUERDA: ITENS ═══════════════════════════════════════ -->
+        <Grid Grid.Row="1" Grid.Column="0" Margin="0,0,20,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="Seleção (todas as opções são de baixo risco e reversíveis)"
+                               FontSize="13" FontWeight="SemiBold" />
+                    <ItemsControl ItemsSource="{Binding Items}" Margin="0,10,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource App.Background.Brush}"
+                                        BorderBrush="{StaticResource App.Border.Brush}"
+                                        BorderThickness="1"
+                                        CornerRadius="10"
+                                        Padding="12"
+                                        Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <CheckBox Grid.Column="0"
+                                                  IsChecked="{Binding IsEnabled}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,12,0" />
+
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontWeight="SemiBold" FontSize="12.5"
+                                                           VerticalAlignment="Center" />
+                                                <Border Background="{Binding Risk, Converter={StaticResource RiskToBadgeBrushConverter}}"
+                                                        CornerRadius="7"
+                                                        Padding="7,1"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding RiskText}"
+                                                               FontSize="9.5" FontWeight="SemiBold"
+                                                               Foreground="{Binding Risk, Converter={StaticResource RiskToBrushConverter}}" />
+                                                </Border>
+                                                <TextBlock Text="{Binding StateText}"
+                                                           FontSize="10.5"
+                                                           Foreground="{StaticResource App.Cyan.Brush}"
+                                                           Margin="10,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           Visibility="{Binding StateText, Converter={StaticResource NullToVisConverter}}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Description}"
+                                                       FontSize="10.5" TextWrapping="Wrap"
+                                                       Foreground="{StaticResource App.TextSecondary.Brush}"
+                                                       Margin="0,3,0,0" />
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2"
+                                                Content="Reverter"
+                                                Style="{StaticResource GhostButton}"
+                                                FontSize="10.5" Padding="10,3"
+                                                Margin="10,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Command="{Binding DataContext.RevertCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding IsApplied}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <Button Content="{Binding RunButtonText}"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding RunCommand}" />
+                <TextBlock Text="{Binding StatusText}"
+                           FontSize="11"
+                           Foreground="{StaticResource App.TextSecondary.Brush}"
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Grid>
+
+        <!-- ═══ DIREITA: MICRO-BENCHMARK ANTES/DEPOIS ════════════════ -->
+        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource Card}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Micro-benchmark (medido, não estimado)"
+                           FontSize="13" FontWeight="SemiBold"
+                           Margin="0,0,0,10" />
+                <TextBlock DockPanel.Dock="Bottom"
+                           Text="Medição real do próprio hardware neste instante (CPU, memória, E/S de disco). "
+                           "Não é uma medição holística de 'performance do sistema' — o resultado varia com o "
+                           "estado da máquina. N/D = sub-medição falhou."
+                           FontSize="10" TextWrapping="Wrap"
+                           Foreground="{StaticResource App.TextSecondary.Brush}"
+                           Margin="0,8,0,0"
+                           Opacity="0.8" />
+
+                <StackPanel>
+                    <Border Background="{StaticResource App.Background.Brush}"
+                            BorderBrush="{StaticResource App.Border.Brush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14"
+                            Visibility="{Binding BenchmarkVisible, Converter={StaticResource BoolToVisConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="70" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="ANTES" Style="{StaticResource SubtleText}" HorizontalAlignment="Center" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="DEPOIS" Style="{StaticResource SubtleText}" HorizontalAlignment="Center" />
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="Δ" Style="{StaticResource SubtleText}" HorizontalAlignment="Center" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="CPU (índice MiB/s)" Style="{StaticResource SubtleText}" FontSize="10.5" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CpuBefore}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding CpuAfter}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding CpuDelta}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Memória (alocação)" Style="{StaticResource SubtleText}" FontSize="10.5" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MemBefore}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding MemAfter}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding MemDelta}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Disco (leitura)" Style="{StaticResource SubtleText}" FontSize="10.5" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ReadBefore}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding ReadAfter}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="3" Grid.Column="3" Text="{Binding ReadDelta}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Disco (escrita)" Style="{StaticResource SubtleText}" FontSize="10.5" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding WriteBefore}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding WriteAfter}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Grid.Row="4" Grid.Column="3" Text="{Binding WriteDelta}" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="Ainda sem medição — execute a Otimização Rápida para medir antes/depois."
+                               FontSize="11"
+                               Foreground="{StaticResource App.TextSecondary.Brush}"
+                               Margin="4,8,0,0"
+                               Visibility="{Binding BenchmarkVisible, Converter={StaticResource InverseBoolToVisConverter}}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

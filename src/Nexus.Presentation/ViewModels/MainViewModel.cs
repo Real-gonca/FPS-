@@ -40,6 +40,9 @@ public sealed class MainViewModel : ObservableObject
     private readonly RunOptimizationUseCase _runOptimization;
     private readonly IOptimizationTaskCatalog _catalog;
     private readonly DashboardViewModel _dashboard;
+    private readonly QuickOptimizationViewModel _quickOptimization;
+    private readonly ServicesViewModel _services;
+    private readonly PrivacyViewModel _privacy;
     private readonly ILogger<MainViewModel> _log;
 
     private NavItem? _selectedNav;
@@ -59,6 +62,9 @@ public sealed class MainViewModel : ObservableObject
         IElevationService elevation,
         TelemetryEvents telemetry,
         DashboardViewModel dashboard,
+        QuickOptimizationViewModel quickOptimization,
+        ServicesViewModel services,
+        PrivacyViewModel privacy,
         RunOptimizationUseCase runOptimization,
         IOptimizationTaskCatalog catalog,
         INotificationHub notificationHub,
@@ -69,6 +75,9 @@ public sealed class MainViewModel : ObservableObject
         _elevation = elevation;
         _telemetry = telemetry;
         _dashboard = dashboard;
+        _quickOptimization = quickOptimization;
+        _services = services;
+        _privacy = privacy;
         _runOptimization = runOptimization;
         _catalog = catalog;
         _notifications = notificationHub;
@@ -104,9 +113,15 @@ public sealed class MainViewModel : ObservableObject
         {
             if (Set(ref _selectedNav, value))
             {
-                CurrentView = value is null
-                    ? null
-                    : value.Key == "dashboard" ? _dashboard : new PlaceholderViewModel(value);
+                CurrentView = value switch
+                {
+                    null => null,
+                    { Key: "dashboard" } => _dashboard,
+                    { Key: "quick-optimization" } => _quickOptimization,
+                    { Key: "services" } => _services,
+                    { Key: "privacy" } => _privacy,
+                    _ => new PlaceholderViewModel(value),
+                };
             }
         }
     }
@@ -188,11 +203,10 @@ public sealed class MainViewModel : ObservableObject
         new("quick-optimization",
             "Otimização Rápida",
             "\uE945",
-            "Conjunto de tweaks seguros de baixo risco, aplicáveis num clique, com benchmark A/B medido " +
-            "antes/depois e rollback individual. Parte do pipeline já existe neste patch (a tarefa de " +
-            "telemetria está ativa nas Recomendações); o benchmark A/B chega no patch seguinte.",
+            "Conjunto de tweaks seguros de baixo risco, aplicáveis num clique, com micro-benchmark " +
+            "medido antes/depois e rollback individual por tarefa.",
             FeatureVisibility.Simple,
-            "patch 2"),
+            null),
 
         new("advanced-cleanup",
             "Limpeza Avançada",
@@ -221,18 +235,18 @@ public sealed class MainViewModel : ObservableObject
         new("services",
             "Serviços",
             "\uE950",
-            "Gestão real de serviços Windows (WMI + sc.exe) dentro do CommandExecutor com whitelist, com " +
-            "perfis de otimização (Gaming, Privacidade) e preview de impacto antes de aplicar.",
+            "Gestão real de serviços Windows (WMI + sc.exe dentro do CommandExecutor whitelisted), com " +
+            "perfis Gaming e Privacidade e preview de impacto antes de aplicar.",
             FeatureVisibility.Advanced,
-            "patch 2"),
+            null),
 
         new("privacy",
             "Privacidade / Telemetria",
             "\uE72E",
-            "Toggles reais sobre chaves/serviços de telemetria conhecidos, cada um documentado. A " +
-            "desativação da telemetria de base já está implementada neste patch (ver Recomendações).",
+            "Toggles reais sobre chaves/serviços de telemetria conhecidos — cada um documentado, com " +
+            "estado lido de fontes reais e rollback.",
             FeatureVisibility.Simple,
-            "patch 2"),
+            null),
 
         new("network",
             "Rede",

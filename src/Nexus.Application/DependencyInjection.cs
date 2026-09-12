@@ -27,14 +27,36 @@ public static class DependencyInjection
         services.AddSingleton<IOptimizationTaskCatalog, OptimizationTaskCatalog>();
         services.AddSingleton<OptimizationOrchestrator>();
 
-        // Tarefas reais — Patch 1 regista a primeira; cada patch seguinte
-        // acrescenta as suas tarefas aqui (single point de registo).
+        // Tarefas reais — cada patch acrescenta as suas aqui (single point).
+        // Patch 1:
         services.AddSingleton<IOptimizationTask, DisableTelemetryTask>();
+        // Patch 2 (serviços + privacidade):
+        services.AddSingleton<IOptimizationTask, AdvertisingIdTask>();
+        services.AddSingleton<IOptimizationTask>(sp => new ServiceTask(
+            TaskKeys.ServiceDiagTrackDisable,
+            "DiagTrack",
+            "Connected User Experiences and Telemetry",
+            ServiceOperation.ChangeStartMode,
+            "disabled",
+            "Coleta/envia dados de telemetria e diagnóstico (CEIP). A desativação é reversível e é a ação " +
+            "com maior impacto na privacidade entre os serviços.",
+            sp.GetRequiredService<ISystemCommandExecutor>()));
+        services.AddSingleton<IOptimizationTask>(sp => new ServiceTask(
+            TaskKeys.ServiceWmpNetworkDisable,
+            "WMPNetworkSvc",
+            "Windows Media Player Network Sharing Service",
+            ServiceOperation.ChangeStartMode,
+            "disabled",
+            "Partilha a biblioteca do Media Player com outros dispositivos da rede. Sem utilidade se não " +
+            "partilhar media; ciclos em segundo plano eliminados.",
+            sp.GetRequiredService<ISystemCommandExecutor>()));
 
         // Casos de uso.
         services.AddSingleton<RunOptimizationUseCase>();
         services.AddSingleton<RollbackUseCase>();
         services.AddSingleton<GetDashboardSnapshotUseCase>();
+        services.AddSingleton<ServiceOperationUseCase>();
+        services.AddSingleton<BenchmarkUseCase>();
 
         // Serviços de fundo.
         services.AddHostedService<TelemetrySamplerService>();

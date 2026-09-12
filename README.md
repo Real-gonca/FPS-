@@ -2,7 +2,7 @@
 
 Suite de otimização e manutenção para **Windows 10/11** — *otimização mensurável, reversível e transparente*.
 
-> **Estado atual: Patch 0 (Auditoria) + Patch 1 (Fundação) concluídos.**
+> **Estado atual: Patch 0 (Auditoria) + Patch 1 (Fundação) + Patch 2 (Serviços + Otimização Rápida) concluídos.**
 > Detalhes em [`docs/patches/`](docs/patches/). Roadmap de patches abaixo.
 
 ## Princípios (inegociáveis)
@@ -42,7 +42,7 @@ dotnet run --project src/Nexus.Presentation
 |---|---|---|
 | **0** | Auditoria + decisões de arquitetura | ✅ |
 | **1** | Fundação: design system, shell, notificações tipadas, Dashboard (score + métricas reais + tendência + recomendações), pipeline completo, 1ª tarefa real (telemetria), testes | ✅ |
-| **2** | Serviços reais (WMI + sc.exe) + Otimização Rápida completa com benchmark A/B | ⏳ |
+| **2** | Serviços reais (WMI + sc.exe whitelisted, perfis Gaming/Privacidade), Otimização Rápida com micro-benchmark A/B real, toggles de Privacidade, backup/rollback de serviços, testes | ✅ |
 | **3** | Gaming Center / Emuladores (deteção real + afinidade de CPU) | ⏳ |
 | **4** | Startup Manager + Limpeza Avançada (preview obrigatório) | ⏳ |
 | **5** | Monitor honesto (métricas ao vivo completas, incl. rede) | ⏳ |

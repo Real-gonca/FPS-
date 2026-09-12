@@ -109,3 +109,33 @@ explicitamente exigido pela spec.
   planeado para o patch de Monitor; até lá a UI mostra VRAM *total* e N/D para uso.
 - **Temperatura** vem da zona térmica ACPI (grão por zona, não por core).
 - **Uptime** via `Environment.TickCount64` (ms desde boot) — fonte real, sem WMI.
+## ADR-011 — Benchmark A/B = micro-benchmark honesto (Patch 2)
+
+**Decisão:** o "benchmark medido antes/depois" da Otimização Rápida é um
+**micro-benchmark** determinístico do próprio hardware: FNV-1a CPU (~2 s),
+alocação+escrita de memória 16 MiB (~2 s), escrita/leitura de 64 MiB em disco.
+Os valores (MiB/s, MB/s) são reais e persistidos em `Benchmarks` (contexto
+`quick-before`/`quick-after`).
+
+**Porquê:** medir "performance do sistema" de forma holística em 30 segundos
+é impossível com credibilidade — qualquer número seria fabricado (violaria a
+regra de ouro). Um micro-benchmark determinístico dá números comparáveis na
+mesma máquina, e a UI etiquetou-o explicitamente como micro-benchmark com
+aviso de que "não é uma medição holística". Melhoria ≠ garantia: deltas
+negativos aparecem como estão.
+
+## ADR-012 — Serviços: WMI para ler, sc.exe (whitelist) para escrever (Patch 2)
+
+**Decisão:** leitura do estado dos serviços via WMI (`Win32_Service`, timeout
+2–3 s); escritas (start/stop/change) exclusivamente via `sc.exe` dentro do
+CommandExecutor whitelisted (regras já auditadas no Patch 1). Perfis aplicam
+alteração a alteração pelo pipeline completo (backup WMI → apply → histórico →
+rollback individual); uma falha interrompe o perfil.
+
+**Porquê:** o WMI lê o estado *canónico* do serviço (nome curto, start mode,
+estado) e é a mesma fonte que a UI apresenta — o que o utilizador vê é o que o
+backup guarda. O sc.exe é o binário oficial de gestão de serviços e já estava
+na whitelist; introduzir outro caminho de escrita criaria uma segunda
+superfície de ataque. Exit codes idempotentes (1056 já a correr / 1062 já
+parado) são tratados como sucesso, mantendo as ações idempotentes.
+

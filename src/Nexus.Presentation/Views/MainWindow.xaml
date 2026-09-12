@@ -32,6 +32,15 @@
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
             <views:DashboardView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:QuickOptimizationViewModel}">
+            <views:QuickOptimizationView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ServicesViewModel}">
+            <views:ServicesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PrivacyViewModel}">
+            <views:PrivacyView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:PlaceholderViewModel}">
             <views:PlaceholderView />
         </DataTemplate>

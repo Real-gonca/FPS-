@@ -147,6 +147,31 @@ public sealed class NullToVisibilityConverter : IValueConverter
         throw new NotSupportedException();
 }
 
+public sealed class InverseBoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is true ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>null → false; caso contrário true (ex.: habilitar botão só com seleção).</summary>
+public sealed class NullToBoolConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is not null;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Opções do filtro de estado no Serviços Manager.</summary>
+public static class StateFilterOptions
+{
+    public static string[] All { get; } = { "Todos", "Em execução", "Parados", "Desativados" };
+}
+
 /// <summary>
 /// Fundo dos segmentos do seletor de modo.
 /// value = IsAdvanced (bool); parameter = "simple" | "advanced".
