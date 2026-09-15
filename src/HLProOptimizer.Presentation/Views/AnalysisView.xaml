@@ -1,0 +1,196 @@
+<!--
+  ANÁLISE DO SISTEMA: scan por categorias, filtros, lista de problemas e correção
+  seletiva. O progresso aparece no diálogo modal (ProgressDialog) e também na barra
+  embutida, para quem prefere acompanhar sem modal.
+-->
+<UserControl x:Class="HLProOptimizer.Presentation.Views.AnalysisView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:HLProOptimizer.Presentation.Localization"
+             Background="Transparent">
+
+    <Grid Margin="28,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{loc:Loc Analysis_Title}" Style="{StaticResource Text.PageTitle}" />
+                <TextBlock Text="{loc:Loc Analysis_Subtitle}" Style="{StaticResource Text.Subtitle}" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource Button.Ghost}" Content="{loc:Loc Common_Export}" Command="{Binding ExportReportCommand}" />
+                <Button Style="{StaticResource Button.Secondary}" Margin="10,0,0,0"
+                        Content="{loc:Loc Common_Scan}" Command="{Binding ScanCategoriesCommand}" />
+                <Button Style="{StaticResource Button.Primary}" Margin="10,0,0,0"
+                        Content="{loc:Loc Analysis_StartScan}" Command="{Binding StartScanCommand}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Métricas do último scan -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20,16">
+            <UniformGrid Columns="5">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Analysis_IssuesFound}" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding IssuesFound}" Style="{StaticResource Text.Metric}" Margin="0,2,0,0" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Severity_Critical}" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding CriticalCount}" Style="{StaticResource Text.Metric}" Margin="0,2,0,0"
+                               Foreground="{StaticResource Brush.Danger}" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Analysis_RecoverableTotal}" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding RecoverableText}" Style="{StaticResource Text.Metric}" Margin="0,2,0,0"
+                               Foreground="{StaticResource Brush.Accent}" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Startup_EstimatedTime}" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding BootImpactText}" Style="{StaticResource Text.Metric}" Margin="0,2,0,0" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Opt_Duration}" Style="{StaticResource Text.Caption}" />
+                    <TextBlock Text="{Binding DurationText}" Style="{StaticResource Text.Metric}" Margin="0,2,0,0" />
+                </StackPanel>
+            </UniformGrid>
+        </Border>
+
+        <!-- Progresso + filtros -->
+        <StackPanel Grid.Row="2" Margin="0,16,0,12">
+            <Grid Visibility="{Binding IsScanning, Converter={StaticResource Conv.BoolToVisibility}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ProgressBar Grid.Column="0" Height="6" Style="{StaticResource ProgressBar.Gradient}"
+                             Value="{Binding ProgressPercent, Mode=OneWay}" Maximum="100" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding CurrentStepText}" Margin="12,0,0,0"
+                           Style="{StaticResource Text.Caption}" VerticalAlignment="Center" MaxWidth="420"
+                           TextTrimming="CharacterEllipsis" />
+            </Grid>
+
+            <TextBlock Text="{Binding FailedCategoriesText}" Style="{StaticResource Text.Caption}"
+                       Foreground="{StaticResource Brush.Warning}" Margin="0,8,0,0"
+                       Visibility="{Binding HasFailedCategories, Converter={StaticResource Conv.BoolToVisibility}}" />
+
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="230" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ComboBox Grid.Column="0" Style="{StaticResource ComboBox.Default}"
+                          ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategoryFilter, Mode=TwoWay}"
+                          DisplayMemberPath="Label" />
+
+                <TextBox Grid.Column="1" Style="{StaticResource TextBox.Default}" Margin="10,0"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                         ToolTip="{loc:Loc Common_SearchPlaceholder}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Style="{StaticResource Button.Ghost}" Content="{loc:Loc Common_SelectAll}" Command="{Binding SelectAllCommand}" />
+                    <Button Style="{StaticResource Button.Ghost}" Margin="8,0,0,0"
+                            Content="{loc:Loc Common_ClearSelection}" Command="{Binding ClearSelectionCommand}" />
+                    <Button Style="{StaticResource Button.Primary}" Margin="12,0,0,0"
+                            Command="{Binding FixSelectedCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{loc:Loc Analysis_OptimizeSelected}" />
+                            <Border Background="{StaticResource Brush.Glass.Strong}" CornerRadius="8" Padding="7,1" Margin="8,0,0,0">
+                                <TextBlock Text="{Binding SelectedCount}" FontSize="11" />
+                            </Border>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <!-- Lista de problemas -->
+        <Border Grid.Row="3" Style="{StaticResource Card}" Padding="6">
+            <Grid>
+                <ListView Style="{StaticResource ListView.Table}"
+                          ItemContainerStyle="{StaticResource ListView.TableItem}"
+                          ItemsSource="{Binding IssuesView}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="44">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  Style="{StaticResource CheckBox.Default}"
+                                                  IsEnabled="{Binding CanAutoFix}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Header="{loc:Loc Common_Status}" Width="118">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Badge}"
+                                                Background="{Binding Severity, Converter={StaticResource Conv.SeverityBrush}, ConverterParameter=Soft}">
+                                            <TextBlock Text="{Binding SeverityText}" FontSize="11"
+                                                       Foreground="{Binding Severity, Converter={StaticResource Conv.SeverityBrush}}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Header="{loc:Loc Cat_Performance}" Width="150"
+                                            DisplayMemberBinding="{Binding CategoryText}" />
+
+                            <GridViewColumn Header="{loc:Loc Common_Description}" Width="420">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,2">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Description}" FontSize="12" Opacity="0.72"
+                                                       TextWrapping="Wrap" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Header="{loc:Loc Common_Recoverable}" Width="110"
+                                            DisplayMemberBinding="{Binding RecoverableText}" />
+
+                            <GridViewColumn Header="{loc:Loc Startup_EstimatedTime}" Width="90"
+                                            DisplayMemberBinding="{Binding BootImpactText}" />
+
+                            <GridViewColumn Header="{loc:Loc Common_Actions}" Width="120">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource Button.Small}" Content="{loc:Loc Analysis_Fix}"
+                                                Command="{Binding DataContext.FixIssueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Visibility="{Binding HasIssues, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}">
+                    <TextBlock Text="⚗" FontFamily="Segoe UI Symbol" FontSize="34" HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.Text.Muted}" />
+                    <TextBlock Text="{loc:Loc Analysis_NoIssues}" Style="{StaticResource Text.Body}"
+                               HorizontalAlignment="Center" Margin="0,10,0,0" />
+                    <TextBlock Text="{loc:Loc Msg_ScanInProgress}" Style="{StaticResource Text.Caption}"
+                               HorizontalAlignment="Center" Margin="0,4,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

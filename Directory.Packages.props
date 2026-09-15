@@ -1,0 +1,62 @@
+<Project>
+
+  <!--
+    ============================================================================
+    Central Package Management (CPM)
+    ----------------------------------------------------------------------------
+    Todas as versões de pacotes NuGet vivem aqui. Para atualizar uma dependência
+    altere APENAS este arquivo - nenhum .csproj declara versão.
+
+    NOTA (LiveCharts2): o pacote está em prerelease. Caso o restore falhe com a
+    versão fixada abaixo, troque por outra versão "2.0.0-rc*" disponível no feed
+    (ex.: 2.0.0-rc3.3 ou 2.0.0-rc5.4). A API usada no projeto é estável entre
+    essas versões (Series / XAxes / YAxes / LineSeries<T>).
+    ============================================================================
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="MVVM / UI">
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageVersion Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc4.5" />
+  </ItemGroup>
+
+  <ItemGroup Label="Dependency Injection">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Data Access (EF Core + SQLite)">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" />
+  </ItemGroup>
+
+  <ItemGroup Label="Logging">
+    <PackageVersion Include="Serilog" Version="3.1.1" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Debug" Version="2.0.0" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Serialization">
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Windows APIs">
+    <PackageVersion Include="System.Management" Version="8.0.0" />
+    <PackageVersion Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
+    <PackageVersion Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageVersion Include="xunit" Version="2.6.6" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.6" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ============================================================================
+    CAMADA: PRESENTATION (WPF / MVVM)
+    ----------------------------------------------------------------------------
+    Views (XAML), ViewModels (CommunityToolkit.Mvvm), tema dark premium,
+    controles customizados, converters e composição raiz (DI container).
+    UseWindowsForms é habilitado apenas para o NotifyIcon da system tray.
+    ============================================================================
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>HLProOptimizer.Presentation</RootNamespace>
+    <AssemblyName>HLProOptimizer</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <StartupObject>HLProOptimizer.Presentation.App</StartupObject>
+    <ApplicationIcon Condition="Exists('Assets\app.ico')">Assets\app.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>pt-BR;en;es</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HLProOptimizer.Core\HLProOptimizer.Core.csproj" />
+    <ProjectReference Include="..\HLProOptimizer.Application\HLProOptimizer.Application.csproj" />
+    <ProjectReference Include="..\HLProOptimizer.Infrastructure\HLProOptimizer.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\**\*.png" Condition="Exists('Assets')" />
+  </ItemGroup>
+
+</Project>

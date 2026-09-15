@@ -1,0 +1,228 @@
+<!--
+  LIMPEZA: scan por categoria, seleção granular (com tri-estado por grupo) e remoção
+  com confirmação. Totais recalculados por evento — nunca por polling.
+-->
+<UserControl x:Class="HLProOptimizer.Presentation.Views.CleanupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:HLProOptimizer.Presentation.Localization"
+             Background="Transparent">
+
+    <Grid Margin="28,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{loc:Loc Cleanup_Title}" Style="{StaticResource Text.PageTitle}" />
+                <TextBlock Text="{loc:Loc Cleanup_Subtitle}" Style="{StaticResource Text.Subtitle}" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource Button.Ghost}" Content="{loc:Loc App_Elevate}" Command="{Binding ElevateCommand}"
+                        Visibility="{Binding IsElevated, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}" />
+                <Button Style="{StaticResource Button.Secondary}" Margin="10,0,0,0"
+                        Content="{loc:Loc Dash_QuickJunk}" Command="{Binding QuickCleanCommand}" />
+                <Button Style="{StaticResource Button.Secondary}" Margin="10,0,0,0"
+                        Content="{loc:Loc Cleanup_Scan}" Command="{Binding ScanCommand}" />
+                <Button Style="{StaticResource Button.Primary}" Margin="10,0,0,0"
+                        Command="{Binding CleanCommand}"
+                        IsEnabled="{Binding HasSelection}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{loc:Loc Cleanup_Clean}" />
+                        <TextBlock Text="{Binding SelectedText, StringFormat=· {0}}" Margin="8,0,0,0" Opacity="0.8" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Resumo + nível -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20,16" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <UniformGrid Grid.Column="0" Columns="4">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Cleanup_TotalEstimated}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding TotalText}" Style="{StaticResource Text.Metric}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Cleanup_Selected}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding SelectedText}" Style="{StaticResource Text.Metric}"
+                                   Foreground="{StaticResource Brush.Accent}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Cleanup_FilesDeleted}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding DeletedCount}" Style="{StaticResource Text.Metric}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Opt_SpaceFreed}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding FreedText}" Style="{StaticResource Text.Metric}"
+                                   Foreground="{StaticResource Brush.Success}" />
+                    </StackPanel>
+                </UniformGrid>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource Button.Ghost}" Content="{loc:Loc Common_SelectAll}" Command="{Binding SelectAllCommand}" />
+                    <Button Style="{StaticResource Button.Ghost}" Margin="8,0,0,0" Content="{loc:Loc Common_Recommended}"
+                            Command="{Binding SelectSafeOnlyCommand}" />
+                    <Button Style="{StaticResource Button.Ghost}" Margin="8,0,0,0" Content="{loc:Loc Common_ClearSelection}"
+                            Command="{Binding ClearSelectionCommand}" />
+                    <ComboBox Style="{StaticResource ComboBox.Default}" Width="180" Margin="14,0,0,0"
+                              ItemsSource="{Binding Levels}"
+                              SelectedItem="{Binding Level, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource Conv.EnumText}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Grupos -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Padding="0" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <!-- Cabeçalho do grupo (seleção tri-estado) -->
+                                    <Grid Margin="20,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <CheckBox Grid.Column="0" Style="{StaticResource CheckBox.Default}"
+                                                  IsChecked="{Binding IsGroupSelected, Mode=TwoWay}"
+                                                  IsThreeState="True" VerticalAlignment="Center" />
+
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" Style="{StaticResource Text.SectionTitle}" Margin="0" />
+                                            <TextBlock Style="{StaticResource Text.Caption}" Margin="0,2,0,0">
+                                                <Run Text="{Binding Targets.Count, Mode=OneWay, StringFormat={}{0} item(ns)}" />
+                                                <Run Text=" · " Opacity="0.5" />
+                                                <Run Text="{Binding TotalFormatted, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <Border Grid.Column="2" Style="{StaticResource Badge}" Background="{StaticResource Brush.Primary.Soft}"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedFormatted}" FontSize="12"
+                                                       Foreground="{StaticResource Brush.Accent}" FontWeight="SemiBold" />
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Height="1" Background="{StaticResource Brush.Border}" />
+
+                                    <!-- Alvos -->
+                                    <ItemsControl ItemsSource="{Binding Targets}" Margin="20,12,20,16">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,10">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <CheckBox Grid.Column="0" Style="{StaticResource CheckBox.Default}"
+                                                              IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" />
+
+                                                    <StackPanel Grid.Column="1" Margin="12,0,14,0" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Subtitle}" Margin="0" />
+                                                            <Border Style="{StaticResource Badge}" Background="{StaticResource Brush.Warning.Soft}"
+                                                                    Margin="8,0,0,0" VerticalAlignment="Center"
+                                                                    Visibility="{Binding RequiresAdmin, Converter={StaticResource Conv.BoolToVisibility}}">
+                                                                <TextBlock Text="{loc:Loc Tools_RequiresAdmin}" FontSize="10"
+                                                                           Foreground="{StaticResource Brush.Warning}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource Badge}" Background="{StaticResource Brush.Danger.Soft}"
+                                                                    Margin="6,0,0,0" VerticalAlignment="Center"
+                                                                    Visibility="{Binding IsSafe, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}">
+                                                                <TextBlock Text="{loc:Loc Privacy_Risk}" FontSize="10"
+                                                                           Foreground="{StaticResource Brush.Danger}" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}"
+                                                                   TextWrapping="Wrap" Margin="0,2,0,0" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                        <TextBlock Text="{Binding SizeFormatted}" Style="{StaticResource Text.Subtitle}"
+                                                                   HorizontalAlignment="Right" Margin="0" />
+                                                        <TextBlock Text="{Binding FileCount, StringFormat={}{0} arquivo(s)}"
+                                                                   Style="{StaticResource Text.Caption}" HorizontalAlignment="Right" Margin="0,1,0,0" />
+                                                    </StackPanel>
+
+                                                    <Button Grid.Column="3" Style="{StaticResource Button.Ghost}" VerticalAlignment="Center"
+                                                            Content="{loc:Loc Common_OpenLocation}"
+                                                            Command="{Binding DataContext.OpenTargetLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Estados vazios -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,26,0,26"
+                            Visibility="{Binding HasGroups, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}">
+                    <TextBlock Text="♻" FontFamily="Segoe UI Symbol" FontSize="34" HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.Text.Muted}" />
+                    <TextBlock Text="{loc:Loc Cleanup_NoTargets}" Style="{StaticResource Text.Body}"
+                               HorizontalAlignment="Center" Margin="0,10,0,0" />
+                    <TextBlock Text="{loc:Loc Cleanup_Preview}" Style="{StaticResource Text.Caption}"
+                               HorizontalAlignment="Center" Margin="0,4,0,0" />
+                </StackPanel>
+
+                <!-- Resultado -->
+                <Border Style="{StaticResource Card}" Padding="20,16" Margin="0,2,0,16"
+                        Visibility="{Binding HasResult, Converter={StaticResource Conv.BoolToVisibility}}">
+                    <UniformGrid Columns="4">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Cleanup_FilesDeleted}" Style="{StaticResource Text.Caption}" />
+                            <TextBlock Text="{Binding DeletedCount}" Style="{StaticResource Text.Metric}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Cleanup_Skipped}" Style="{StaticResource Text.Caption}" />
+                            <TextBlock Text="{Binding SkippedCount}" Style="{StaticResource Text.Metric}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Opt_Failed}" Style="{StaticResource Text.Caption}" />
+                            <TextBlock Text="{Binding FailedCount}" Style="{StaticResource Text.Metric}"
+                                       Foreground="{StaticResource Brush.Danger}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Opt_SpaceFreed}" Style="{StaticResource Text.Caption}" />
+                            <TextBlock Text="{Binding FreedText}" Style="{StaticResource Text.Metric}"
+                                       Foreground="{StaticResource Brush.Success}" />
+                        </StackPanel>
+                    </UniformGrid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

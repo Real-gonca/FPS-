@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ============================================================================
+    CAMADA: APPLICATION (Business Logic / Use Cases)
+    ----------------------------------------------------------------------------
+    Orquestra os casos de uso (análise, otimização, limpeza, privacidade, modo
+    gamer, scoring, monitoramento). Depende SOMENTE de abstrações do Core;
+    nunca referencia WMI, Registro, WPF ou EF Core diretamente.
+    Isso mantém a lógica testável em qualquer plataforma (xUnit roda em Linux/macOS).
+    ============================================================================
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>HLProOptimizer.Application</RootNamespace>
+    <AssemblyName>HLProOptimizer.Application</AssemblyName>
+
+    <!-- O recurso neutro (Strings.resx) é português do Brasil. -->
+    <NeutralLanguage>pt-BR</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HLProOptimizer.Core\HLProOptimizer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Recursos de localização: português (neutro), inglês e espanhol. -->
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Strings.en.resx" />
+    <EmbeddedResource Update="Resources\Strings.es.resx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HLProOptimizer.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,195 @@
+<!--
+  INICIALIZAÇÃO: tabela de programas que iniciam com o Windows, estatísticas de boot
+  e ações (ativar/desativar, remover, abrir local, pesquisar online).
+-->
+<UserControl x:Class="HLProOptimizer.Presentation.Views.StartupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:HLProOptimizer.Presentation.Localization"
+             Background="Transparent">
+
+    <Grid Margin="28,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{loc:Loc Startup_Title}" Style="{StaticResource Text.PageTitle}" />
+                <TextBlock Text="{loc:Loc Startup_Subtitle}" Style="{StaticResource Text.Subtitle}" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource Button.Secondary}" Content="{loc:Loc Startup_DisableNonEssential}"
+                        Command="{Binding DisableNonEssentialCommand}" />
+                <Button Style="{StaticResource Button.Primary}" Margin="10,0,0,0"
+                        Content="{loc:Loc Common_Refresh}" Command="{Binding LoadCommand}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Estatísticas de boot -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20,16" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="260" />
+                </Grid.ColumnDefinitions>
+
+                <UniformGrid Grid.Column="0" Columns="5">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Startup_TotalPrograms}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding TotalCount}" Style="{StaticResource Text.Metric}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Startup_Enabled}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding EnabledCount}" Style="{StaticResource Text.Metric}"
+                                   Foreground="{StaticResource Brush.Accent}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Startup_Disabled}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding DisabledCount}" Style="{StaticResource Text.Metric}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Startup_Impact_High}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding HighImpactCount}" Style="{StaticResource Text.Metric}"
+                                   Foreground="{StaticResource Brush.Warning}" />
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Startup_Orphaned}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding OrphanedCount}" Style="{StaticResource Text.Metric}"
+                                   Foreground="{StaticResource Brush.Danger}" />
+                    </StackPanel>
+                </UniformGrid>
+
+                <StackPanel Grid.Column="1">
+                    <Grid>
+                        <TextBlock Text="{loc:Loc Startup_Savings}" Style="{StaticResource Text.Caption}" />
+                        <TextBlock Text="{Binding SavingsText}" HorizontalAlignment="Right"
+                                   Style="{StaticResource Text.Caption}" Foreground="{StaticResource Brush.Success}" />
+                    </Grid>
+                    <ProgressBar Height="6" Margin="0,6,0,6" Maximum="100"
+                                 Style="{StaticResource ProgressBar.Gradient}"
+                                 Value="{Binding SavingsPercent, Mode=OneWay}" />
+                    <Grid>
+                        <TextBlock Text="{Binding CurrentBootText}" Style="{StaticResource Text.Caption}" Opacity="0.75" />
+                        <TextBlock Text="{Binding OptimizedBootText}" HorizontalAlignment="Right" Style="{StaticResource Text.Caption}" />
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Filtros -->
+        <Grid Grid.Row="2" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0" Style="{StaticResource TextBox.Default}" MaxWidth="360" HorizontalAlignment="Left"
+                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                     ToolTip="{loc:Loc Common_SearchPlaceholder}" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <CheckBox Style="{StaticResource CheckBox.Default}" Content="{loc:Loc Startup_Enabled}"
+                          IsChecked="{Binding OnlyEnabled}" Margin="0,0,14,0" VerticalAlignment="Center" />
+                <CheckBox Style="{StaticResource CheckBox.Default}" Content="{loc:Loc Startup_Impact_High}"
+                          IsChecked="{Binding OnlyHighImpact}" Margin="0,0,14,0" VerticalAlignment="Center" />
+                <CheckBox Style="{StaticResource CheckBox.Default}" Content="{loc:Loc Startup_Orphaned}"
+                          IsChecked="{Binding OnlyOrphaned}" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Tabela -->
+        <Border Grid.Row="3" Style="{StaticResource Card}" Padding="6">
+            <Grid>
+                <ListView Style="{StaticResource ListView.Table}"
+                          ItemContainerStyle="{StaticResource ListView.TableItem}"
+                          ItemsSource="{Binding ProgramsView}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="52">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Style="{StaticResource CheckBox.Switch}"
+                                                  IsChecked="{Binding IsEnabled, Mode=TwoWay}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Header="{loc:Loc Startup_Program}" Width="300">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,2">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                <Border Style="{StaticResource Badge}" Background="{StaticResource Brush.Danger.Soft}"
+                                                        Margin="8,0,0,0"
+                                                        Visibility="{Binding IsOrphaned, Converter={StaticResource Conv.BoolToVisibility}}">
+                                                    <TextBlock Text="{loc:Loc Startup_Orphaned}" FontSize="10"
+                                                               Foreground="{StaticResource Brush.Danger}" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Command}" FontSize="11.5" Opacity="0.65"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="280" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Header="{loc:Loc Startup_Publisher}" Width="170"
+                                            DisplayMemberBinding="{Binding Publisher}" />
+
+                            <GridViewColumn Header="{loc:Loc Startup_Impact}" Width="110">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding ImpactText}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Header="{loc:Loc Startup_EstimatedTime}" Width="90"
+                                            DisplayMemberBinding="{Binding EstimatedTimeText}" />
+
+                            <GridViewColumn Header="{loc:Loc Startup_Location}" Width="150"
+                                            DisplayMemberBinding="{Binding LocationText}" />
+
+                            <GridViewColumn Header="{loc:Loc Common_Actions}" Width="230">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Style="{StaticResource Button.Ghost}" Content="{loc:Loc Common_OpenLocation}"
+                                                    Command="{Binding DataContext.OpenLocationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Style="{StaticResource Button.Ghost}" Margin="6,0,0,0" Content="{loc:Loc Startup_SearchOnline}"
+                                                    Command="{Binding DataContext.SearchOnlineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Style="{StaticResource Button.Ghost}" Margin="6,0,0,0" Content="{loc:Loc Common_Remove}"
+                                                    Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Visibility="{Binding IsLoaded, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}">
+                    <TextBlock Text="⏻" FontFamily="Segoe UI Symbol" FontSize="32" HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.Text.Muted}" />
+                    <TextBlock Text="{loc:Loc Startup_NoItems}" Style="{StaticResource Text.Body}"
+                               HorizontalAlignment="Center" Margin="0,10,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

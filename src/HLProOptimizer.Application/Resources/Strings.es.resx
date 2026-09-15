@@ -1,0 +1,1186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Title" xml:space="preserve">
+    <value>HL PRO OPTIMIZER</value>
+  </data>
+  <data name="App_Tagline" xml:space="preserve">
+    <value>Optimización profesional para Windows</value>
+  </data>
+  <data name="App_Version" xml:space="preserve">
+    <value>Versión</value>
+  </data>
+  <data name="App_AdminBadge" xml:space="preserve">
+    <value>Administrador</value>
+  </data>
+  <data name="App_UserBadge" xml:space="preserve">
+    <value>Usuario estándar</value>
+  </data>
+  <data name="App_PerformanceMode" xml:space="preserve">
+    <value>Modo Rendimiento</value>
+  </data>
+  <data name="App_Elevate" xml:space="preserve">
+    <value>Ejecutar como administrador</value>
+  </data>
+  <data name="App_Minimize" xml:space="preserve">
+    <value>Minimizar</value>
+  </data>
+  <data name="App_Close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Panel principal</value>
+  </data>
+  <data name="Nav_Analysis" xml:space="preserve">
+    <value>Análisis del sistema</value>
+  </data>
+  <data name="Nav_Optimization" xml:space="preserve">
+    <value>Optimización</value>
+  </data>
+  <data name="Nav_GameMode" xml:space="preserve">
+    <value>Modo Gamer</value>
+  </data>
+  <data name="Nav_Cleanup" xml:space="preserve">
+    <value>Limpieza</value>
+  </data>
+  <data name="Nav_Startup" xml:space="preserve">
+    <value>Inicio</value>
+  </data>
+  <data name="Nav_Privacy" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Nav_Tools" xml:space="preserve">
+    <value>Herramientas</value>
+  </data>
+  <data name="Nav_Monitoring" xml:space="preserve">
+    <value>Monitoreo</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Configuración</value>
+  </data>
+  <data name="Common_Scan" xml:space="preserve">
+    <value>Analizar</value>
+  </data>
+  <data name="Common_StartScan" xml:space="preserve">
+    <value>Iniciar análisis</value>
+  </data>
+  <data name="Common_Optimize" xml:space="preserve">
+    <value>Optimizar</value>
+  </data>
+  <data name="Common_Clean" xml:space="preserve">
+    <value>Limpiar</value>
+  </data>
+  <data name="Common_Apply" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Atrás</value>
+  </data>
+  <data name="Common_Start" xml:space="preserve">
+    <value>Iniciar</value>
+  </data>
+  <data name="Common_Stop" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="Common_Restart" xml:space="preserve">
+    <value>Reiniciar</value>
+  </data>
+  <data name="Common_Details" xml:space="preserve">
+    <value>Detalles</value>
+  </data>
+  <data name="Common_Search" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Common_OpenLocation" xml:space="preserve">
+    <value>Abrir ubicación del archivo</value>
+  </data>
+  <data name="Common_Remove" xml:space="preserve">
+    <value>Quitar</value>
+  </data>
+  <data name="Common_Enable" xml:space="preserve">
+    <value>Activar</value>
+  </data>
+  <data name="Common_Disable" xml:space="preserve">
+    <value>Desactivar</value>
+  </data>
+  <data name="Common_SelectAll" xml:space="preserve">
+    <value>Seleccionar todo</value>
+  </data>
+  <data name="Common_ClearSelection" xml:space="preserve">
+    <value>Limpiar selección</value>
+  </data>
+  <data name="Common_Export" xml:space="preserve">
+    <value>Exportar</value>
+  </data>
+  <data name="Common_Import" xml:space="preserve">
+    <value>Importar</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Cargando...</value>
+  </data>
+  <data name="Common_None" xml:space="preserve">
+    <value>Ninguno</value>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>Aceptar</value>
+  </data>
+  <data name="Common_Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Common_Free" xml:space="preserve">
+    <value>Libre</value>
+  </data>
+  <data name="Common_Used" xml:space="preserve">
+    <value>En uso</value>
+  </data>
+  <data name="Common_NotAvailable" xml:space="preserve">
+    <value>N/D</value>
+  </data>
+  <data name="Common_Recoverable" xml:space="preserve">
+    <value>Recuperable</value>
+  </data>
+  <data name="Common_Recommended" xml:space="preserve">
+    <value>Recomendado</value>
+  </data>
+  <data name="Common_Status" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="Common_Actions" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="Common_Name" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="Common_Description" xml:space="preserve">
+    <value>Descripción</value>
+  </data>
+  <data name="Common_Size" xml:space="preserve">
+    <value>Tamaño</value>
+  </data>
+  <data name="Common_Items" xml:space="preserve">
+    <value>elementos</value>
+  </data>
+  <data name="Common_Filter" xml:space="preserve">
+    <value>Filtrar</value>
+  </data>
+  <data name="Common_SearchPlaceholder" xml:space="preserve">
+    <value>Buscar...</value>
+  </data>
+  <data name="Dash_Title" xml:space="preserve">
+    <value>Panel principal</value>
+  </data>
+  <data name="Dash_Subtitle" xml:space="preserve">
+    <value>Resumen del estado y rendimiento de tu PC</value>
+  </data>
+  <data name="Dash_SystemScore" xml:space="preserve">
+    <value>Puntuación del sistema</value>
+  </data>
+  <data name="Dash_QuickInfo" xml:space="preserve">
+    <value>Información rápida</value>
+  </data>
+  <data name="Dash_Cpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Dash_Ram" xml:space="preserve">
+    <value>RAM</value>
+  </data>
+  <data name="Dash_Gpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Dash_Os" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="Dash_Uptime" xml:space="preserve">
+    <value>Tiempo activo</value>
+  </data>
+  <data name="Dash_Temperature" xml:space="preserve">
+    <value>Temperatura</value>
+  </data>
+  <data name="Dash_Disk" xml:space="preserve">
+    <value>Disco</value>
+  </data>
+  <data name="Dash_RealtimeCharts" xml:space="preserve">
+    <value>Gráficos en tiempo real</value>
+  </data>
+  <data name="Dash_CpuUsage" xml:space="preserve">
+    <value>Uso de CPU</value>
+  </data>
+  <data name="Dash_RamUsage" xml:space="preserve">
+    <value>Uso de RAM</value>
+  </data>
+  <data name="Dash_DiskIo" xml:space="preserve">
+    <value>Disco (E/S)</value>
+  </data>
+  <data name="Dash_Network" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Dash_StatusCards" xml:space="preserve">
+    <value>Estado del sistema</value>
+  </data>
+  <data name="Dash_Performance" xml:space="preserve">
+    <value>Rendimiento</value>
+  </data>
+  <data name="Dash_Stability" xml:space="preserve">
+    <value>Estabilidad</value>
+  </data>
+  <data name="Dash_Security" xml:space="preserve">
+    <value>Seguridad</value>
+  </data>
+  <data name="Dash_Cleanliness" xml:space="preserve">
+    <value>Limpieza</value>
+  </data>
+  <data name="Dash_QuickActions" xml:space="preserve">
+    <value>Acciones rápidas</value>
+  </data>
+  <data name="Dash_QuickJunk" xml:space="preserve">
+    <value>Limpieza de basura</value>
+  </data>
+  <data name="Dash_QuickSystem" xml:space="preserve">
+    <value>Optimizar sistema</value>
+  </data>
+  <data name="Dash_QuickPrivacy" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Dash_QuickUpdates" xml:space="preserve">
+    <value>Actualizaciones</value>
+  </data>
+  <data name="Dash_Recommendations" xml:space="preserve">
+    <value>Recomendaciones</value>
+  </data>
+  <data name="Dash_RecentActions" xml:space="preserve">
+    <value>Acciones recientes</value>
+  </data>
+  <data name="Dash_ViewFullReport" xml:space="preserve">
+    <value>Ver informe completo</value>
+  </data>
+  <data name="Dash_NoRecommendations" xml:space="preserve">
+    <value>No se encontraron problemas. ¡Tu sistema está en excelente estado!</value>
+  </data>
+  <data name="Dash_NoRecentActions" xml:space="preserve">
+    <value>Aún no hay acciones registradas.</value>
+  </data>
+  <data name="Dash_Checking" xml:space="preserve">
+    <value>Comprobando...</value>
+  </data>
+  <data name="Dash_AnalyzeNow" xml:space="preserve">
+    <value>Analizar ahora</value>
+  </data>
+  <data name="Health_Excellent" xml:space="preserve">
+    <value>Excelente</value>
+  </data>
+  <data name="Health_Good" xml:space="preserve">
+    <value>Bueno</value>
+  </data>
+  <data name="Health_Fair" xml:space="preserve">
+    <value>Regular</value>
+  </data>
+  <data name="Health_Poor" xml:space="preserve">
+    <value>Deficiente</value>
+  </data>
+  <data name="Status_VeryGood" xml:space="preserve">
+    <value>Muy bueno</value>
+  </data>
+  <data name="Status_Protected" xml:space="preserve">
+    <value>Protegido</value>
+  </data>
+  <data name="Status_Attention" xml:space="preserve">
+    <value>Atención</value>
+  </data>
+  <data name="Status_Vulnerable" xml:space="preserve">
+    <value>Vulnerable</value>
+  </data>
+  <data name="Status_Clean" xml:space="preserve">
+    <value>Limpio</value>
+  </data>
+  <data name="Status_NeedsCleanup" xml:space="preserve">
+    <value>Requiere limpieza</value>
+  </data>
+  <data name="Status_Stable" xml:space="preserve">
+    <value>Estable</value>
+  </data>
+  <data name="Status_Unstable" xml:space="preserve">
+    <value>Inestable</value>
+  </data>
+  <data name="Severity_Informational" xml:space="preserve">
+    <value>Informativo</value>
+  </data>
+  <data name="Severity_Low" xml:space="preserve">
+    <value>Baja</value>
+  </data>
+  <data name="Severity_Medium" xml:space="preserve">
+    <value>Media</value>
+  </data>
+  <data name="Severity_High" xml:space="preserve">
+    <value>Alta</value>
+  </data>
+  <data name="Severity_Critical" xml:space="preserve">
+    <value>Crítica</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>Prioridad alta</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>Prioridad media</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>Prioridad baja</value>
+  </data>
+  <data name="Cat_TemporaryFiles" xml:space="preserve">
+    <value>Archivos temporales</value>
+  </data>
+  <data name="Cat_SystemCache" xml:space="preserve">
+    <value>Caché del sistema</value>
+  </data>
+  <data name="Cat_LogsAndDumps" xml:space="preserve">
+    <value>Registros y volcados</value>
+  </data>
+  <data name="Cat_Registry" xml:space="preserve">
+    <value>Registro de Windows</value>
+  </data>
+  <data name="Cat_StartupPrograms" xml:space="preserve">
+    <value>Programas de inicio</value>
+  </data>
+  <data name="Cat_Services" xml:space="preserve">
+    <value>Servicios</value>
+  </data>
+  <data name="Cat_Drivers" xml:space="preserve">
+    <value>Controladores</value>
+  </data>
+  <data name="Cat_WindowsUpdate" xml:space="preserve">
+    <value>Windows Update</value>
+  </data>
+  <data name="Cat_RecycleBin" xml:space="preserve">
+    <value>Papelera</value>
+  </data>
+  <data name="Cat_BrowserCache" xml:space="preserve">
+    <value>Caché de navegadores</value>
+  </data>
+  <data name="Cat_Privacy" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Cat_Performance" xml:space="preserve">
+    <value>Rendimiento</value>
+  </data>
+  <data name="Cat_Security" xml:space="preserve">
+    <value>Seguridad</value>
+  </data>
+  <data name="Cat_Network" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Analysis_Title" xml:space="preserve">
+    <value>Análisis del sistema</value>
+  </data>
+  <data name="Analysis_Subtitle" xml:space="preserve">
+    <value>Análisis profundo de rendimiento, seguridad y privacidad</value>
+  </data>
+  <data name="Analysis_StartScan" xml:space="preserve">
+    <value>Iniciar análisis</value>
+  </data>
+  <data name="Analysis_Progress" xml:space="preserve">
+    <value>Progreso del análisis</value>
+  </data>
+  <data name="Analysis_Results" xml:space="preserve">
+    <value>Resultados del análisis</value>
+  </data>
+  <data name="Analysis_RecoverableTotal" xml:space="preserve">
+    <value>Total recuperable</value>
+  </data>
+  <data name="Analysis_OptimizeSelected" xml:space="preserve">
+    <value>Optimizar seleccionados</value>
+  </data>
+  <data name="Analysis_NoIssues" xml:space="preserve">
+    <value>No se encontraron problemas.</value>
+  </data>
+  <data name="Analysis_ScanCompleted" xml:space="preserve">
+    <value>Análisis completado</value>
+  </data>
+  <data name="Analysis_FailedCategories" xml:space="preserve">
+    <value>Categorías con error</value>
+  </data>
+  <data name="Analysis_IssuesFound" xml:space="preserve">
+    <value>problemas encontrados</value>
+  </data>
+  <data name="Analysis_Fix" xml:space="preserve">
+    <value>Corregir</value>
+  </data>
+  <data name="Opt_Title" xml:space="preserve">
+    <value>Optimización</value>
+  </data>
+  <data name="Opt_Subtitle" xml:space="preserve">
+    <value>Elige un modo y aplica las mejoras con un clic</value>
+  </data>
+  <data name="Opt_Modes" xml:space="preserve">
+    <value>Modos de optimización</value>
+  </data>
+  <data name="Opt_Mode_Quick" xml:space="preserve">
+    <value>Rápida</value>
+  </data>
+  <data name="Opt_Mode_Full" xml:space="preserve">
+    <value>Completa</value>
+  </data>
+  <data name="Opt_Mode_Gamer" xml:space="preserve">
+    <value>Gamer</value>
+  </data>
+  <data name="Opt_Mode_Privacy" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Opt_Mode_Quick_Desc" xml:space="preserve">
+    <value>Limpieza básica + flush de DNS</value>
+  </data>
+  <data name="Opt_Mode_Full_Desc" xml:space="preserve">
+    <value>Todo lo de Rápida + registro + servicios</value>
+  </data>
+  <data name="Opt_Mode_Gamer_Desc" xml:space="preserve">
+    <value>Enfocada en FPS y latencia</value>
+  </data>
+  <data name="Opt_Mode_Privacy_Desc" xml:space="preserve">
+    <value>Telemetría + rastreo</value>
+  </data>
+  <data name="Opt_Options" xml:space="preserve">
+    <value>Opciones configurables</value>
+  </data>
+  <data name="Opt_OptimizeNow" xml:space="preserve">
+    <value>OPTIMIZAR AHORA</value>
+  </data>
+  <data name="Opt_LiveLog" xml:space="preserve">
+    <value>Registro en tiempo real</value>
+  </data>
+  <data name="Opt_Result" xml:space="preserve">
+    <value>Resumen final</value>
+  </data>
+  <data name="Opt_Opt_Temp" xml:space="preserve">
+    <value>Limpiar archivos temporales</value>
+  </data>
+  <data name="Opt_Opt_Cache" xml:space="preserve">
+    <value>Limpiar caché del sistema</value>
+  </data>
+  <data name="Opt_Opt_Registry" xml:space="preserve">
+    <value>Optimizar registro</value>
+  </data>
+  <data name="Opt_Opt_Dns" xml:space="preserve">
+    <value>Flush de DNS</value>
+  </data>
+  <data name="Opt_Opt_Services" xml:space="preserve">
+    <value>Optimizar servicios</value>
+  </data>
+  <data name="Opt_Opt_Telemetry" xml:space="preserve">
+    <value>Desactivar telemetría</value>
+  </data>
+  <data name="Opt_Opt_RestorePoint" xml:space="preserve">
+    <value>Crear punto de restauración</value>
+  </data>
+  <data name="Opt_Opt_MaxPerformance" xml:space="preserve">
+    <value>Activar rendimiento máximo</value>
+  </data>
+  <data name="Opt_Opt_RecycleBin" xml:space="preserve">
+    <value>Vaciar la papelera</value>
+  </data>
+  <data name="Opt_Opt_BrowserCache" xml:space="preserve">
+    <value>Limpiar caché de navegadores</value>
+  </data>
+  <data name="Opt_Opt_Startup" xml:space="preserve">
+    <value>Desactivar inicio no esencial</value>
+  </data>
+  <data name="Opt_Opt_Network" xml:space="preserve">
+    <value>Red de baja latencia</value>
+  </data>
+  <data name="Opt_StepsExecuted" xml:space="preserve">
+    <value>Pasos ejecutados</value>
+  </data>
+  <data name="Opt_SpaceFreed" xml:space="preserve">
+    <value>Espacio liberado</value>
+  </data>
+  <data name="Opt_Duration" xml:space="preserve">
+    <value>Duración</value>
+  </data>
+  <data name="Opt_Failed" xml:space="preserve">
+    <value>Fallos</value>
+  </data>
+  <data name="Opt_Skipped" xml:space="preserve">
+    <value>Omitidos</value>
+  </data>
+  <data name="Opt_Running" xml:space="preserve">
+    <value>Optimizando el sistema...</value>
+  </data>
+  <data name="Opt_Completed" xml:space="preserve">
+    <value>Optimización completada</value>
+  </data>
+  <data name="Game_Title" xml:space="preserve">
+    <value>Modo Gamer / FPS Boost</value>
+  </data>
+  <data name="Game_Subtitle" xml:space="preserve">
+    <value>Libera todo el potencial de tu hardware para jugar</value>
+  </data>
+  <data name="Game_Activate" xml:space="preserve">
+    <value>ACTIVAR MODO GAMER</value>
+  </data>
+  <data name="Game_Deactivate" xml:space="preserve">
+    <value>DESACTIVAR MODO GAMER</value>
+  </data>
+  <data name="Game_Active" xml:space="preserve">
+    <value>Modo Gamer activo</value>
+  </data>
+  <data name="Game_Inactive" xml:space="preserve">
+    <value>Modo Gamer inactivo</value>
+  </data>
+  <data name="Game_ActiveSince" xml:space="preserve">
+    <value>Activo desde</value>
+  </data>
+  <data name="Game_AutoDisable" xml:space="preserve">
+    <value>Desactivar automáticamente al cerrar el juego</value>
+  </data>
+  <data name="Game_Tweaks" xml:space="preserve">
+    <value>Ajustes aplicados</value>
+  </data>
+  <data name="Game_FpsGain" xml:space="preserve">
+    <value>Ganancia estimada de FPS</value>
+  </data>
+  <data name="Game_Terminated" xml:space="preserve">
+    <value>Procesos finalizados</value>
+  </data>
+  <data name="Game_FreedMemory" xml:space="preserve">
+    <value>RAM liberada</value>
+  </data>
+  <data name="Game_BoostProcess" xml:space="preserve">
+    <value>Dar prioridad a un juego en ejecución</value>
+  </data>
+  <data name="Game_NoTweaksApplied" xml:space="preserve">
+    <value>Aún no se aplicaron ajustes.</value>
+  </data>
+  <data name="Cleanup_Title" xml:space="preserve">
+    <value>Limpieza</value>
+  </data>
+  <data name="Cleanup_Subtitle" xml:space="preserve">
+    <value>Elimina archivos y entradas de registro innecesarios</value>
+  </data>
+  <data name="Cleanup_Scan" xml:space="preserve">
+    <value>Analizar</value>
+  </data>
+  <data name="Cleanup_Clean" xml:space="preserve">
+    <value>Limpiar</value>
+  </data>
+  <data name="Cleanup_Preview" xml:space="preserve">
+    <value>Vista previa</value>
+  </data>
+  <data name="Cleanup_TotalEstimated" xml:space="preserve">
+    <value>Tamaño total estimado</value>
+  </data>
+  <data name="Cleanup_Selected" xml:space="preserve">
+    <value>Seleccionado</value>
+  </data>
+  <data name="Cleanup_ConfirmTitle" xml:space="preserve">
+    <value>Confirmar limpieza</value>
+  </data>
+  <data name="Cleanup_ConfirmMessage" xml:space="preserve">
+    <value>¿Seguro que deseas eliminar los elementos seleccionados? Esta acción no se puede deshacer.</value>
+  </data>
+  <data name="Cleanup_Done" xml:space="preserve">
+    <value>Limpieza completada</value>
+  </data>
+  <data name="Cleanup_SystemFiles" xml:space="preserve">
+    <value>Archivos del sistema</value>
+  </data>
+  <data name="Cleanup_Apps" xml:space="preserve">
+    <value>Aplicaciones</value>
+  </data>
+  <data name="Cleanup_RegistrySection" xml:space="preserve">
+    <value>Registro</value>
+  </data>
+  <data name="Cleanup_NoTargets" xml:space="preserve">
+    <value>Nada que limpiar. Tu sistema ya está libre de basura.</value>
+  </data>
+  <data name="Cleanup_FilesDeleted" xml:space="preserve">
+    <value>Archivos eliminados</value>
+  </data>
+  <data name="Cleanup_Skipped" xml:space="preserve">
+    <value>Omitidos (en uso)</value>
+  </data>
+  <data name="Startup_Title" xml:space="preserve">
+    <value>Administrador de inicio</value>
+  </data>
+  <data name="Startup_Subtitle" xml:space="preserve">
+    <value>Controla lo que se carga con Windows</value>
+  </data>
+  <data name="Startup_Program" xml:space="preserve">
+    <value>Programa</value>
+  </data>
+  <data name="Startup_Publisher" xml:space="preserve">
+    <value>Fabricante</value>
+  </data>
+  <data name="Startup_Path" xml:space="preserve">
+    <value>Ruta</value>
+  </data>
+  <data name="Startup_Impact" xml:space="preserve">
+    <value>Impacto en el inicio</value>
+  </data>
+  <data name="Startup_EstimatedTime" xml:space="preserve">
+    <value>Tiempo estimado</value>
+  </data>
+  <data name="Startup_Location" xml:space="preserve">
+    <value>Ubicación</value>
+  </data>
+  <data name="Startup_TotalPrograms" xml:space="preserve">
+    <value>Total de programas</value>
+  </data>
+  <data name="Startup_CurrentBoot" xml:space="preserve">
+    <value>Inicio estimado actual</value>
+  </data>
+  <data name="Startup_OptimizedBoot" xml:space="preserve">
+    <value>Inicio tras la optimización</value>
+  </data>
+  <data name="Startup_Savings" xml:space="preserve">
+    <value>Ahorro potencial</value>
+  </data>
+  <data name="Startup_SearchOnline" xml:space="preserve">
+    <value>Buscar en línea</value>
+  </data>
+  <data name="Startup_DisableNonEssential" xml:space="preserve">
+    <value>Desactivar no esenciales</value>
+  </data>
+  <data name="Startup_Enabled" xml:space="preserve">
+    <value>Activo</value>
+  </data>
+  <data name="Startup_Disabled" xml:space="preserve">
+    <value>Inactivo</value>
+  </data>
+  <data name="Startup_Impact_High" xml:space="preserve">
+    <value>Alto</value>
+  </data>
+  <data name="Startup_Impact_Medium" xml:space="preserve">
+    <value>Medio</value>
+  </data>
+  <data name="Startup_Impact_Low" xml:space="preserve">
+    <value>Bajo</value>
+  </data>
+  <data name="Startup_Impact_Unknown" xml:space="preserve">
+    <value>Desconocido</value>
+  </data>
+  <data name="Startup_RemoveConfirm" xml:space="preserve">
+    <value>¿Quitar esta entrada permanentemente?</value>
+  </data>
+  <data name="Startup_NoItems" xml:space="preserve">
+    <value>No se encontraron programas de inicio.</value>
+  </data>
+  <data name="Startup_Orphaned" xml:space="preserve">
+    <value>Ejecutable no encontrado (entrada huérfana)</value>
+  </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Privacy_Subtitle" xml:space="preserve">
+    <value>Bloquea telemetría, rastreo y permisos invasivos</value>
+  </data>
+  <data name="Privacy_Telemetry" xml:space="preserve">
+    <value>Telemetría de Windows</value>
+  </data>
+  <data name="Privacy_Tracking" xml:space="preserve">
+    <value>Rastreo</value>
+  </data>
+  <data name="Privacy_BackgroundApps" xml:space="preserve">
+    <value>Apps en segundo plano</value>
+  </data>
+  <data name="Privacy_Permissions" xml:space="preserve">
+    <value>Permisos</value>
+  </data>
+  <data name="Privacy_ProtectionScore" xml:space="preserve">
+    <value>Nivel de protección</value>
+  </data>
+  <data name="Privacy_ApplyRecommendations" xml:space="preserve">
+    <value>Aplicar recomendaciones</value>
+  </data>
+  <data name="Privacy_RestoreDefaults" xml:space="preserve">
+    <value>Restaurar valores</value>
+  </data>
+  <data name="Privacy_Recommended" xml:space="preserve">
+    <value>Recomendado</value>
+  </data>
+  <data name="Privacy_Risk" xml:space="preserve">
+    <value>Riesgo</value>
+  </data>
+  <data name="Privacy_Protected" xml:space="preserve">
+    <value>Protegido</value>
+  </data>
+  <data name="Privacy_Exposed" xml:space="preserve">
+    <value>Expuesto</value>
+  </data>
+  <data name="Privacy_NoItems" xml:space="preserve">
+    <value>No hay elementos de privacidad disponibles.</value>
+  </data>
+  <data name="Mon_Title" xml:space="preserve">
+    <value>Monitoreo en tiempo real</value>
+  </data>
+  <data name="Mon_Subtitle" xml:space="preserve">
+    <value>Métricas de hardware actualizadas cada segundo</value>
+  </data>
+  <data name="Mon_CpuTemp" xml:space="preserve">
+    <value>Temperatura</value>
+  </data>
+  <data name="Mon_Clock" xml:space="preserve">
+    <value>Frecuencia</value>
+  </data>
+  <data name="Mon_Threads" xml:space="preserve">
+    <value>Hilos activos</value>
+  </data>
+  <data name="Mon_Processes" xml:space="preserve">
+    <value>Procesos activos</value>
+  </data>
+  <data name="Mon_RamTotal" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Mon_RamAvailable" xml:space="preserve">
+    <value>Disponible</value>
+  </data>
+  <data name="Mon_RamInUse" xml:space="preserve">
+    <value>En uso</value>
+  </data>
+  <data name="Mon_Cache" xml:space="preserve">
+    <value>Caché</value>
+  </data>
+  <data name="Mon_Modified" xml:space="preserve">
+    <value>Modificada</value>
+  </data>
+  <data name="Mon_Standby" xml:space="preserve">
+    <value>En espera</value>
+  </data>
+  <data name="Mon_Commit" xml:space="preserve">
+    <value>Commit charge</value>
+  </data>
+  <data name="Mon_Vram" xml:space="preserve">
+    <value>VRAM</value>
+  </data>
+  <data name="Mon_GpuClock" xml:space="preserve">
+    <value>Frecuencia núcleo/memoria</value>
+  </data>
+  <data name="Mon_Fan" xml:space="preserve">
+    <value>Ventilador</value>
+  </data>
+  <data name="Mon_Read" xml:space="preserve">
+    <value>Lectura</value>
+  </data>
+  <data name="Mon_Write" xml:space="preserve">
+    <value>Escritura</value>
+  </data>
+  <data name="Mon_Iops" xml:space="preserve">
+    <value>IOPS</value>
+  </data>
+  <data name="Mon_ResponseTime" xml:space="preserve">
+    <value>Tiempo de respuesta</value>
+  </data>
+  <data name="Mon_FreeSpace" xml:space="preserve">
+    <value>Espacio libre</value>
+  </data>
+  <data name="Mon_Download" xml:space="preserve">
+    <value>Descarga</value>
+  </data>
+  <data name="Mon_Upload" xml:space="preserve">
+    <value>Subida</value>
+  </data>
+  <data name="Mon_Latency" xml:space="preserve">
+    <value>Latencia</value>
+  </data>
+  <data name="Mon_Connections" xml:space="preserve">
+    <value>Conexiones activas</value>
+  </data>
+  <data name="Mon_TopCpu" xml:space="preserve">
+    <value>Top 10 por CPU</value>
+  </data>
+  <data name="Mon_TopRam" xml:space="preserve">
+    <value>Top 10 por RAM</value>
+  </data>
+  <data name="Mon_TopDisk" xml:space="preserve">
+    <value>Top 10 por disco</value>
+  </data>
+  <data name="Mon_KillProcess" xml:space="preserve">
+    <value>Finalizar proceso</value>
+  </data>
+  <data name="Mon_KillConfirm" xml:space="preserve">
+    <value>Finalizar este proceso puede causar pérdida de datos. ¿Continuar?</value>
+  </data>
+  <data name="Mon_Interval" xml:space="preserve">
+    <value>Intervalo de actualización</value>
+  </data>
+  <data name="Mon_History" xml:space="preserve">
+    <value>Histórico (60s)</value>
+  </data>
+  <data name="Mon_Paused" xml:space="preserve">
+    <value>Monitoreo en pausa</value>
+  </data>
+  <data name="Mon_Pause" xml:space="preserve">
+    <value>Pausar</value>
+  </data>
+  <data name="Mon_Resume" xml:space="preserve">
+    <value>Reanudar</value>
+  </data>
+  <data name="Mon_Partitions" xml:space="preserve">
+    <value>Particiones</value>
+  </data>
+  <data name="Tools_Title" xml:space="preserve">
+    <value>Herramientas</value>
+  </data>
+  <data name="Tools_Subtitle" xml:space="preserve">
+    <value>Utilidades avanzadas de mantenimiento de Windows</value>
+  </data>
+  <data name="Tools_Services" xml:space="preserve">
+    <value>Administrador de servicios</value>
+  </data>
+  <data name="Tools_Drivers" xml:space="preserve">
+    <value>Administrador de controladores</value>
+  </data>
+  <data name="Tools_Hosts" xml:space="preserve">
+    <value>Editor de hosts</value>
+  </data>
+  <data name="Tools_Dns" xml:space="preserve">
+    <value>Editor de DNS</value>
+  </data>
+  <data name="Tools_Power" xml:space="preserve">
+    <value>Planes de energía</value>
+  </data>
+  <data name="Tools_Network" xml:space="preserve">
+    <value>Herramientas de red</value>
+  </data>
+  <data name="Tools_System" xml:space="preserve">
+    <value>Herramientas del sistema</value>
+  </data>
+  <data name="Tools_Backup" xml:space="preserve">
+    <value>Copia y restauración</value>
+  </data>
+  <data name="Tools_ServiceName" xml:space="preserve">
+    <value>Servicio</value>
+  </data>
+  <data name="Tools_StartupType" xml:space="preserve">
+    <value>Tipo de inicio</value>
+  </data>
+  <data name="Tools_UpdateDriver" xml:space="preserve">
+    <value>Actualizar controlador</value>
+  </data>
+  <data name="Tools_RollbackDriver" xml:space="preserve">
+    <value>Revertir controlador</value>
+  </data>
+  <data name="Tools_UninstallDriver" xml:space="preserve">
+    <value>Desinstalar controlador</value>
+  </data>
+  <data name="Tools_BlockDomains" xml:space="preserve">
+    <value>Bloquear dominios (ads/trackers)</value>
+  </data>
+  <data name="Tools_FlushDns" xml:space="preserve">
+    <value>Flush DNS</value>
+  </data>
+  <data name="Tools_DnsOverHttps" xml:space="preserve">
+    <value>DNS over HTTPS</value>
+  </data>
+  <data name="Tools_ResetTcpIp" xml:space="preserve">
+    <value>Resetear TCP/IP</value>
+  </data>
+  <data name="Tools_ResetWinsock" xml:space="preserve">
+    <value>Resetear Winsock</value>
+  </data>
+  <data name="Tools_ReleaseIp" xml:space="preserve">
+    <value>Liberar IP</value>
+  </data>
+  <data name="Tools_RenewIp" xml:space="preserve">
+    <value>Renovar IP</value>
+  </data>
+  <data name="Tools_RepairNetwork" xml:space="preserve">
+    <value>Reparar red</value>
+  </data>
+  <data name="Tools_SfcScan" xml:space="preserve">
+    <value>Análisis SFC (System File Checker)</value>
+  </data>
+  <data name="Tools_DismRepair" xml:space="preserve">
+    <value>Reparación DISM</value>
+  </data>
+  <data name="Tools_Chkdsk" xml:space="preserve">
+    <value>CHKDSK</value>
+  </data>
+  <data name="Tools_DefenderScan" xml:space="preserve">
+    <value>Análisis de Windows Defender</value>
+  </data>
+  <data name="Tools_Troubleshooter" xml:space="preserve">
+    <value>Solucionador de rendimiento</value>
+  </data>
+  <data name="Tools_BackupRegistry" xml:space="preserve">
+    <value>Copia del registro</value>
+  </data>
+  <data name="Tools_RestoreRegistry" xml:space="preserve">
+    <value>Restaurar registro</value>
+  </data>
+  <data name="Tools_CreateRestorePoint" xml:space="preserve">
+    <value>Crear punto de restauración</value>
+  </data>
+  <data name="Tools_RestorePoint" xml:space="preserve">
+    <value>Restaurar punto anterior</value>
+  </data>
+  <data name="Tools_ExportSettings" xml:space="preserve">
+    <value>Exportar configuración</value>
+  </data>
+  <data name="Tools_UltimatePerformance" xml:space="preserve">
+    <value>Activar Rendimiento Máximo</value>
+  </data>
+  <data name="Tools_RequiresAdmin" xml:space="preserve">
+    <value>Requiere administrador</value>
+  </data>
+  <data name="Tools_CommandOutput" xml:space="preserve">
+    <value>Salida del comando</value>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>Configuración</value>
+  </data>
+  <data name="Settings_General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Settings_Optimization" xml:space="preserve">
+    <value>Optimización</value>
+  </data>
+  <data name="Settings_Monitoring" xml:space="preserve">
+    <value>Monitoreo</value>
+  </data>
+  <data name="Settings_Updates" xml:space="preserve">
+    <value>Actualizaciones</value>
+  </data>
+  <data name="Settings_Plugins" xml:space="preserve">
+    <value>Complementos</value>
+  </data>
+  <data name="Settings_About" xml:space="preserve">
+    <value>Acerca de</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>Oscuro</value>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="Settings_Theme_Auto" xml:space="preserve">
+    <value>Automático (seguir Windows)</value>
+  </data>
+  <data name="Settings_StartWithWindows" xml:space="preserve">
+    <value>Iniciar con Windows</value>
+  </data>
+  <data name="Settings_MinimizeToTray" xml:space="preserve">
+    <value>Minimizar a la bandeja</value>
+  </data>
+  <data name="Settings_Notifications" xml:space="preserve">
+    <value>Notificaciones</value>
+  </data>
+  <data name="Settings_AutoBackup" xml:space="preserve">
+    <value>Crear copia automática</value>
+  </data>
+  <data name="Settings_RestorePointBefore" xml:space="preserve">
+    <value>Punto de restauración antes de cambios</value>
+  </data>
+  <data name="Settings_ConfirmBeforeDelete" xml:space="preserve">
+    <value>Confirmar antes de eliminar</value>
+  </data>
+  <data name="Settings_OptLevel" xml:space="preserve">
+    <value>Nivel de optimización</value>
+  </data>
+  <data name="Settings_Level_Conservative" xml:space="preserve">
+    <value>Conservador</value>
+  </data>
+  <data name="Settings_Level_Balanced" xml:space="preserve">
+    <value>Equilibrado</value>
+  </data>
+  <data name="Settings_Level_Aggressive" xml:space="preserve">
+    <value>Agresivo</value>
+  </data>
+  <data name="Settings_UpdateInterval" xml:space="preserve">
+    <value>Intervalo de actualización</value>
+  </data>
+  <data name="Settings_ShowInTray" xml:space="preserve">
+    <value>Mostrar en la bandeja</value>
+  </data>
+  <data name="Settings_GameOverlay" xml:space="preserve">
+    <value>Overlay en juegos (próximamente)</value>
+  </data>
+  <data name="Settings_AutoCheckUpdates" xml:space="preserve">
+    <value>Comprobar actualizaciones automáticamente</value>
+  </data>
+  <data name="Settings_UpdateFrequency" xml:space="preserve">
+    <value>Frecuencia</value>
+  </data>
+  <data name="Settings_Freq_Daily" xml:space="preserve">
+    <value>Diaria</value>
+  </data>
+  <data name="Settings_Freq_Weekly" xml:space="preserve">
+    <value>Semanal</value>
+  </data>
+  <data name="Settings_Freq_Monthly" xml:space="preserve">
+    <value>Mensual</value>
+  </data>
+  <data name="Settings_AutoInstall" xml:space="preserve">
+    <value>Instalar automáticamente</value>
+  </data>
+  <data name="Settings_Channel" xml:space="preserve">
+    <value>Canal</value>
+  </data>
+  <data name="Settings_Channel_Stable" xml:space="preserve">
+    <value>Estable</value>
+  </data>
+  <data name="Settings_Channel_Beta" xml:space="preserve">
+    <value>Beta</value>
+  </data>
+  <data name="Settings_PluginsManage" xml:space="preserve">
+    <value>Complementos instalados</value>
+  </data>
+  <data name="Settings_PluginsInstall" xml:space="preserve">
+    <value>Instalar nuevo complemento</value>
+  </data>
+  <data name="Settings_NoPlugins" xml:space="preserve">
+    <value>No hay complementos instalados.</value>
+  </data>
+  <data name="Settings_License" xml:space="preserve">
+    <value>Licencia</value>
+  </data>
+  <data name="Settings_CheckForUpdates" xml:space="preserve">
+    <value>Buscar actualizaciones</value>
+  </data>
+  <data name="Settings_SendFeedback" xml:space="preserve">
+    <value>Enviar comentarios</value>
+  </data>
+  <data name="Settings_AppLogs" xml:space="preserve">
+    <value>Registros de la aplicación</value>
+  </data>
+  <data name="Settings_OpenLogs" xml:space="preserve">
+    <value>Abrir carpeta de registros</value>
+  </data>
+  <data name="Settings_OpenDataFolder" xml:space="preserve">
+    <value>Abrir carpeta de datos</value>
+  </data>
+  <data name="Settings_Saved" xml:space="preserve">
+    <value>Configuración guardada correctamente.</value>
+  </data>
+  <data name="Settings_ResetDefaults" xml:space="preserve">
+    <value>Restaurar valores de fábrica</value>
+  </data>
+  <data name="Settings_ResetConfirm" xml:space="preserve">
+    <value>Todas las preferencias volverán al valor predeterminado. ¿Continuar?</value>
+  </data>
+  <data name="Settings_StartMinimized" xml:space="preserve">
+    <value>Iniciar minimizado</value>
+  </data>
+  <data name="Settings_GameModeAutoStart" xml:space="preserve">
+    <value>Reactivar el Modo Gamer al iniciar</value>
+  </data>
+  <data name="Settings_MeasureLatency" xml:space="preserve">
+    <value>Medir latencia de red</value>
+  </data>
+  <data name="Dlg_ElevationTitle" xml:space="preserve">
+    <value>Privilegios de administrador</value>
+  </data>
+  <data name="Dlg_ElevationMessage" xml:space="preserve">
+    <value>Esta acción requiere privilegios de administrador. ¿Ejecutarla de forma elevada?</value>
+  </data>
+  <data name="Dlg_ErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Dlg_SuccessTitle" xml:space="preserve">
+    <value>Completado</value>
+  </data>
+  <data name="Dlg_CancelledTitle" xml:space="preserve">
+    <value>Operación cancelada</value>
+  </data>
+  <data name="Dlg_WarningTitle" xml:space="preserve">
+    <value>Advertencia</value>
+  </data>
+  <data name="Msg_GenericError" xml:space="preserve">
+    <value>Ocurrió un error inesperado. Consulta el registro para más detalles.</value>
+  </data>
+  <data name="Msg_NeedAdmin" xml:space="preserve">
+    <value>Requiere administrador</value>
+  </data>
+  <data name="Msg_ScanInProgress" xml:space="preserve">
+    <value>Análisis en curso...</value>
+  </data>
+  <data name="Msg_NavigationFailed" xml:space="preserve">
+    <value>No se pudo abrir la pantalla solicitada.</value>
+  </data>
+  <data name="Msg_AppliedWithErrors" xml:space="preserve">
+    <value>Aplicado con errores parciales.</value>
+  </data>
+  <data name="Msg_RestartRequired" xml:space="preserve">
+    <value>Algunos cambios requieren reiniciar.</value>
+  </data>
+  <data name="Msg_FeatureUnavailable" xml:space="preserve">
+    <value>Función no disponible en este sistema.</value>
+  </data>
+</root>

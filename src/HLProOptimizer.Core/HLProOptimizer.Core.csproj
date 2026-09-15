@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ============================================================================
+    CAMADA: CORE (Domain)
+    ----------------------------------------------------------------------------
+    Entidades, enums, DTOs e CONTRATOS (interfaces). Não referencia nada além da
+    BCL: nenhuma dependência de WPF, WMI, registro ou banco de dados.
+    É a camada mais interna da Clean Architecture - todas as outras dependem dela.
+    ============================================================================
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>HLProOptimizer.Core</RootNamespace>
+    <AssemblyName>HLProOptimizer.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HLProOptimizer.Tests" />
+  </ItemGroup>
+
+</Project>
