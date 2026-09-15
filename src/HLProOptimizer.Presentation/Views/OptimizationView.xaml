@@ -1,0 +1,259 @@
+<!--
+  OTIMIZAÇÃO: seleção do modo, ajustes finos, pré-visualização do plano, execução
+  com log ao vivo e resumo do resultado (com reexecução elevada quando necessário).
+-->
+<UserControl x:Class="HLProOptimizer.Presentation.Views.OptimizationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:HLProOptimizer.Presentation.Localization"
+             Background="Transparent">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="28,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Cabeçalho -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{loc:Loc Opt_Title}" Style="{StaticResource Text.PageTitle}" />
+                    <TextBlock Text="{loc:Loc Opt_Subtitle}" Style="{StaticResource Text.Subtitle}" Margin="0,2,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource Button.Ghost}" Content="{loc:Loc App_Elevate}"
+                            Command="{Binding ElevateCommand}"
+                            Visibility="{Binding IsElevated, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}" />
+                    <Button Style="{StaticResource Button.Secondary}" Margin="10,0,0,0"
+                            Content="{loc:Loc Opt_RestoreDefaults}" Command="{Binding RevertCommand}" />
+                    <Button Style="{StaticResource Button.Primary}" Margin="10,0,0,0"
+                            Content="{loc:Loc Opt_OptimizeNow}" Command="{Binding OptimizeCommand}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="330" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Modos -->
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{loc:Loc Opt_Modes}" Style="{StaticResource Text.SectionTitle}" Margin="0,0,0,10" />
+
+                    <ListBox Style="{StaticResource ListBox.Plain}"
+                             ItemsSource="{Binding Modes}"
+                             SelectedItem="{Binding SelectedMode, Mode=TwoWay}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Width="38" Height="38" CornerRadius="11"
+                                            Background="{StaticResource Brush.Primary.Soft}" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Glyph}" FontFamily="Segoe UI Symbol" FontSize="17"
+                                                   Foreground="{StaticResource Brush.Accent}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Subtitle}" />
+                                        <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}"
+                                                   TextWrapping="Wrap" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Resultado -->
+                    <Border Style="{StaticResource Card}" Padding="20" Margin="0,16,0,0"
+                            Visibility="{Binding HasResult, Converter={StaticResource Conv.BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Opt_Result}" Style="{StaticResource Text.SectionTitle}" />
+
+                            <UniformGrid Columns="2" Margin="0,14,0,0">
+                                <StackPanel Margin="0,0,0,12">
+                                    <TextBlock Text="{loc:Loc Opt_StepsExecuted}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Text="{Binding SuccessCount}" Style="{StaticResource Text.Metric}"
+                                               Foreground="{StaticResource Brush.Success}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,0,12">
+                                    <TextBlock Text="{loc:Loc Opt_SpaceFreed}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Text="{Binding FreedText}" Style="{StaticResource Text.Metric}"
+                                               Foreground="{StaticResource Brush.Accent}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{loc:Loc Opt_Skipped}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Text="{Binding SkippedCount}" Style="{StaticResource Text.Metric}" />
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="{loc:Loc Opt_Failed}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Text="{Binding FailedCount}" Style="{StaticResource Text.Metric}"
+                                               Foreground="{StaticResource Brush.Danger}" />
+                                </StackPanel>
+                            </UniformGrid>
+
+                            <TextBlock Text="{Binding DurationText}" Style="{StaticResource Text.Caption}"
+                                       Margin="0,6,0,0" Opacity="0.75" />
+
+                            <Button Style="{StaticResource Button.Secondary}" Margin="0,14,0,0"
+                                    HorizontalAlignment="Stretch"
+                                    Content="{loc:Loc App_Elevate}"
+                                    Command="{Binding ElevateCommand}"
+                                    Visibility="{Binding ResultRequiresElevation, Converter={StaticResource Conv.BoolToVisibility}}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Opções + plano + log -->
+                <StackPanel Grid.Column="2">
+                    <Border Style="{StaticResource Card}" Padding="22">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="200" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Margin="0,0,18,0">
+                                <TextBlock Text="{loc:Loc Opt_Options}" Style="{StaticResource Text.SectionTitle}" Margin="0,0,0,12" />
+
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Temp}"
+                                          IsChecked="{Binding CleanTemporaryFiles}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Cache}"
+                                          IsChecked="{Binding CleanSystemCache}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Registry}"
+                                          IsChecked="{Binding OptimizeRegistry}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Dns}"
+                                          IsChecked="{Binding FlushDns}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Services}"
+                                          IsChecked="{Binding OptimizeServices}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Telemetry}"
+                                          IsChecked="{Binding DisableTelemetry}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Margin="0,0,18,0">
+                                <TextBlock Text="{loc:Loc Opt_Options}" Style="{StaticResource Text.SectionTitle}"
+                                           Margin="0,0,0,12" Opacity="0" Visibility="Hidden" />
+
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_RestorePoint}"
+                                          IsChecked="{Binding CreateRestorePoint}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_MaxPerformance}"
+                                          IsChecked="{Binding EnableMaximumPerformance}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_RecycleBin}"
+                                          IsChecked="{Binding EmptyRecycleBin}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_BrowserCache}"
+                                          IsChecked="{Binding CleanBrowserCache}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Startup}"
+                                          IsChecked="{Binding OptimizeStartup}" Margin="0,0,0,10" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Network}"
+                                          IsChecked="{Binding OptimizeNetworkLatency}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{loc:Loc Settings_OptLevel}" Style="{StaticResource Text.Caption}" Margin="0,0,6,6" />
+                                <ComboBox Style="{StaticResource ComboBox.Default}"
+                                          ItemsSource="{Binding Levels}"
+                                          SelectedItem="{Binding Level, Mode=TwoWay}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource Conv.EnumText}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <TextBlock Text="{loc:Loc Opt_RestartExplorer}" Style="{StaticResource Text.Caption}"
+                                           Margin="0,18,0,6" />
+                                <CheckBox Style="{StaticResource CheckBox.Switch}" Content="{loc:Loc Opt_Opt_Registry}"
+                                          IsChecked="{Binding RestartExplorer}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Plano -->
+                    <Border Style="{StaticResource Card}" Padding="22" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,12">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <TextBlock Text="{loc:Loc Analysis_Results}" Style="{StaticResource Text.SectionTitle}" />
+                                    <Border Style="{StaticResource Badge}" Background="{StaticResource Brush.Primary.Soft}" Margin="10,0,0,0">
+                                        <TextBlock Text="{Binding PlanCount}" FontSize="11" Foreground="{StaticResource Brush.Accent}" />
+                                    </Border>
+                                </StackPanel>
+                                <Button Style="{StaticResource Button.Ghost}" HorizontalAlignment="Right"
+                                        Content="{loc:Loc Common_Refresh}" Command="{Binding RefreshPlanCommand}" />
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding PlanSteps}" MaxHeight="230">
+                                <ItemsControl.Template>
+                                    <ControlTemplate TargetType="ItemsControl">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                            <ItemsPresenter />
+                                        </ScrollViewer>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="›" FontSize="15" Margin="0,0,10,0"
+                                                       Foreground="{StaticResource Brush.Accent}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Subtitle}" />
+                                                <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}"
+                                                           TextWrapping="Wrap" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                            <Border Grid.Column="2" Style="{StaticResource Badge}" VerticalAlignment="Center"
+                                                    Background="{StaticResource Brush.Warning.Soft}"
+                                                    Visibility="{Binding RequiresAdmin, Converter={StaticResource Conv.BoolToVisibility}}">
+                                                <TextBlock Text="{loc:Loc Tools_RequiresAdmin}" FontSize="10.5"
+                                                           Foreground="{StaticResource Brush.Warning}" />
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Log ao vivo -->
+                    <Border Style="{StaticResource Card}" Padding="22" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <TextBlock Text="{loc:Loc Opt_LiveLog}" Style="{StaticResource Text.SectionTitle}" />
+                                <Button Style="{StaticResource Button.Ghost}" HorizontalAlignment="Right"
+                                        Content="{loc:Loc Common_ClearSelection}" Command="{Binding ClearLogCommand}" />
+                            </Grid>
+
+                            <Border Background="{StaticResource Brush.Surface.Input}" CornerRadius="{StaticResource Radius.Control}"
+                                    BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" Padding="12" MinHeight="120">
+                                <ListBox ItemsSource="{Binding LiveLog}" Background="Transparent" BorderThickness="0"
+                                         FontFamily="Consolas" FontSize="12"
+                                         Foreground="{StaticResource Brush.Text.Secondary}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Auto" MaxHeight="190" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

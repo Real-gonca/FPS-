@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ============================================================================
+    TESTES DE UNIDADE (xUnit)
+    ----------------------------------------------------------------------------
+    Cobrem Core + Application (camadas independentes de Windows). Por isso o TFM
+    é net8.0 puro e os testes rodam em qualquer SO - inclusive no CI Linux.
+    As implementações de Infrastructure são validadas via fakes/doubles.
+    ============================================================================
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>HLProOptimizer.Tests</RootNamespace>
+    <AssemblyName>HLProOptimizer.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HLProOptimizer.Core\HLProOptimizer.Core.csproj" />
+    <ProjectReference Include="..\..\src\HLProOptimizer.Application\HLProOptimizer.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

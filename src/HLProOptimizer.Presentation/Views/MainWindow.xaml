@@ -1,0 +1,333 @@
+<!--
+  ============================================================================
+  JANELA PRINCIPAL (shell)
+  ----------------------------------------------------------------------------
+  - WindowStyle=None + WindowChrome: cantos arredondados, sombra nativa e
+    redimensionamento pelas bordas, sem perder o visual customizado.
+  - Layout: title bar (drag + selo de privilégio + minimizar/fechar),
+    sidebar de navegação (RadioButtons no estilo Nav.Item) e área de conteúdo
+    (ContentControl + DataTemplates de ViewTemplates.xaml).
+  - Nenhum comportamento de negócio aqui: tudo vem do MainViewModel.
+  ============================================================================
+-->
+<Window x:Class="HLProOptimizer.Presentation.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:HLProOptimizer.Presentation.Localization"
+        Title="{Binding AppTitle}"
+        Width="1380" Height="880"
+        MinWidth="1100" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        Background="Transparent"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Ideal"
+        UseLayoutRounding="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0"
+                      ResizeBorderThickness="6"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <!-- Moldura externa: cantos arredondados + borda de vidro -->
+    <Border CornerRadius="14"
+            BorderThickness="1"
+            BorderBrush="{StaticResource Brush.Border.Glass}"
+            Background="{StaticResource Brush.Background.App}"
+            ClipToBounds="True">
+        <Grid>
+            <!-- Halo decorativo (gradiente azul → ciano em baixa opacidade) -->
+            <Ellipse Width="720" Height="720"
+                     HorizontalAlignment="Right" VerticalAlignment="Top"
+                     Margin="0,-320,-220,0"
+                     Fill="{StaticResource Brush.Background.Halo}"
+                     IsHitTestVisible="False" />
+            <Ellipse Width="560" Height="560"
+                     HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                     Margin="-220,0,0,-260"
+                     Fill="{StaticResource Brush.Background.Halo}"
+                     IsHitTestVisible="False"
+                     Opacity="0.6" />
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- ================= TITLE BAR ================= -->
+            <Grid Grid.Row="0"
+                  Height="56"
+                  Background="{StaticResource Brush.Glass}"
+                  MouseLeftButtonDown="OnTitleBarMouseDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Marca -->
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="18,0,0,0">
+                    <Border Width="30" Height="30"
+                            CornerRadius="9"
+                            Background="{StaticResource Brush.Text.Gradient}">
+                        <TextBlock Text="HL"
+                                   FontFamily="Segoe UI"
+                                   FontSize="13" FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.Text.Inverse}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding AppTitle}"
+                                   Style="{StaticResource Text.SubsectionTitle}"
+                                   Margin="0" />
+                        <TextBlock Text="{Binding AppTagline}"
+                                   Style="{StaticResource Text.Caption}"
+                                   Margin="0,-2,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Resumo do hardware + selo de privilégio -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding MachineText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                    <TextBlock Text="·" Margin="8,0" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Opacity="0.5" />
+                    <TextBlock Text="{Binding OsText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                    <TextBlock Text="·" Margin="8,0" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Opacity="0.5" />
+                    <TextBlock Text="{Binding CpuText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                    <TextBlock Text="·" Margin="8,0" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Opacity="0.5" />
+                    <TextBlock Text="{Binding MemoryText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+
+                    <Border Style="{StaticResource Badge}" Margin="16,0,0,0" VerticalAlignment="Center"
+                            Background="{StaticResource Brush.Primary.Soft}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⛨" FontFamily="Segoe UI Symbol" FontSize="11" Margin="0,0,5,0"
+                                       Foreground="{StaticResource Brush.Primary}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding PrivilegeBadgeText}" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{StaticResource Brush.Primary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button Style="{StaticResource Button.Small}"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Content="{loc:Loc App_Elevate}"
+                            Command="{Binding ElevateCommand}"
+                            Visibility="{Binding IsStandardUser, Converter={StaticResource Conv.BoolToVisibility}}" />
+                </StackPanel>
+
+                <!-- Botões da janela -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Button Style="{StaticResource Button.TitleBar}"
+                            Content="─"
+                            ToolTip="{loc:Loc App_Minimize}"
+                            Click="OnMinimizeClick" />
+                    <Button Style="{StaticResource Button.TitleBar.Close}"
+                            Content="✕"
+                            FontFamily="Segoe UI Symbol"
+                            ToolTip="{loc:Loc App_Close}"
+                            Click="OnCloseClick" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ================= CORPO ================= -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="248" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- ---------- SIDEBAR ---------- -->
+                <Border Grid.Column="0"
+                        Background="{StaticResource Brush.Background.Side}"
+                        BorderBrush="{StaticResource Brush.Border}"
+                        BorderThickness="0,0,1,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <ScrollViewer Grid.Row="0"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Padding="10,14,10,6">
+                            <StackPanel>
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="dashboard"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=dashboard, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⌂" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Dashboard}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="analysis"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=analysis, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚗" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Analysis}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="optimization"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=optimization, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="↯" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Optimization}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="gamemode"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=gamemode, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚔" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_GameMode}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="cleanup"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=cleanup, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="♻" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Cleanup}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="startup"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=startup, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⏻" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Startup}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="privacy"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=privacy, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⛨" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Privacy}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="monitoring"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=monitoring, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="∿" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Monitoring}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="tools"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=tools, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚒" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Tools}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton Style="{StaticResource Nav.Item}" GroupName="Nav"
+                                             Command="{Binding NavigateCommand}" CommandParameter="settings"
+                                             IsChecked="{Binding CurrentKey, Converter={StaticResource Conv.StringEquals}, ConverterParameter=settings, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚙" FontFamily="Segoe UI Symbol" FontSize="16" Width="22" />
+                                        <TextBlock Text="{loc:Loc Nav_Settings}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Cartão do Modo Gamer (atalho permanente) -->
+                        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="12,6,12,14" Padding="14">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚔" FontFamily="Segoe UI Symbol" FontSize="16"
+                                               Foreground="{StaticResource Brush.Accent}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc Nav_GameMode}" Margin="8,0,0,0"
+                                               Style="{StaticResource Text.Subtitle}" VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBlock Text="{Binding GameModeText}"
+                                           Style="{StaticResource Text.Caption}"
+                                           Margin="0,4,0,10" />
+
+                                <Button Style="{StaticResource Button.Primary}"
+                                        Content="{Binding GameModeButtonText}"
+                                        Command="{Binding ToggleGameModeCommand}"
+                                        HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ---------- CONTEÚDO ---------- -->
+                <Border Grid.Column="1" Padding="0">
+                    <Grid>
+                        <ContentControl Content="{Binding CurrentViewModel}" Focusable="False" />
+
+                        <!-- Véu de ocupado (overlay leve para operações longas) -->
+                        <Border Background="{StaticResource Brush.Glass.Strong}"
+                                Visibility="{Binding IsBusy, Converter={StaticResource Conv.BoolToVisibility}}"
+                                IsHitTestVisible="True">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ProgressBar Style="{StaticResource ProgressBar.Gradient}"
+                                             IsIndeterminate="True"
+                                             Width="240" Height="6" />
+                                <TextBlock Text="{Binding BusyMessage}"
+                                           Style="{StaticResource Text.Body}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,14,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ================= BARRA DE STATUS ================= -->
+            <Border Grid.Row="2"
+                    Height="32"
+                    Background="{StaticResource Brush.Glass}"
+                    BorderBrush="{StaticResource Brush.Border}"
+                    BorderThickness="0,1,0,0">
+                <Grid Margin="16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding StatusMessage}"
+                               Style="{StaticResource Text.Caption}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding UptimeText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                        <TextBlock Text="·" Margin="8,0" Style="{StaticResource Text.Caption}" Opacity="0.5" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding GpuText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center"
+                                   MaxWidth="260" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="·" Margin="8,0" Style="{StaticResource Text.Caption}" Opacity="0.5" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding VersionText}" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

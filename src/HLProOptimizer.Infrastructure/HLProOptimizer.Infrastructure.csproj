@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ============================================================================
+    CAMADA: INFRASTRUCTURE (Data Access + Windows Internals)
+    ----------------------------------------------------------------------------
+    Implementações concretas dos contratos do Core/Application:
+      * WMI (System.Management) para inventário de hardware/SO
+      * Registro do Windows, serviços (ServiceController), processos
+      * powercfg / netsh / ipconfig / sfc / dism / pnputil / reg via ICommandRunner
+      * P/Invoke (kernel32, powrprof, shell32, advapi32)
+      * EF Core + SQLite para histórico, configurações e relatórios
+      * Serilog para logging estruturado em arquivo
+    TargetFramework net8.0-windows habilita as APIs exclusivas de Windows.
+    ============================================================================
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>HLProOptimizer.Infrastructure</RootNamespace>
+    <AssemblyName>HLProOptimizer.Infrastructure</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HLProOptimizer.Core\HLProOptimizer.Core.csproj" />
+    <ProjectReference Include="..\HLProOptimizer.Application\HLProOptimizer.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.Debug" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" />
+    <PackageReference Include="System.Management" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" />
+  </ItemGroup>
+
+</Project>

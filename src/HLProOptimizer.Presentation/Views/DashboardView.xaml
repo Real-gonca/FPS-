@@ -1,0 +1,450 @@
+<!--
+  ============================================================================
+  DASHBOARD
+  ----------------------------------------------------------------------------
+  Cartão de score (gauge LiveCharts), status cards de hardware, gráficos em
+  tempo real, ações rápidas, recomendações priorizadas e histórico recente.
+  Toda a informação vem do DashboardViewModel (nenhum code-behind de negócio).
+  ============================================================================
+-->
+<UserControl x:Class="HLProOptimizer.Presentation.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:loc="clr-namespace:HLProOptimizer.Presentation.Localization"
+             Background="Transparent">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="28,22,28,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ============ CABEÇALHO ============ -->
+            <Grid Grid.Row="0" Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{loc:Loc Dash_Title}" Style="{StaticResource Text.PageTitle}" />
+                    <TextBlock Text="{loc:Loc Dash_Subtitle}" Style="{StaticResource Text.Subtitle}" Margin="0,2,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource Button.Secondary}"
+                            Content="{loc:Loc Common_Refresh}"
+                            Command="{Binding RefreshCommand}" />
+                    <Button Style="{StaticResource Button.Primary}"
+                            Margin="10,0,0,0"
+                            Content="{loc:Loc Dash_AnalyzeNow}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="analysis" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ============ BANNER DE ATUALIZAÇÃO ============ -->
+            <Border Grid.Row="1"
+                    Style="{StaticResource Card}"
+                    Padding="16,12"
+                    Margin="0,0,0,14"
+                    Visibility="{Binding HasUpdateAvailable, Converter={StaticResource Conv.BoolToVisibility}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="↻" FontFamily="Segoe UI Symbol" FontSize="18"
+                               Foreground="{StaticResource Brush.Accent}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding UpdateText}" Margin="12,0"
+                               Style="{StaticResource Text.Body}" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Style="{StaticResource Button.Small}"
+                            Content="{loc:Loc Settings_Updates}"
+                            Command="{Binding InstallUpdateCommand}" />
+                </Grid>
+            </Border>
+
+            <!-- ============ CONTEÚDO ============ -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" MinWidth="420" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="1.15*" MinWidth="320" />
+                </Grid.ColumnDefinitions>
+
+                <!-- ---------- COLUNA ESQUERDA ---------- -->
+                <StackPanel Grid.Column="0">
+
+                    <!-- Score -->
+                    <Border Style="{StaticResource Card}" Padding="22">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Width="186" Height="186">
+                                <lvc:PieChart Series="{Binding ScoreSeries}"
+                                              LegendPosition="Hidden"
+                                              AnimationsSpeed="00:00:00.35" />
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding OverallScore}"
+                                               FontSize="44" FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.Text.Primary}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding StatusText}"
+                                               Style="{StaticResource Text.Caption}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Grid.Column="1" Margin="26,4,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc Dash_SystemScore}" Style="{StaticResource Text.SectionTitle}" />
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc Dash_Performance}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding PerformanceScore}" Style="{StaticResource Text.Caption}" />
+                                    <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="6" Margin="0,4,0,12"
+                                                 Style="{StaticResource ProgressBar.Gradient}"
+                                                 Value="{Binding PerformanceScore, Mode=OneWay}" Maximum="100" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Loc Dash_Stability}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding StabilityScore}" Style="{StaticResource Text.Caption}" />
+                                    <ProgressBar Grid.Row="3" Grid.ColumnSpan="2" Height="6" Margin="0,4,0,12"
+                                                 Style="{StaticResource ProgressBar.Gradient}"
+                                                 Value="{Binding StabilityScore, Mode=OneWay}" Maximum="100" />
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Loc Dash_Security}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SecurityScore}" Style="{StaticResource Text.Caption}" />
+                                    <ProgressBar Grid.Row="5" Grid.ColumnSpan="2" Height="6" Margin="0,4,0,12"
+                                                 Style="{StaticResource ProgressBar.Gradient}"
+                                                 Value="{Binding SecurityScore, Mode=OneWay}" Maximum="100" />
+
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="{loc:Loc Dash_Cleanliness}" Style="{StaticResource Text.Caption}" />
+                                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding CleanlinessScore}" Style="{StaticResource Text.Caption}" />
+                                    <ProgressBar Grid.Row="7" Grid.ColumnSpan="2" Height="6" Margin="0,4,0,0"
+                                                 Style="{StaticResource ProgressBar.Gradient}"
+                                                 Value="{Binding CleanlinessScore, Mode=OneWay}" Maximum="100" />
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Gráficos em tempo real -->
+                    <Border Style="{StaticResource Card}" Padding="22" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Dash_RealtimeCharts}" Style="{StaticResource Text.SectionTitle}" />
+
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="16" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <Grid>
+                                        <TextBlock Text="{loc:Loc Dash_CpuUsage}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding CpuPercent, Converter={StaticResource Conv.Percent}}"
+                                                   HorizontalAlignment="Right" Style="{StaticResource Text.Caption}" />
+                                    </Grid>
+                                    <lvc:CartesianChart Height="118" Margin="0,6,0,0"
+                                                        Series="{Binding CpuSeries}"
+                                                        XAxes="{Binding TimeAxes}"
+                                                        YAxes="{Binding PercentAxes}"
+                                                        LegendPosition="Hidden"
+                                                        AnimationsSpeed="00:00:00.30" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <Grid>
+                                        <TextBlock Text="{loc:Loc Dash_RamUsage}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding MemoryPercent, Converter={StaticResource Conv.Percent}}"
+                                                   HorizontalAlignment="Right" Style="{StaticResource Text.Caption}" />
+                                    </Grid>
+                                    <lvc:CartesianChart Height="118" Margin="0,6,0,0"
+                                                        Series="{Binding MemorySeries}"
+                                                        XAxes="{Binding TimeAxes}"
+                                                        YAxes="{Binding PercentAxes}"
+                                                        LegendPosition="Hidden"
+                                                        AnimationsSpeed="00:00:00.30" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Recomendações -->
+                    <Border Style="{StaticResource Card}" Padding="22" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid>
+                                <TextBlock Text="{loc:Loc Dash_Recommendations}" Style="{StaticResource Text.SectionTitle}" />
+                                <TextBlock Text="{Binding RecoverableText}" HorizontalAlignment="Right"
+                                           Style="{StaticResource Text.Caption}"
+                                           Foreground="{StaticResource Brush.Accent}" />
+                            </Grid>
+
+                            <TextBlock Text="{loc:Loc Dash_NoRecommendations}"
+                                       Style="{StaticResource Text.Caption}"
+                                       Margin="0,12,0,0"
+                                       Visibility="{Binding HasRecommendations, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}" />
+
+                            <ItemsControl ItemsSource="{Binding Recommendations}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource Brush.Surface}"
+                                                BorderBrush="{StaticResource Brush.Border}"
+                                                BorderThickness="1"
+                                                CornerRadius="{StaticResource Radius.Control}"
+                                                Padding="14,12"
+                                                Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Grid.Column="0" Width="4" CornerRadius="2"
+                                                        Background="{Binding Severity, Converter={StaticResource Conv.SeverityBrush}}" />
+
+                                                <StackPanel Grid.Column="1" Margin="12,0">
+                                                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Subtitle}" />
+                                                    <TextBlock Text="{Binding Description}" Style="{StaticResource Text.Caption}"
+                                                               Margin="0,2,0,0" TextWrapping="Wrap" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                        <Border Style="{StaticResource Badge}" Background="{StaticResource Brush.Glass}">
+                                                            <TextBlock Text="{Binding CategoryText}" FontSize="11" />
+                                                        </Border>
+                                                        <Border Style="{StaticResource Badge}" Margin="6,0,0,0" Background="{StaticResource Brush.Glass}">
+                                                            <TextBlock Text="{Binding SeverityText}" FontSize="11" />
+                                                        </Border>
+                                                        <TextBlock Text="{Binding RecoverableText}" FontSize="11" Margin="10,0,0,0"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{StaticResource Brush.Text.Muted}"
+                                                                   Visibility="{Binding RecoverableText, Converter={StaticResource Conv.NullToVisibility}}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <Button Grid.Column="2" Style="{StaticResource Button.Small}"
+                                                        Content="{loc:Loc Analysis_Fix}"
+                                                        VerticalAlignment="Center"
+                                                        Command="{Binding DataContext.FixIssueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ---------- COLUNA DIREITA ---------- -->
+                <StackPanel Grid.Column="2">
+
+                    <!-- Ações rápidas -->
+                    <Border Style="{StaticResource Card}" Padding="22">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Dash_QuickActions}" Style="{StaticResource Text.SectionTitle}" />
+
+                            <UniformGrid Columns="2" Margin="0,14,0,0">
+                                <Button Style="{StaticResource Button.Primary}" Margin="0,0,6,10"
+                                        Content="{loc:Loc Dash_QuickSystem}"
+                                        Command="{Binding RunQuickOptimizationCommand}" />
+                                <Button Style="{StaticResource Button.Secondary}" Margin="6,0,0,10"
+                                        Content="{loc:Loc Common_Optimize}"
+                                        Command="{Binding RunFullOptimizationCommand}" />
+                                <Button Style="{StaticResource Button.Secondary}" Margin="0,0,6,0"
+                                        Content="{loc:Loc Dash_QuickJunk}"
+                                        Command="{Binding RunQuickCleanCommand}" />
+                                <Button Style="{StaticResource Button.Secondary}" Margin="6,0,0,0"
+                                        Content="{loc:Loc Nav_GameMode}"
+                                        Command="{Binding ToggleGameModeCommand}" />
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Status cards -->
+                    <Border Style="{StaticResource Card}" Padding="22" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Dash_StatusCards}" Style="{StaticResource Text.SectionTitle}" />
+
+                            <UniformGrid Columns="2" Margin="0,14,0,0">
+                                <!-- CPU -->
+                                <Border Background="{StaticResource Brush.Surface}" CornerRadius="{StaticResource Radius.Control}"
+                                        BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" Padding="14" Margin="0,0,6,12">
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Loc Dash_Cpu}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding CpuText}" Style="{StaticResource Text.Caption}"
+                                                   Margin="0,4,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding CpuText}" />
+                                        <ProgressBar Height="5" Margin="0,8,0,0" Maximum="100"
+                                                     Style="{StaticResource ProgressBar.Gradient}"
+                                                     Value="{Binding CpuPercent, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- RAM -->
+                                <Border Background="{StaticResource Brush.Surface}" CornerRadius="{StaticResource Radius.Control}"
+                                        BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" Padding="14" Margin="6,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Loc Dash_Ram}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding MemoryText}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding MemoryText}" />
+                                        <ProgressBar Height="5" Margin="0,8,0,0" Maximum="100"
+                                                     Style="{StaticResource ProgressBar.Gradient}"
+                                                     Value="{Binding MemoryPercent, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- GPU -->
+                                <Border Background="{StaticResource Brush.Surface}" CornerRadius="{StaticResource Radius.Control}"
+                                        BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" Padding="14" Margin="0,0,6,12">
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Loc Dash_Gpu}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding GpuText}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding GpuText}" />
+                                        <ProgressBar Height="5" Margin="0,8,0,0" Maximum="100"
+                                                     Style="{StaticResource ProgressBar.Gradient}"
+                                                     Value="{Binding GpuPercent, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Disco -->
+                                <Border Background="{StaticResource Brush.Surface}" CornerRadius="{StaticResource Radius.Control}"
+                                        BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" Padding="14" Margin="6,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Loc Dash_Disk}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding DiskText}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding DiskText}" />
+                                        <ProgressBar Height="5" Margin="0,8,0,0" Maximum="100"
+                                                     Style="{StaticResource ProgressBar.Gradient}"
+                                                     Value="{Binding DiskPercent, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Sistema -->
+                                <Border Background="{StaticResource Brush.Surface}" CornerRadius="{StaticResource Radius.Control}"
+                                        BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" Padding="14" Margin="0,0,6,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Loc Dash_Os}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding OsText}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding OsText}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Temperatura -->
+                                <Border Background="{StaticResource Brush.Surface}" CornerRadius="{StaticResource Radius.Control}"
+                                        BorderBrush="{StaticResource Brush.Border}" BorderThickness="1" Padding="14" Margin="6,0,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{loc:Loc Dash_Temperature}" Style="{StaticResource Text.Caption}" />
+                                        <TextBlock Text="{Binding TemperatureText}" Style="{StaticResource Text.Caption}" Margin="0,4,0,0"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Processos -->
+                    <Border Style="{StaticResource Card}" Padding="22" Margin="0,16,0,0">
+                        <StackPanel>
+                            <Grid>
+                                <TextBlock Text="{loc:Loc Mon_TopCpu}" Style="{StaticResource Text.SectionTitle}" />
+                                <TextBlock Text="{loc:Loc Common_Details}" HorizontalAlignment="Right"
+                                           Style="{StaticResource Text.Caption}"
+                                           Foreground="{StaticResource Brush.Accent}"
+                                           Cursor="Hand">
+                                    <TextBlock.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding NavigateCommand}"
+                                                      CommandParameter="monitoring" />
+                                    </TextBlock.InputBindings>
+                                </TextBlock>
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding TopProcesses}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource Text.Caption}"
+                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding MemoryFormatted}" Style="{StaticResource Text.Caption}"
+                                                       Margin="10,0" VerticalAlignment="Center" Opacity="0.75" />
+                                            <TextBlock Grid.Column="2" Text="{Binding CpuPercent, Converter={StaticResource Conv.Percent}}"
+                                                       Style="{StaticResource Text.Caption}" VerticalAlignment="Center"
+                                                       Foreground="{StaticResource Brush.Accent}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="{loc:Loc Common_None}" Style="{StaticResource Text.Caption}"
+                                       Visibility="{Binding HasProcesses, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Ações recentes -->
+                    <Border Style="{StaticResource Card}" Padding="22" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Dash_RecentActions}" Style="{StaticResource Text.SectionTitle}" />
+
+                            <ItemsControl ItemsSource="{Binding RecentActions}" Margin="0,12,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="✓" FontFamily="Segoe UI Symbol" FontSize="12"
+                                                       VerticalAlignment="Center" Margin="0,0,10,0"
+                                                       Foreground="{StaticResource Brush.Success}" />
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Caption}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding BytesFormatted}" FontSize="10.5"
+                                                           Foreground="{StaticResource Brush.Text.Muted}" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Timestamp, Converter={StaticResource Conv.RelativeTime}}"
+                                                       Style="{StaticResource Text.Caption}" VerticalAlignment="Center" Opacity="0.7" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="{loc:Loc Dash_NoRecentActions}" Style="{StaticResource Text.Caption}"
+                                       Visibility="{Binding HasRecentActions, Converter={StaticResource Conv.BoolToVisibility}, ConverterParameter=Invert}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

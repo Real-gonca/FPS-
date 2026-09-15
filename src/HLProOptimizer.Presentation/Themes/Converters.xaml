@@ -1,0 +1,24 @@
+<!--
+  Instâncias dos conversores (recursos estáticos reutilizáveis pelas Views).
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:HLProOptimizer.Presentation.Converters">
+
+    <converters:BoolToVisibilityConverter x:Key="Conv.BoolToVisibility" />
+    <converters:InverseBoolConverter x:Key="Conv.InverseBool" />
+    <converters:BoolToOpacityConverter x:Key="Conv.BoolToOpacity" />
+    <converters:NullToVisibilityConverter x:Key="Conv.NullToVisibility" />
+    <converters:BytesToTextConverter x:Key="Conv.Bytes" />
+    <converters:PercentToTextConverter x:Key="Conv.Percent" />
+    <converters:PercentToBrushConverter x:Key="Conv.PercentBrush" />
+    <converters:SeverityToBrushConverter x:Key="Conv.SeverityBrush" />
+    <converters:EnumToLocalizedNameConverter x:Key="Conv.EnumText" />
+    <converters:RelativeTimeConverter x:Key="Conv.RelativeTime" />
+    <converters:TimeSpanToTextConverter x:Key="Conv.TimeSpan" />
+    <converters:RateToTextConverter x:Key="Conv.Rate" />
+
+    <converters:StringEqualsToBoolConverter x:Key="Conv.StringEquals" />
+
+</ResourceDictionary>
