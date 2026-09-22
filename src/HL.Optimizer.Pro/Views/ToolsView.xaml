@@ -1,0 +1,105 @@
+<UserControl x:Class="HL.Optimizer.Pro.Views.ToolsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000">
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Text="FERRAMENTAS AVANÇADAS" Foreground="White" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Acesso a ferramentas reais do Windows e otimizador de rede" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
+
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Network -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="NETWORK OPTIMIZER" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="IP" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                <TextBlock Text="{Binding NetworkInfo.IpAddress}" Foreground="White" FontSize="12" FontWeight="Medium" Margin="0,2,0,0"/>
+                                <TextBlock Text="Gateway" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,12,0,0"/>
+                                <TextBlock Text="{Binding NetworkInfo.Gateway}" Foreground="White" FontSize="12" Margin="0,2,0,0"/>
+                                <TextBlock Text="DNS" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,12,0,0"/>
+                                <TextBlock Text="{Binding NetworkInfo.DnsPrimary}" Foreground="White" FontSize="12" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Adaptador" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                <TextBlock Text="{Binding NetworkInfo.AdapterName}" Foreground="White" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                <TextBlock Text="Velocidade" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,12,0,0"/>
+                                <TextBlock Text="{Binding NetworkInfo.Speed}" Foreground="White" FontSize="12" Margin="0,2,0,0"/>
+                                <TextBlock Text="Latência" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,12,0,0"/>
+                                <TextBlock Text="{Binding PingLatency, StringFormat={}{0:0} ms}" Foreground="{StaticResource AccentGreenBrush}" FontSize="12" FontWeight="Bold" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="DNS Personalizado" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,20,0,0"/>
+                        <ComboBox ItemsSource="{Binding DnsOptions}" SelectedItem="{Binding SelectedDns}" Margin="0,8,0,0" Background="{StaticResource SurfaceDarkBrush}" Foreground="White" Padding="8"/>
+                        <Grid Margin="0,8,0,0" Visibility="{Binding SelectedDns, Converter={StaticResource StringToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Background="{StaticResource SurfaceDarkBrush}" Foreground="White" BorderBrush="{StaticResource BorderDarkBrush}" Padding="8" Tag="DNS Primário" Text="{Binding CustomDnsPrimary}" Margin="0,0,4,0"/>
+                            <TextBox Grid.Column="1" Background="{StaticResource SurfaceDarkBrush}" Foreground="White" BorderBrush="{StaticResource BorderDarkBrush}" Padding="8" Tag="DNS Secundário" Text="{Binding CustomDnsSecondary}" Margin="4,0,0,0"/>
+                        </Grid>
+
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Flush DNS" Command="{Binding FlushDnsCommand}" Margin="0,0,4,0"/>
+                            <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="Reset Winsock" Command="{Binding ResetWinsockCommand}" Margin="4,0"/>
+                            <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Content="Aplicar DNS" Command="{Binding ApplyDnsCommand}" Margin="4,0,0,0"/>
+                        </Grid>
+
+                        <Button Style="{StaticResource SecondaryButton}" Content="Atualizar Informações" Margin="0,12,0,0" Command="{Binding RefreshNetworkCommand}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Windows Tools -->
+                <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="FERRAMENTAS DO WINDOWS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <TextBlock Text="Abre recursos reais do Windows quando apropriado" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,4,0,0"/>
+
+                        <UniformGrid Columns="2" Margin="0,16,0,0">
+                            <Button Style="{StaticResource SecondaryButton}" Content="Gerenciador de Tarefas" Margin="0,0,6,6" Command="{Binding OpenTaskManagerCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Gerenciador de Dispositivos" Margin="6,0,0,6" Command="{Binding OpenDeviceManagerCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Gerenciamento de Disco" Margin="0,0,6,6" Command="{Binding OpenDiskManagementCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Visualizador de Eventos" Margin="6,0,0,6" Command="{Binding OpenEventViewerCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Serviços" Margin="0,0,6,6" Command="{Binding OpenServicesCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="MSConfig" Margin="6,0,0,6" Command="{Binding OpenMsConfigCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Regedit" Margin="0,0,6,6" Command="{Binding OpenRegeditCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Painel de Controle" Margin="6,0,0,6" Command="{Binding OpenControlPanelCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="PowerShell" Margin="0,0,6,6" Command="{Binding OpenPowerShellCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="CMD" Margin="6,0,0,6" Command="{Binding OpenCmdCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Informações do Sistema" Margin="0,0,6,6" Command="{Binding OpenSystemInfoCommand}"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Monitor de Recursos" Margin="6,0,0,6" Command="{Binding OpenResourceMonitorCommand}"/>
+                        </UniformGrid>
+
+                        <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,16,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Hosts Editor" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                <TextBlock Text="Edite C:\Windows\System32\drivers\etc\hosts com segurança" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="Abrir Hosts" Margin="0,8,0,0" Command="{Binding OpenHostsEditorCommand}"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

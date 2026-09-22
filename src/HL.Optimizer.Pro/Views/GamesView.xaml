@@ -1,0 +1,236 @@
+<UserControl x:Class="HL.Optimizer.Pro.Views.GamesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000">
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="HL GAME BOOSTER" Foreground="White" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="Detecta jogos instalados e otimiza desempenho sem prometer FPS específico - apenas métricas reais" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <!-- Game Mode Status -->
+            <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="48" Height="48" CornerRadius="12" Background="{StaticResource SuccessGradientBrush}" Visibility="{Binding IsGameModeActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="🎮" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Border Width="48" Height="48" CornerRadius="12" Background="{StaticResource SurfaceDarkBrush}" Visibility="{Binding IsGameModeActive, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <TextBlock Text="🎮" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.5"/>
+                        </Border>
+                        <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Modo Jogo" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedGame.Name, StringFormat={}Perfil: {0}}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,2,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock Text="{Binding Metrics.CpuUsage, StringFormat={}CPU {0:0}%}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10"/>
+                                <TextBlock Text="•" Foreground="{StaticResource TextTertiaryBrush}" Margin="6,0" FontSize="10"/>
+                                <TextBlock Text="{Binding Metrics.RamUsage, StringFormat={}RAM {0:0}%}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10"/>
+                                <TextBlock Text="•" Foreground="{StaticResource TextTertiaryBrush}" Margin="6,0" FontSize="10"/>
+                                <TextBlock Text="{Binding Metrics.GpuUsage, StringFormat={}GPU {0:0}%}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource SuccessButton}" Content="Ativar Modo Jogo" Margin="0,0,8,0" Command="{Binding EnableGameModeCommand}" Visibility="{Binding IsGameModeActive, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                        <Button Style="{StaticResource SecondaryButton}" Content="Desativar" Command="{Binding DisableGameModeCommand}" Visibility="{Binding IsGameModeActive, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <Button Style="{StaticResource SecondaryButton}" Content="🔄 Atualizar" Margin="8,0,0,0" Command="{Binding RefreshCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Games List -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="JOGOS DETECTADOS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <ListView ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedGame}" Background="Transparent" BorderThickness="0" Margin="0,12,0,0" MaxHeight="400">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="40" Height="40" CornerRadius="8" Background="{StaticResource SecondaryDarkBrush}">
+                                                <TextBlock Text="🎯" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                                <TextBlock Text="{Binding Name}" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Type}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                                <TextBlock Text="{Binding ExecutablePath}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="8" TextTrimming="CharacterEllipsis" MaxWidth="180" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <TextBlock Text="EMULADORES" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1" Margin="0,16,0,0"/>
+                        <ItemsControl ItemsSource="{Binding Emulators}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                                <TextBlock Text="{Binding Type}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <Border Background="{Binding IsRunning, Converter={StaticResource BoolToColorConverter}}" CornerRadius="4" Padding="4,2">
+                                                        <TextBlock Text="{Binding IsRunning}" FontSize="8"/>
+                                                    </Border>
+                                                    <TextBlock Text="{Binding PerformanceProfile.Resolution}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="9" Margin="6,0,0,0"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Width="8" Height="8" CornerRadius="4" Background="{StaticResource AccentGreenBrush}" VerticalAlignment="Center" Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Details -->
+                <Grid Grid.Column="1" Margin="8,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Style="{StaticResource CardBorder}">
+                        <StackPanel>
+                            <TextBlock Text="PERFIL DO JOGO" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Jogo" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <TextBlock Text="{Binding SelectedGame.Name}" Foreground="White" FontSize="13" FontWeight="Bold" Margin="0,4,0,0"/>
+                                    <TextBlock Text="Caminho" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,12,0,0"/>
+                                    <TextBlock Text="{Binding SelectedGame.ExecutablePath}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Configurações do Booster" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <CheckBox Content="Modo Jogo" IsChecked="{Binding SelectedGame.BoosterSettings.EnableGameMode}" Foreground="White" FontSize="11" Margin="0,8,0,0"/>
+                                    <CheckBox Content="Prioridade Alta" IsChecked="{Binding SelectedGame.BoosterSettings.HighPriority}" Foreground="White" FontSize="11" Margin="0,6,0,0"/>
+                                    <CheckBox Content="Suspender processos" IsChecked="{Binding SelectedGame.BoosterSettings.SuspendNonEssentialProcesses}" Foreground="White" FontSize="11" Margin="0,6,0,0"/>
+                                    <CheckBox Content="Plano alto desempenho" IsChecked="{Binding SelectedGame.BoosterSettings.HighPerformancePowerPlan}" Foreground="White" FontSize="11" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Style="{StaticResource PrimaryButton}" Content="Iniciar Jogo com Booster" Command="{Binding LaunchGameCommand}" CommandParameter="{Binding SelectedGame}"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="Aplicar Perfil" Margin="8,0,0,0" Command="{Binding EnableGameModeCommand}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="EMULATOR BOOST - BLUESTACKS / LDPLAYER" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Emulador Selecionado" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <TextBlock Text="{Binding SelectedEmulator.Name}" Foreground="White" FontSize="12" FontWeight="Bold" Margin="0,4,0,0"/>
+                                    <TextBlock Text="{Binding SelectedEmulator.InstallPath}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,4,0,0"/>
+
+                                    <TextBlock Text="Perfil de Desempenho" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,16,0,0"/>
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Resolução:" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedEmulator.PerformanceProfile.Resolution}" Foreground="White" FontSize="10"/>
+
+                                        <TextBlock Grid.Row="1" Text="DPI:" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" Margin="0,6,0,0"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEmulator.PerformanceProfile.Dpi}" Foreground="White" FontSize="10" Margin="0,6,0,0"/>
+
+                                        <TextBlock Grid.Row="2" Text="RAM:" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" Margin="0,6,0,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedEmulator.PerformanceProfile.RamMB, StringFormat={}{0} MB}" Foreground="White" FontSize="10" Margin="0,6,0,0"/>
+
+                                        <TextBlock Grid.Row="3" Text="CPU:" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" Margin="0,6,0,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedEmulator.PerformanceProfile.CpuCores, StringFormat={}{0} cores}" Foreground="White" FontSize="10" Margin="0,6,0,0"/>
+                                    </Grid>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                                    <TextBlock Text="Métricas em Tempo Real" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,8,0,0">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="CPU" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedEmulator.CpuUsage, StringFormat={}{0:0}%}" Foreground="White" FontSize="10"/>
+                                            </Grid>
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="RAM" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedEmulator.RamUsageMB, StringFormat={}{0:0} MB}" Foreground="White" FontSize="10"/>
+                                            </Grid>
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Renderizador" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding SelectedEmulator.PerformanceProfile.Renderer}" Foreground="White" FontSize="10"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Text="⚠ Não alteramos configurações perigosas sem confirmação. Backup automático criado." Foreground="{StaticResource WarningBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,12,0,0"/>
+
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Aplicar Perfil de Desempenho" Margin="0,16,0,0" Command="{Binding ApplyEmulatorProfileCommand}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

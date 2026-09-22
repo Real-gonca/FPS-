@@ -1,0 +1,154 @@
+<UserControl x:Class="HL.Optimizer.Pro.Views.SystemView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000">
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="INFORMAÇÕES DO SISTEMA" Foreground="White" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding WindowsVersion}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Style="{StaticResource SecondaryButton}" Content="Copiar" Command="{Binding CopyToClipboardCommand}" Margin="0,0,8,0"/>
+                    <Button Style="{StaticResource PrimaryButton}" Content="Atualizar" Command="{Binding RefreshCommand}"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,8,8">
+                    <StackPanel>
+                        <TextBlock Text="CPU" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <TextBlock Text="{Binding Info.CpuName}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Cores" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                <TextBlock Text="{Binding Info.CpuCores}" Foreground="White" FontSize="12" FontWeight="Medium"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Threads" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                <TextBlock Text="{Binding Info.CpuLogicalProcessors}" Foreground="White" FontSize="12" FontWeight="Medium"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="8,0,0,8">
+                    <StackPanel>
+                        <TextBlock Text="GPU" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <TextBlock Text="{Binding Info.GpuName}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding Info.GpuDriverVersion, StringFormat={}Driver: {0}}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,0,8,8">
+                    <StackPanel>
+                        <TextBlock Text="MEMÓRIA RAM" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <TextBlock Text="{Binding Info.TotalRamBytes, StringFormat={}{0} bytes}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0"/>
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Total" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                <TextBlock Text="8 GB" Foreground="White" FontSize="12"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Disponível" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                <TextBlock Text="{Binding Info.AvailableRamBytes}" Foreground="White" FontSize="12"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorder}" Margin="8,0,0,8">
+                    <StackPanel>
+                        <TextBlock Text="PLACA-MÃE E BIOS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <TextBlock Text="{Binding Info.Motherboard}" Foreground="White" FontSize="13" FontWeight="Bold" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding Info.BiosManufacturer, StringFormat={}BIOS: {0}}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding Info.BiosVersion}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock Text="DISCOS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <ItemsControl ItemsSource="{Binding Info.Disks}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="120"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" Foreground="White" FontWeight="Medium" FontSize="12"/>
+                                                <TextBlock Text="{Binding Model}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="Total" Foreground="{StaticResource TextTertiaryBrush}" FontSize="9"/>
+                                                <TextBlock Text="{Binding TotalBytes}" Foreground="White" FontSize="11"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Livre" Foreground="{StaticResource TextTertiaryBrush}" FontSize="9"/>
+                                                <TextBlock Text="{Binding FreeBytes}" Foreground="{StaticResource AccentGreenBrush}" FontSize="11"/>
+                                                <ProgressBar Style="{StaticResource ModernProgressBar}" Value="{Binding FreePercent}" Maximum="100" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="REDE" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1" Margin="0,16,0,0"/>
+                        <ItemsControl ItemsSource="{Binding Info.NetworkAdapters}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                                <TextBlock Text="{Binding Description}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="{StaticResource AccentGreenBrush}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="Conectado" Foreground="White" FontSize="9"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

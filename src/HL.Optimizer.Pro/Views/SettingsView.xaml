@@ -1,0 +1,148 @@
+<UserControl x:Class="HL.Optimizer.Pro.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000">
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Text="CONFIGURAÇÕES" Foreground="White" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Geral, aparência, idioma, desempenho, notificações, logs e privacidade" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
+
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="GERAL" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Iniciar com Windows" Foreground="White" FontSize="11" VerticalAlignment="Center"/>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ModernToggle}" IsChecked="{Binding AutoStartWithWindows}"/>
+
+                                <TextBlock Grid.Row="1" Text="Minimizar para bandeja" Foreground="White" FontSize="11" VerticalAlignment="Center" Margin="0,16,0,0"/>
+                                <CheckBox Grid.Row="1" Grid.Column="1" Style="{StaticResource ModernToggle}" IsChecked="{Binding MinimizeToTray}" Margin="0,16,0,0"/>
+
+                                <TextBlock Grid.Row="2" Text="Monitoramento em tempo real" Foreground="White" FontSize="11" VerticalAlignment="Center" Margin="0,16,0,0"/>
+                                <CheckBox Grid.Row="2" Grid.Column="1" Style="{StaticResource ModernToggle}" IsChecked="{Binding EnableRealTimeMonitoring}" Margin="0,16,0,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorder}" Margin="0,16,8,0">
+                        <StackPanel>
+                            <TextBlock Text="IDIOMA" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" Margin="0,12,0,0" Background="{StaticResource SurfaceDarkBrush}" Foreground="White" Padding="10">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button Style="{StaticResource SecondaryButton}" Content="PT-BR" Command="{Binding ChangeLanguageCommand}" CommandParameter="pt-BR" Margin="0,0,6,0"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="PT-PT" Command="{Binding ChangeLanguageCommand}" CommandParameter="pt-PT" Margin="0,0,6,0"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="EN-US" Command="{Binding ChangeLanguageCommand}" CommandParameter="en-US" Margin="0,0,6,0"/>
+                                <Button Style="{StaticResource SecondaryButton}" Content="ES-ES" Command="{Binding ChangeLanguageCommand}" CommandParameter="es-ES"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorder}" Margin="0,16,8,0">
+                        <StackPanel>
+                            <TextBlock Text="SEGURANÇA" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Criar ponto de restauração antes de otimizar" Foreground="White" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ModernToggle}" IsChecked="{Binding CreateRestorePointBeforeOptimization}"/>
+                                <TextBlock Grid.Row="1" Text="Notificações" Foreground="White" FontSize="11" VerticalAlignment="Center" Margin="0,16,0,0"/>
+                                <CheckBox Grid.Row="1" Grid.Column="1" Style="{StaticResource ModernToggle}" IsChecked="{Binding EnableNotifications}" Margin="0,16,0,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                    <Border Style="{StaticResource CardBorder}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="LOG CENTER" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Style="{StaticResource SecondaryButton}" Content="Exportar" FontSize="10" Padding="8,3" Margin="0,0,6,0" Command="{Binding ExportLogsCommand}"/>
+                                    <Button Style="{StaticResource SecondaryButton}" Content="Limpar" FontSize="10" Padding="8,3" Command="{Binding ClearLogsCommand}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+                                <ItemsControl ItemsSource="{Binding Logs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="4" Padding="8" Margin="0,0,0,4">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Action}" Foreground="White" FontSize="10" FontWeight="Medium"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Result}" Foreground="{StaticResource AccentGreenBrush}" FontSize="9"/>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding Timestamp, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="8" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding Details}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="9" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <Button Style="{StaticResource SecondaryButton}" Content="Abrir Pasta de Logs" Margin="0,12,0,0" Command="{Binding OpenLogsFolderCommand}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="SOBRE" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Border Width="48" Height="48" CornerRadius="12" Background="{StaticResource PrimaryGradientBrush}">
+                                    <TextBlock Text="HL" Foreground="White" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="HL OPTIMIZER PRO" Foreground="White" FontWeight="Bold" FontSize="13"/>
+                                    <TextBlock Text="{Binding AppVersion}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0"/>
+                                    <TextBlock Text="Mais Desempenho. Mais Estabilidade. Mais Você." Foreground="{StaticResource TextTertiaryBrush}" FontSize="9" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Text="Software desktop profissional para Windows 10/11. Arquitetura modular, MVVM, APIs nativas. Todas as alterações rastreáveis, reversíveis e registradas." Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,16,0,0"/>
+                            <TextBlock Text="© 2026 HL Software - Todos os direitos reservados" Foreground="{StaticResource TextTertiaryBrush}" FontSize="9" Margin="0,12,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

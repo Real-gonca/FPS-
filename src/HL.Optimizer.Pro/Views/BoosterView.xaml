@@ -1,0 +1,167 @@
+<UserControl x:Class="HL.Optimizer.Pro.Views.BoosterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000">
+    <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Text="BOOSTER" Foreground="White" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Otimize desempenho com modos inteligentes" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
+
+            <!-- Modes -->
+            <TextBlock Text="MODOS DE DESEMPENHO" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1" Margin="0,24,0,0"/>
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,6,0" Cursor="Hand">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource CardBorder}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedMode}" Value="Econômico">
+                                    <Setter Property="BorderBrush" Value="{StaticResource AccentGreenBrush}"/>
+                                    <Setter Property="BorderThickness" Value="2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="36" Height="36" CornerRadius="18" Background="#0F2A1A">
+                                <TextBlock Text="🌱" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                            </Border>
+                            <TextBlock Text="ECONÔMICO" Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="Economia máxima de energia. Reduz frequência da CPU, desativa efeitos visuais, plano de energia economia." Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0"/>
+                        <Button Style="{StaticResource SecondaryButton}" Content="Ativar Econômico" Margin="0,16,0,0" Command="{Binding ApplyModeCommand}" CommandParameter="Econômico"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="6,0">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource CardBorder}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedMode}" Value="Equilibrado">
+                                    <Setter Property="BorderBrush" Value="{StaticResource ElectricBlueBrush}"/>
+                                    <Setter Property="BorderThickness" Value="2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="36" Height="36" CornerRadius="18" Background="#1A2A4A">
+                                <TextBlock Text="⚖" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                            </Border>
+                            <TextBlock Text="EQUILIBRADO" Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="Equilíbrio entre desempenho e economia. Recomendado para uso diário. Plano balanceado do Windows." Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0"/>
+                        <Button Style="{StaticResource PrimaryButton}" Content="Ativar Equilibrado" Margin="0,16,0,0" Command="{Binding ApplyModeCommand}" CommandParameter="Equilibrado"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Margin="6,0,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource CardBorder}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedMode}" Value="Desempenho">
+                                    <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+                                    <Setter Property="BorderThickness" Value="2"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="36" Height="36" CornerRadius="18" Background="#4A1A1A">
+                                <TextBlock Text="🚀" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"/>
+                            </Border>
+                            <TextBlock Text="DESEMPENHO" Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="Máximo desempenho. CPU em frequência máxima, plano alto desempenho, prioridade alta para jogos." Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,12,0,0"/>
+                        <Button Style="{StaticResource SecondaryButton}" Content="Ativar Desempenho" Margin="0,16,0,0" Command="{Binding ApplyModeCommand}" CommandParameter="Desempenho"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Services -->
+            <Grid Margin="0,24,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="OTIMIZAÇÃO DE SERVIÇOS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="Otimizar Selecionados" FontSize="10" Padding="10,4" Command="{Binding OptimizeServicesCommand}"/>
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding ServicesOptimizations}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource SmallCorner}" Padding="12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                                <TextBlock Text="{Binding Name}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                                <TextBlock Text="{Binding Description}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="OTIMIZAÇÃO DE MEMÓRIA E PROCESSOS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="16" Margin="0,12,0,0">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Uso de RAM" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+                                        <TextBlock Text="{Binding Metrics.RamUsage, StringFormat={}{0:0}%}" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Processos" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+                                        <TextBlock Text="{Binding Metrics.ProcessCount}" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Grid>
+                                <ProgressBar Style="{StaticResource ModernProgressBar}" Value="{Binding Metrics.RamUsage}" Margin="0,12,0,0" Foreground="{StaticResource AccentGreenBrush}"/>
+                                <Button Style="{StaticResource SuccessButton}" Content="Limpeza de Memória (Segura)" Margin="0,16,0,0" Command="{Binding OptimizeMemoryCommand}"/>
+                                <TextBlock Text="Reduz working sets de processos. Não fecha programas. Seguro e reversível." Foreground="{StaticResource TextTertiaryBrush}" FontSize="9" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="16" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Plano de Energia Ativo" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+                                <TextBlock Text="{Binding ActivePowerPlan}" Foreground="White" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" MaxHeight="60"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
