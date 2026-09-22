@@ -1,0 +1,17 @@
+# Build
+bin/
+obj/
+publish/
+dist/*.zip
+*.user
+*.suo
+.vs/
+# Logs
+*.log
+logs.db
+# OS
+Thumbs.db
+.DS_Store
+# NuGet
+packages/
+*.nupkg

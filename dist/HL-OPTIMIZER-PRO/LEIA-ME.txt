@@ -1,0 +1,18 @@
+HL OPTIMIZER PRO v1.0.0
+Mais Desempenho. Mais Estabilidade. Mais Você.
+
+INSTALAÇÃO RÁPIDA:
+1. Instale .NET 8 SDK: https://dotnet.microsoft.com/download/dotnet/8.0
+2. Abra HL.Optimizer.Pro.sln no Visual Studio 2022
+3. Selecione x64 e Release
+4. Build > Build Solution
+5. Execute como Administrador
+
+OU via linha de comando:
+dotnet restore
+dotnet build -c Release
+dotnet run --project src/HL.Optimizer.Pro/HL.Optimizer.Pro.csproj
+
+O software requer privilégios administrativos para otimizações completas.
+
+Suporte: HL Software 2026
