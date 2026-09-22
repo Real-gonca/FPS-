@@ -1,0 +1,101 @@
+<UserControl x:Class="HL.Optimizer.Pro.Views.DiagnosticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="DIAGNÓSTICO" Foreground="White" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Verificação completa: disco, RAM, CPU, GPU, drivers, rede, serviços e integridade" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="DIAGNÓSTICO AUTOMÁTICO" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="{Binding IssuesCount, StringFormat={}{0} problemas}" Foreground="{StaticResource ErrorBrush}" FontSize="12" FontWeight="Bold"/>
+                        <TextBlock Text="•" Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0"/>
+                        <TextBlock Text="{Binding WarningsCount, StringFormat={}{0} avisos}" Foreground="{StaticResource WarningBrush}" FontSize="12"/>
+                        <TextBlock Text="•" Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0"/>
+                        <TextBlock Text="{Binding CurrentCheck}" Foreground="{StaticResource ElectricBlueBrush}" FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="EXECUTAR DIAGNÓSTICO" Height="40" Padding="20,0" Command="{Binding RunDiagnosticsCommand}" IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" Margin="0,16,0,0" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Results}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource CardDarkBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1" CornerRadius="{StaticResource LargeCorner}" Padding="16" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Width="40" Height="40" CornerRadius="20" VerticalAlignment="Top">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource SurfaceDarkBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Severity}" Value="Info">
+                                                    <Setter Property="Background" Value="#1A3A5A"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                                                    <Setter Property="Background" Value="#4A3A1A"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Severity}" Value="Error">
+                                                    <Setter Property="Background" Value="#4A1A1A"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="!" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                    <TextBlock Text="{Binding Title}" Foreground="White" FontSize="13" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Category}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" Margin="0,2,0,0"/>
+                                    <TextBlock Text="{Binding Problem}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                                    <StackPanel Margin="0,12,0,0">
+                                        <TextBlock Text="Causa provável:" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding ProbableCause}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                        <TextBlock Text="Impacto:" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" Margin="0,8,0,0"/>
+                                        <TextBlock Text="{Binding Impact}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                        <TextBlock Text="Recomendação:" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" Margin="0,8,0,0"/>
+                                        <TextBlock Text="{Binding Recommendation}" Foreground="{StaticResource AccentGreenBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="{Binding Severity}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="9"/>
+                                    </Border>
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Corrigir" FontSize="10" Padding="12,4" Margin="0,8,0,0"
+                                            Command="{Binding DataContext.FixIssueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                            Visibility="{Binding HasFix, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

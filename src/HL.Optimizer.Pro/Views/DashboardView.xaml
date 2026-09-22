@@ -1,0 +1,415 @@
+<UserControl x:Class="HL.Optimizer.Pro.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1000"
+             Background="Transparent">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- TOP ROW: Health + Metrics + Action -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="280"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Health Card -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,12,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="ESTADO DO SISTEMA" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                            <TextBlock Text="{Binding SystemHealth}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="18" FontWeight="Bold" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <Grid Grid.Row="1" Margin="0,20,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Circular Progress -->
+                            <Grid Width="90" Height="90">
+                                <Ellipse Stroke="{StaticResource SurfaceDarkBrush}" StrokeThickness="8" Width="90" Height="90"/>
+                                <Ellipse Stroke="{StaticResource AccentGreenBrush}" StrokeThickness="8" Width="90" Height="90" 
+                                         StrokeDashArray="283" 
+                                         StrokeDashOffset="{Binding HealthPercentage, Converter={StaticResource PercentageToBrushConverter}}"
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform Angle="-90"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding HealthPercentage, StringFormat={}{0:0}%}" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="ÍNDICE" Foreground="{StaticResource TextSecondaryBrush}" FontSize="9" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding OptIndex.CompletedOptimizations}" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding OptIndex.TotalOptimizations, StringFormat={}de {0} otimizações}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+                                <TextBlock Text="aplicáveis concluídas" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+                                <Border Margin="0,10,0,0" Background="{StaticResource SurfaceDarkBrush}" CornerRadius="4" Height="6">
+                                    <Border Background="{StaticResource AccentGreenBrush}" CornerRadius="4" HorizontalAlignment="Left" 
+                                            Width="{Binding HealthPercentage, Converter={StaticResource PercentageToWidthConverter}}"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Button Grid.Row="2" Style="{StaticResource SuccessButton}" Content="EXECUTAR OTIMIZAÇÃO" Height="44" FontSize="13" FontWeight="Bold"
+                                Command="{Binding ExecuteOptimizationCommand}" IsEnabled="{Binding IsOptimizing, Converter={StaticResource InverseBoolConverter}}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Metrics -->
+                <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="0,0,12,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="DESEMPENHO DO SISTEMA" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+
+                        <Grid Grid.Row="1" Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- CPU -->
+                            <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,0,6,6">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="28" Height="28" CornerRadius="8" Background="#1E3A8A">
+                                            <TextBlock Text="CPU" Foreground="#60A5FA" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="CPU" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Text="{Binding Metrics.CpuUsage, StringFormat={}{0:0}%}" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,8,0,0"/>
+                                    <ProgressBar Grid.Row="2" Style="{StaticResource ModernProgressBar}" Value="{Binding Metrics.CpuUsage}" Margin="0,8,0,0" Foreground="{StaticResource ElectricBlueBrush}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- RAM -->
+                            <Border Grid.Column="1" Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="6,0,0,6">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="28" Height="28" CornerRadius="8" Background="#065F46">
+                                            <TextBlock Text="RAM" Foreground="#34D399" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="RAM" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Text="{Binding Metrics.RamUsage, StringFormat={}{0:0}%}" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,8,0,0"/>
+                                    <ProgressBar Grid.Row="2" Style="{StaticResource ModernProgressBar}" Value="{Binding Metrics.RamUsage}" Margin="0,8,0,0" Foreground="{StaticResource AccentGreenBrush}"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- GPU -->
+                            <Border Grid.Row="1" Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,6,6,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="28" Height="28" CornerRadius="8" Background="#7C2D12">
+                                            <TextBlock Text="GPU" Foreground="#FB923C" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="GPU" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Text="{Binding Metrics.GpuUsage, StringFormat={}{0:0}%}" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,8,0,0"/>
+                                    <ProgressBar Grid.Row="2" Style="{StaticResource ModernProgressBar}" Value="{Binding Metrics.GpuUsage}" Margin="0,8,0,0" Foreground="#FB923C"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- DISK -->
+                            <Border Grid.Row="1" Grid.Column="1" Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="6,6,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="28" Height="28" CornerRadius="8" Background="#4C1D95">
+                                            <TextBlock Text="DSK" Foreground="#A78BFA" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="DISCO" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Text="{Binding Metrics.DiskUsage, StringFormat={}{0:0}%}" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,8,0,0"/>
+                                    <ProgressBar Grid.Row="2" Style="{StaticResource ModernProgressBar}" Value="{Binding Metrics.DiskUsage}" Margin="0,8,0,0" Foreground="#A78BFA"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- System Info Mini -->
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock Text="INFORMAÇÕES DO SISTEMA" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <StackPanel Margin="0,16,0,0">
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource SurfaceDarkBrush}">
+                                    <TextBlock Text="💻" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="Windows" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <TextBlock Text="{Binding SysInfo.OsName}" Foreground="White" FontSize="11" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource SurfaceDarkBrush}">
+                                    <TextBlock Text="⚡" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="CPU" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <TextBlock Text="{Binding SysInfo.CpuName}" Foreground="White" FontSize="11" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource SurfaceDarkBrush}">
+                                    <TextBlock Text="🎮" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="GPU" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <TextBlock Text="{Binding SysInfo.GpuName}" Foreground="White" FontSize="11" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource SurfaceDarkBrush}">
+                                    <TextBlock Text="🧠" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="RAM" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <TextBlock Text="{Binding SysInfo.TotalRamBytes, StringFormat={}{0} bytes}" Foreground="White" FontSize="11" FontWeight="Medium">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="8 GB"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SysInfo.TotalRamBytes}" Value="0">
+                                                        <Setter Property="Text" Value="Calculando..."/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource SurfaceDarkBrush}">
+                                    <TextBlock Text="💾" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="Disco" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                    <TextBlock Text="{Binding SysInfo.Disks[0].FreeBytes, StringFormat={}{0} livre}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- QUICK ACTIONS -->
+            <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="ATALHOS RÁPIDOS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                    <ItemsControl ItemsSource="{Binding QuickActions}" Margin="0,12,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="6"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="14" Margin="0,0,8,0" Cursor="Hand">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Icon}" FontSize="20" HorizontalAlignment="Left"/>
+                                        <TextBlock Text="{Binding Name}" Foreground="White" FontSize="12" FontWeight="SemiBold" Margin="0,8,0,0"/>
+                                        <TextBlock Text="{Binding Description}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- BOTTOM ROW: Categories + Last Actions -->
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="320"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Optimization Categories -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="CATEGORIAS DE OTIMIZAÇÃO" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <ItemsControl ItemsSource="{Binding OptIndex.CategoryScores}" Margin="0,12,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12,8" Margin="0,0,8,8" Width="150">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Category}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                                <TextBlock Text="{Binding Score, StringFormat={}{0:0}%}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Width="24" Height="24" CornerRadius="12" Background="{StaticResource SurfaceDarkBrush}" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                                                <TextBlock Text="✓" Foreground="{StaticResource AccentGreenBrush}" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding Score, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Optimizations List -->
+                        <TextBlock Text="OTIMIZAÇÕES APLICÁVEIS" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1" Margin="0,16,0,0"/>
+                        <ListView ItemsSource="{Binding Optimizations}" Background="Transparent" BorderThickness="0" MaxHeight="200" Margin="0,8,0,0" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                            <TextBlock Text="{Binding Description}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="2" Background="{StaticResource SurfaceDarkBrush}" CornerRadius="4" Padding="6,2" Margin="10,0,0,0">
+                                            <TextBlock Text="{Binding Risk}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="9"/>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <!-- Last Actions -->
+                <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="ÚLTIMAS AÇÕES" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10" FontWeight="Bold" LetterSpacing="1"/>
+                        <ItemsControl ItemsSource="{Binding RecentActions}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource SurfaceDarkBrush}">
+                                            <TextBlock Text="✓" Foreground="{StaticResource AccentGreenBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="Bold"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                            <TextBlock Text="{Binding Action}" Foreground="White" FontSize="11" FontWeight="Medium"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock Text="{Binding Timestamp, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="9"/>
+                                                <TextBlock Text="{Binding Result}" Foreground="{StaticResource AccentGreenBrush}" FontSize="9" Margin="6,0,0,0"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Border Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="12" Margin="0,12,0,0" Visibility="{Binding IsOptimizing, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding OptimizationStatus}" Foreground="White" FontSize="11" TextWrapping="Wrap"/>
+                                <ProgressBar Style="{StaticResource ModernProgressBar}" Value="{Binding OptimizationProgress}" Margin="0,8,0,0" Height="6"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Footer Info -->
+            <Border Grid.Row="3" Margin="0,16,0,0" Background="{StaticResource SurfaceDarkBrush}" CornerRadius="{StaticResource MediumCorner}" Padding="16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="HL OPTIMIZER PRO" Foreground="{StaticResource TextSecondaryBrush}" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock Text="•" Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0"/>
+                        <TextBlock Text="v1.0.0" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10"/>
+                        <TextBlock Text="•" Foreground="{StaticResource TextTertiaryBrush}" Margin="8,0"/>
+                        <TextBlock Text="{Binding SysInfo.Uptime, StringFormat={}Uptime: {0:hh\\:mm\\:ss}}" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="Transparente • Seguro • Reversível" Foreground="{StaticResource TextTertiaryBrush}" FontSize="10"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:utils="clr-namespace:HL.Optimizer.Pro.Core.Utilities">
+    <utils:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+    <utils:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+    <utils:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    <utils:PercentageToBrushConverter x:Key="PercentageToBrushConverter"/>
+    <utils:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    <utils:InverseBoolConverter x:Key="InverseBoolConverter"/>
+    <utils:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
+    <utils:BoolToColorConverter x:Key="BoolToColorConverter"/>
+</ResourceDictionary>

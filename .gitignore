@@ -1,0 +1,18 @@
+# Build
+bin/
+obj/
+publish/
+*.user
+*.suo
+.vs/
+# Logs
+*.log
+logs.db
+# OS
+Thumbs.db
+.DS_Store
+# NuGet
+packages/
+*.nupkg
+# Dist extracted folder (keep zip)
+dist/HL-OPTIMIZER-PRO/

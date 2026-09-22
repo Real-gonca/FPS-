@@ -1,0 +1,20 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <system:String x:Key="AppTitle">HL OPTIMIZER PRO</system:String>
+    <system:String x:Key="AppSubtitle">More Performance. More Stability. More You.</system:String>
+    <system:String x:Key="Dashboard">Dashboard</system:String>
+    <system:String x:Key="Booster">Booster</system:String>
+    <system:String x:Key="Tweaks">Tweaks</system:String>
+    <system:String x:Key="Cleanup">Cleanup</system:String>
+    <system:String x:Key="Games">Games</system:String>
+    <system:String x:Key="System">System</system:String>
+    <system:String x:Key="Diagnostics">Diagnostics</system:String>
+    <system:String x:Key="Performance">Performance Monitor</system:String>
+    <system:String x:Key="Startup">Startup</system:String>
+    <system:String x:Key="Tools">Advanced Tools</system:String>
+    <system:String x:Key="Restore">Restore</system:String>
+    <system:String x:Key="Settings">Settings</system:String>
+    <system:String x:Key="ExecuteOptimization">RUN OPTIMIZATION</system:String>
+    <system:String x:Key="SystemHealthy">System Healthy</system:String>
+</ResourceDictionary>
