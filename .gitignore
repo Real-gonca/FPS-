@@ -2,7 +2,6 @@
 bin/
 obj/
 publish/
-dist/*.zip
 *.user
 *.suo
 .vs/
@@ -15,3 +14,5 @@ Thumbs.db
 # NuGet
 packages/
 *.nupkg
+# Dist extracted folder (keep zip)
+dist/HL-OPTIMIZER-PRO/
