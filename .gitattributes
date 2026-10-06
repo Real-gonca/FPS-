@@ -1,0 +1,7 @@
+* text=auto
+
+# Arquivos de Windows: cmd.exe precisa de CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.reg text eol=crlf
+*.vbs text eol=crlf
