@@ -1,0 +1,115 @@
+<!--
+  ============================================================================
+  HL Optimizer Pro — Tipografia
+  ============================================================================
+  Família: Segoe UI Variable (Windows 11) com recuo automático para Segoe UI.
+  Hierarquia: Display / H1 / H2 / H3 / Body / Secondary / Caption / Metric
+  Os estilos são aplicados por nome (ex.: Style="{StaticResource H1}") para que a
+  interface seja consistente em todas as telas.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+  <!-- FontFamily com fallback: se o Segoe UI Variable não existir (Windows 10),
+       o WPF usa automaticamente a segunda família da lista. -->
+  <FontFamily x:Key="FontPrimary">Segoe UI Variable Display, Segoe UI Variable Text, Segoe UI, Inter, sans-serif</FontFamily>
+  <FontFamily x:Key="FontBody">Segoe UI Variable Text, Segoe UI, Inter, sans-serif</FontFamily>
+  <FontFamily x:Key="FontMono">Cascadia Mono, Consolas, Courier New, monospace</FontFamily>
+
+  <sys:Double x:Key="FontSizeDisplay">34</sys:Double>
+  <sys:Double x:Key="FontSizeH1">24</sys:Double>
+  <sys:Double x:Key="FontSizeH2">18</sys:Double>
+  <sys:Double x:Key="FontSizeH3">15</sys:Double>
+  <sys:Double x:Key="FontSizeBody">13.5</sys:Double>
+  <sys:Double x:Key="FontSizeSmall">12.5</sys:Double>
+  <sys:Double x:Key="FontSizeCaption">11.5</sys:Double>
+
+  <!-- ============================= TÍTULOS ============================ -->
+  <Style x:Key="Display" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontPrimary}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeDisplay}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+    <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+  </Style>
+
+  <Style x:Key="H1" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontPrimary}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeH1}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+    <Setter Property="Margin" Value="0,0,0,4" />
+  </Style>
+
+  <Style x:Key="H2" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontPrimary}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeH2}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <Style x:Key="H3" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontPrimary}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeH3}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+  </Style>
+
+  <!-- ============================== CORPO ============================= -->
+  <Style x:Key="Body" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style x:Key="Secondary" TargetType="TextBlock" BasedOn="{StaticResource Body}">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+  </Style>
+
+  <Style x:Key="Caption" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style x:Key="Mono" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontMono}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+  </Style>
+
+  <!-- Valor de métrica: grandes números dos gauges e cartões -->
+  <Style x:Key="MetricValue" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontPrimary}" />
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+  </Style>
+
+  <Style x:Key="MetricValueSmall" TargetType="TextBlock" BasedOn="{StaticResource MetricValue}">
+    <Setter Property="FontSize" Value="20" />
+  </Style>
+
+  <!-- Rótulo em maiúsculas pequenas usado nos títulos de secção da sidebar -->
+  <Style x:Key="SectionLabel" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}" />
+    <Setter Property="Margin" Value="16,12,0,6" />
+  </Style>
+
+  <!-- Estilos predefinidos de TextBlock (sem chave) para não haver surpresas -->
+  <Style TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource FontBody}" />
+    <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+    <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    <Setter Property="TextOptions.TextRenderingMode" Value="ClearType" />
+  </Style>
+
+</ResourceDictionary>

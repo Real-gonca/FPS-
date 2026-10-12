@@ -1,0 +1,30 @@
+<Project>
+
+  <!-- =====================================================================
+       HL Optimizer Pro — propriedades comuns a todos os projetos
+       =====================================================================
+       Centralizar aqui evita divergências entre App / Core / Tests e garante
+       que as mesmas regras de analise (nullable, avisos como erros, versao)
+       se aplicam em toda a solucao.
+       ===================================================================== -->
+  <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NeutralLanguage>pt</NeutralLanguage>
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- Metadados do produto (usados pelo instalador e pela tela Sobre) -->
+    <Product>HL Optimizer Pro</Product>
+    <Company>HL Software</Company>
+    <Copyright>Copyright © 2026 HL Software</Copyright>
+    <Version>2.0.0</Version>
+    <FileVersion>2.0.0.0</FileVersion>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,51 @@
+<Application x:Class="HLOptimizerPro.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:HLOptimizerPro.App.Converters"
+             xmlns:controls="clr-namespace:HLOptimizerPro.App.Controls"
+             ShutdownMode="OnMainWindowClose">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <!-- Ordem importa: cores → tipografia → controlos → animações → logótipo -->
+        <ResourceDictionary Source="Resources/Themes/Colors.xaml" />
+        <ResourceDictionary Source="Resources/Themes/Typography.xaml" />
+        <ResourceDictionary Source="Resources/Themes/Controls.xaml" />
+        <ResourceDictionary Source="Resources/Themes/Animations.xaml" />
+        <ResourceDictionary Source="Resources/Themes/Logo.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+
+      <!-- ===================== CONVERSORES GLOBAIS ===================== -->
+      <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+      <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+      <converters:InverseBoolConverter x:Key="InverseBool" />
+      <converters:NullToVisibilityConverter x:Key="NullToVisibility" />
+      <converters:CountToVisibilityConverter x:Key="CountToVisibility" />
+      <converters:EmptyStringToVisibilityConverter x:Key="EmptyStringToVisibility" />
+      <converters:IconKindConverter x:Key="IconKind" />
+      <converters:HealthToBrushConverter x:Key="HealthToBrush" />
+      <converters:HealthToSoftBrushConverter x:Key="HealthToSoftBrush" />
+      <converters:NotificationToBrushConverter x:Key="NotificationToBrush" />
+      <converters:PriorityToBrushConverter x:Key="PriorityToBrush" />
+      <converters:EqualityConverter x:Key="Equality" />
+      <converters:UsageToBrushConverter x:Key="UsageToBrush" />
+      <converters:ScoreToBrushConverter x:Key="ScoreToBrush" />
+      <converters:RelativeTimeConverter x:Key="RelativeTime" />
+
+      <!-- Controlos personalizados (gauges, barras) -->
+      <Style TargetType="{x:Type controls:GaugeControl}">
+        <Setter Property="AccentBrush" Value="{StaticResource BrushAccentGradient}" />
+        <Setter Property="MinWidth" Value="130" />
+        <Setter Property="MinHeight" Value="130" />
+      </Style>
+      <Style TargetType="{x:Type controls:MetricBar}">
+        <Setter Property="Height" Value="6" />
+        <Setter Property="MinWidth" Value="60" />
+      </Style>
+      <Style TargetType="{x:Type controls:ScoreRing}">
+        <Setter Property="MinWidth" Value="150" />
+        <Setter Property="MinHeight" Value="150" />
+      </Style>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

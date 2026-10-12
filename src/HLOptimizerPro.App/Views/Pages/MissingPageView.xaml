@@ -1,0 +1,16 @@
+<!-- Vista de recurso: mostrada se uma página ainda não tiver vista associada (nunca ecrã em branco). -->
+<UserControl x:Class="HLOptimizerPro.App.Views.Pages.MissingPageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks">
+  <Border Style="{StaticResource Card}" VerticalAlignment="Top">
+    <StackPanel Orientation="Horizontal">
+      <iconPacks:PackIconMaterial Kind="AlertCircleOutline" Width="22" Height="22"
+                                  Foreground="{StaticResource BrushWarning}" VerticalAlignment="Center" />
+      <StackPanel Margin="14,0,0,0">
+        <TextBlock Text="Página indisponível" Style="{StaticResource H3}" />
+        <TextBlock x:Name="MessageBlock" Style="{StaticResource Secondary}" Margin="0,4,0,0" />
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

@@ -1,0 +1,232 @@
+<!--
+  ============================================================================
+  Ferramenta Latência (3.4-f)
+  ============================================================================
+  Medidor real (ping, jitter, DPC/ISR do kernel e resolução do temporizador), seis sliders
+  (Rato/Entrada, CPU, Kernel, GPU, Rede, Tela) com pré-visualização do que será alterado,
+  botão «Aplicar Ajustes» e reversão a partir do diário.
+-->
+<UserControl x:Class="HLOptimizerPro.App.Views.Pages.LatencyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Style="{StaticResource PageTransition}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- ===================== MEDIDOR ===================== -->
+    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="20,18">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Valor principal -->
+        <Border Grid.Column="0" Width="150" Height="150" CornerRadius="75"
+                Background="{StaticResource BrushBgSunken}"
+                BorderBrush="{Binding QualityHealth, Converter={StaticResource HealthToBrush}}"
+                BorderThickness="3">
+          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="{Binding CurrentLatencyText}" Style="{StaticResource MetricValue}"
+                       FontSize="30" HorizontalAlignment="Center" />
+            <TextBlock Text="{Binding QualityText}" Style="{StaticResource Caption}"
+                       HorizontalAlignment="Center" Margin="0,4,0,0"
+                       Foreground="{Binding QualityHealth, Converter={StaticResource HealthToBrush}}" />
+            <TextBlock Text="latência medida" Style="{StaticResource Caption}"
+                       HorizontalAlignment="Center" FontSize="10" />
+          </StackPanel>
+        </Border>
+
+        <!-- Detalhes da medição -->
+        <StackPanel Grid.Column="1" Margin="22,0,20,0" VerticalAlignment="Center">
+          <TextBlock Text="Medições reais" Style="{StaticResource SectionLabel}" Margin="0,0,0,10" />
+
+          <UniformGrid Columns="2" Rows="2">
+            <StackPanel Margin="0,0,16,12">
+              <TextBlock Text="Jitter (variação)" Style="{StaticResource Caption}" />
+              <TextBlock Text="{Binding JitterText}" Style="{StaticResource MetricValueSmall}" Margin="0,3,0,0" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,12">
+              <TextBlock Text="Latência de rede" Style="{StaticResource Caption}" />
+              <TextBlock Text="{Binding NetworkText}" Style="{StaticResource MetricValueSmall}" Margin="0,3,0,0" />
+            </StackPanel>
+            <StackPanel Margin="0,0,16,0">
+              <TextBlock Text="DPC / ISR (kernel)" Style="{StaticResource Caption}" />
+              <TextBlock Text="{Binding DpcText}" Style="{StaticResource MetricValueSmall}" Margin="0,3,0,0"
+                         FontSize="16" />
+            </StackPanel>
+            <StackPanel>
+              <TextBlock Text="Temporizador do sistema" Style="{StaticResource Caption}" />
+              <TextBlock Text="{Binding TimerText}" Style="{StaticResource MetricValueSmall}" Margin="0,3,0,0" />
+            </StackPanel>
+          </UniformGrid>
+
+          <TextBlock Text="{Binding LastMeasureText}" Style="{StaticResource Caption}" Margin="0,12,0,0"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- Ações de medição -->
+        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+          <Button Style="{StaticResource ButtonPrimary}"
+                  Content="Medir Novamente"
+                  MinWidth="160"
+                  Height="42"
+                  Command="{Binding MeasureCommand}"
+                  IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+          <Button Style="{StaticResource ButtonSecondary}"
+                  Content="Temporizador 0,5 ms"
+                  Margin="0,8,0,0"
+                  Command="{Binding ToggleHighResolutionTimerCommand}" />
+          <TextBlock Text="{Binding HighResolutionTimerText}" Style="{StaticResource Caption}"
+                     Margin="0,8,0,0" MaxWidth="180" TextWrapping="Wrap" TextAlignment="Right" />
+          <Button Style="{StaticResource ButtonGhost}"
+                  Content="Reverter ajustes"
+                  Margin="0,8,0,0"
+                  Command="{Binding RevertCommand}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ===================== SLIDERS ===================== -->
+    <Grid Grid.Row="1" Margin="0,16,0,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="1.5*" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <Border Grid.Column="0" Style="{StaticResource Card}" Padding="18,16" Margin="0,0,12,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+
+          <Grid Grid.Row="0" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="TuneVariant" Width="16" Height="16"
+                                          Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+              <TextBlock Text="Ajustes de resposta" Style="{StaticResource H3}" Margin="9,0,0,0" />
+              <TextBlock Text="(≥ 45 % aplica a otimização)" Style="{StaticResource Caption}"
+                         Margin="8,3,0,0" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button Style="{StaticResource ButtonSmallSecondary}" Content="Atualizar pré-visualização"
+                      Margin="0,0,8,0" Command="{Binding RefreshAdjustmentsCommand}" />
+              <Button Style="{StaticResource ButtonSmall}" Content="Aplicar Ajustes"
+                      Command="{Binding ApplyAdjustmentsCommand}"
+                      IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+            </StackPanel>
+          </Grid>
+
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+            <ItemsControl ItemsSource="{Binding Sliders}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Background="{StaticResource BrushBgSunken}"
+                          BorderBrush="{StaticResource BrushBorderSubtle}"
+                          BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,8">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+
+                      <Border Grid.Column="0" Width="36" Height="36" CornerRadius="10"
+                              Background="{StaticResource BrushAccentSubtle}"
+                              BorderBrush="{StaticResource BrushGlassBorder}" BorderThickness="1"
+                              VerticalAlignment="Center">
+                        <iconPacks:PackIconMaterial Kind="{Binding IconKind, Converter={StaticResource IconKind}}"
+                                                    Width="17" Height="17"
+                                                    Foreground="{StaticResource BrushAccentBright}"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
+
+                      <StackPanel Grid.Column="1" Margin="12,0,14,0">
+                        <StackPanel Orientation="Horizontal">
+                          <TextBlock Text="{Binding Name}" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                          <Border Style="{StaticResource Badge}" Margin="8,0,0,0"
+                                  Background="{Binding ApplyHealth, Converter={StaticResource HealthToSoftBrush}}"
+                                  BorderBrush="{Binding ApplyHealth, Converter={StaticResource HealthToBrush}}">
+                            <TextBlock Text="{Binding ValueText}" Style="{StaticResource BadgeText}"
+                                       Foreground="{Binding ApplyHealth, Converter={StaticResource HealthToBrush}}" />
+                          </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}"
+                                   TextWrapping="Wrap" Margin="0,4,0,6" />
+
+                        <Slider Minimum="0" Maximum="100"
+                                Value="{Binding Value, Mode=TwoWay}"
+                                TickFrequency="25" IsSnapToTickEnabled="True"
+                                ToolTip="Arraste para a direita para aplicar este ajuste" />
+
+                        <Grid Margin="0,2,0,0">
+                          <TextBlock Text="{Binding LowLabel}" Style="{StaticResource Caption}"
+                                     HorizontalAlignment="Left" FontSize="10" />
+                          <TextBlock Text="{Binding HighLabel}" Style="{StaticResource Caption}"
+                                     HorizontalAlignment="Right" FontSize="10" />
+                        </Grid>
+                      </StackPanel>
+
+                      <TextBlock Grid.Column="2" Text="{Binding ApplyText}" Style="{StaticResource Caption}"
+                                 VerticalAlignment="Center" TextAlignment="Right" MaxWidth="80"
+                                 TextWrapping="Wrap" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+
+      <!-- Pré-visualização + explicação -->
+      <Border Grid.Column="1" Style="{StaticResource Card}" Padding="18,16">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <iconPacks:PackIconMaterial Kind="EyeOutline" Width="16" Height="16"
+                                        Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+            <TextBlock Text="O que será ajustado" Style="{StaticResource H3}" Margin="9,0,0,0" />
+          </StackPanel>
+
+          <Border Grid.Row="1" Style="{StaticResource CardCompact}" Margin="0,12,0,0">
+            <TextBlock Text="{Binding PreviewText}" Style="{StaticResource Caption}" TextWrapping="Wrap" />
+          </Border>
+
+          <StackPanel Grid.Row="2" Margin="0,14,0,0">
+            <TextBlock Text="Ajustes disponíveis" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+            <TextBlock Text="• Rato / Entrada — desativa a aceleração do ponteiro e reduz o buffer de eventos.&#10;• CPU — ativa o MMCSS e reduz a troca de contexto entre núcleos.&#10;• Kernel — pede a resolução máxima do temporizador (0,5 ms).&#10;• GPU — aumenta a prioridade do subsistema gráfico e desativa economias de energia.&#10;• Rede — desliga o algoritmo de Nagle e o throttling na interface ativa.&#10;• Tela — reduz o tempo até o monitor desligar e desativa o brilho adaptativo."
+                       Style="{StaticResource Body}" TextWrapping="Wrap" LineHeight="20" />
+          </StackPanel>
+
+          <Border Grid.Row="3" Style="{StaticResource CardCompact}" Margin="0,12,0,0"
+                  Background="{StaticResource BrushWarningSoft}"
+                  BorderBrush="{StaticResource BrushWarning}">
+            <StackPanel Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="AlertOutline" Width="15" Height="15"
+                                          Foreground="{StaticResource BrushWarning}" VerticalAlignment="Top" />
+              <TextBlock Text="Valores muito altos podem aumentar o consumo de energia e a temperatura. Use «Máximo» apenas enquanto joga e reverta depois."
+                         Style="{StaticResource Caption}" Foreground="{StaticResource BrushWarning}"
+                         Margin="10,0,0,0" TextWrapping="Wrap" MaxWidth="300" />
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
+</UserControl>

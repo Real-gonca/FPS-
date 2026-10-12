@@ -1,0 +1,49 @@
+# ---------- .NET / Visual Studio ----------
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.binlog
+artifacts/
+TestResults/
+*.trx
+*.coverage
+*.nupkg
+!installer/**/*.nupkg
+
+# ---------- Pacotes / ferramentas ----------
+packages/
+*.nuget.props
+*.nuget.targets
+.tools/
+
+# ---------- Artefactos HL Optimizer Pro ----------
+# Dados de execução (ficam em %AppData%\HLOptimizerPro, nunca no repositório)
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.jsonl
+logs/
+data/
+
+# ---------- Instaladores gerados ----------
+installer/Output/
+installer/*.exe
+installer/*.msi
+*.msix
+*.msixupload
+*.appx
+
+# ---------- Editores / SO ----------
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store

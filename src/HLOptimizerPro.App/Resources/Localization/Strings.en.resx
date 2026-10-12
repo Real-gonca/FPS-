@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    ========================================================================
+    HL Optimizer Pro — Recursos de texto (idioma neutro = português)
+    ========================================================================
+    As Views referenciam estes recursos através da classe estática
+    HLOptimizerPro.App.Resources.Localization.Strings (ver Strings.cs).
+    Os textos estão em português (pt-PT/pt-AO). O ficheiro Strings.en.resx
+    contém a tradução inglesa e é a base para outros idiomas.
+
+    Nota de manutenção: mantenha as chaves sincronizadas entre os ficheiros
+    de idioma — todas as chaves existentes aqui devem existir nos restantes.
+    ========================================================================
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ===================== APLICAÇÃO / SHELL ===================== -->
+  <data name="App_Name" xml:space="preserve"><value>HL Optimizer Pro</value></data>
+  <data name="App_Slogan" xml:space="preserve"><value>More Performance. More Stability. More You.</value></data>
+  <data name="Nav_Home" xml:space="preserve"><value>Home</value></data>
+  <data name="Nav_Assessment" xml:space="preserve"><value>Assessment</value></data>
+  <data name="Nav_Tools" xml:space="preserve"><value>Tools</value></data>
+  <data name="Nav_Optimizations" xml:space="preserve"><value>Optimizations</value></data>
+  <data name="Nav_Recommendations" xml:space="preserve"><value>Recommendations</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Nav_Help" xml:space="preserve"><value>Help</value></data>
+  <data name="Nav_PcBoost" xml:space="preserve"><value>PC Boost</value></data>
+  <data name="Nav_About" xml:space="preserve"><value>About / Premium</value></data>
+
+  <data name="Nav_Memory" xml:space="preserve"><value>RAM Memory</value></data>
+  <data name="Nav_Network" xml:space="preserve"><value>Network</value></data>
+  <data name="Nav_AppTuner" xml:space="preserve"><value>App Tuner</value></data>
+  <data name="Nav_Tweaks" xml:space="preserve"><value>Tweaks</value></data>
+  <data name="Nav_GameMode" xml:space="preserve"><value>Game Mode</value></data>
+  <data name="Nav_Latency" xml:space="preserve"><value>Latency</value></data>
+
+  <!-- ===================== LOGIN / SPLASH ===================== -->
+  <data name="Login_Welcome" xml:space="preserve"><value>Welcome back!</value></data>
+  <data name="Login_User" xml:space="preserve"><value>User or e-mail</value></data>
+  <data name="Login_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Login_Remember" xml:space="preserve"><value>Remember me</value></data>
+  <data name="Login_Forgot" xml:space="preserve"><value>Forgot your password?</value></data>
+  <data name="Login_SignIn" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Login_Microsoft" xml:space="preserve"><value>Sign in with Microsoft</value></data>
+  <data name="Login_CreateAccount" xml:space="preserve"><value>Create account</value></data>
+  <data name="Login_Skip" xml:space="preserve"><value>Not now</value></data>
+  <data name="Login_BenefitsTitle" xml:space="preserve"><value>What you will gain</value></data>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <data name="Dash_OptimizedState" xml:space="preserve"><value>System optimized</value></data>
+  <data name="Dash_AttentionState" xml:space="preserve"><value>Attention needed</value></data>
+  <data name="Dash_RunOptimization" xml:space="preserve"><value>Run Optimization</value></data>
+  <data name="Dash_QuickActions" xml:space="preserve"><value>Quick Actions</value></data>
+  <data name="Dash_QuickCleanup" xml:space="preserve"><value>Quick Cleanup</value></data>
+  <data name="Dash_GameMode" xml:space="preserve"><value>Game Mode</value></data>
+  <data name="Dash_RestorePoint" xml:space="preserve"><value>Restore Point</value></data>
+  <data name="Dash_SystemLogs" xml:space="preserve"><value>System Logs</value></data>
+  <data name="Dash_PerformanceChart" xml:space="preserve"><value>System Performance</value></data>
+  <data name="Dash_Uptime" xml:space="preserve"><value>Uptime</value></data>
+
+  <!-- ===================== AVALIAÇÃO ===================== -->
+  <data name="Assessment_Title" xml:space="preserve"><value>System Assessment</value></data>
+  <data name="Assessment_Run" xml:space="preserve"><value>Analyse now</value></data>
+  <data name="Assessment_FullReport" xml:space="preserve"><value>View Full Report</value></data>
+  <data name="Assessment_ExportPdf" xml:space="preserve"><value>Export PDF</value></data>
+  <data name="Assessment_ExportHtml" xml:space="preserve"><value>Export HTML</value></data>
+
+  <!-- ===================== GENÉRICOS ===================== -->
+  <data name="Common_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Common_Revert" xml:space="preserve"><value>Revert</value></data>
+  <data name="Common_Simulate" xml:space="preserve"><value>Simulate</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Common_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="Common_ApplySelected" xml:space="preserve"><value>Apply Selected</value></data>
+  <data name="Common_ApplyAll" xml:space="preserve"><value>Apply Optimizations</value></data>
+  <data name="Common_RevertAll" xml:space="preserve"><value>Revert all</value></data>
+  <data name="Common_Rescan" xml:space="preserve"><value>Scan again</value></data>
+  <data name="Common_Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
+
+  <!-- ===================== AVISOS DE SEGURANÇA ===================== -->
+  <data name="Safety_RestorePointCreated" xml:space="preserve"><value>Restore point created before changes.</value></data>
+  <data name="Safety_NotElevated" xml:space="preserve"><value>No administrator privileges: some optimizations will be unavailable.</value></data>
+  <data name="Safety_SimulationOn" xml:space="preserve"><value>Simulation mode is on — nothing will be changed on your system.</value></data>
+  <data name="Safety_ConfirmRisky" xml:space="preserve"><value>This action changes sensitive settings. Continue?</value></data>
+  <data name="Safety_ProtectedProcess" xml:space="preserve"><value>Protected system process — it will not be changed.</value></data>
+</root>

@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- =====================================================================
+       Camada de apresentacao (WPF / MVVM).
+       Contem Views, ViewModels, Controls personalizados e o design system.
+       ===================================================================== -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>false</UseWindowsForms>
+    <RootNamespace>HLOptimizerPro.App</RootNamespace>
+    <AssemblyName>HLOptimizerPro</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>x64</PlatformTarget>          <!-- WMI + LibreHardwareMonitor exigem 64 bits para ler GPU/RAM completos -->
+    <Platforms>AnyCPU;x64</Platforms>
+    <SatelliteResourceLanguages>pt;en</SatelliteResourceLanguages>
+    <StartupObject>HLOptimizerPro.App.App</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Os ficheiros .xaml sob o projeto são compilados automaticamente (App.xaml como
+         ApplicationDefinition e os dicionários em /Resources como Page). Aqui garantimos
+         apenas que os recursos binários da pasta Assets ficam embutidos no executável. -->
+    <Resource Include="Assets\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- .resx: localizacao (pt e idioma neutro, preparado para en) -->
+    <EmbeddedResource Update="Resources\Localization\Strings.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ============ Navegacao / MVVM / DI ============ -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
+
+    <!-- ============ Logs ============ -->
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
+
+    <!-- ============ Graficos (OxyPlot: estavel, sem dependencias nativas) ============ -->
+    <PackageReference Include="OxyPlot.Wpf" Version="2.1.2" />
+
+    <!-- ============ Icones (Material Design Icons via IconPacks) ============ -->
+    <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="5.1.0" />
+
+    <!-- ============ Login Microsoft opcional (MSAL) ============ -->
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.60.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HLOptimizerPro.Core\HLOptimizerPro.Core.csproj" />
+  </ItemGroup>
+
+</Project>

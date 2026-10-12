@@ -1,0 +1,286 @@
+<!--
+  ============================================================================
+  Avaliação do Sistema (3.3)
+  ============================================================================
+  · Anel de pontuação 0–100 % com classificação (Excelente / Bom / Regular / Crítico)
+  · Sub-pontuações: Desempenho, Estabilidade, Segurança, Otimização (com barra)
+  · Diagnóstico em linguagem natural
+  · "Ver Relatório Completo" (PDF / HTML) e acesso à pasta dos relatórios
+  · Cada critério mostra o valor medido e os pontos que retirou (auditável)
+-->
+<UserControl x:Class="HLOptimizerPro.App.Views.Pages.AssessmentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:controls="clr-namespace:HLOptimizerPro.App.Controls"
+             Style="{StaticResource PageTransition}">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
+    <StackPanel>
+
+      <!-- ===================== CABEÇALHO + AÇÃO ===================== -->
+      <Border Style="{StaticResource Card}" Padding="22,20">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0" VerticalAlignment="Center">
+            <TextBlock Text="Avaliação do Sistema" Style="{StaticResource H1}" FontSize="23" />
+            <TextBlock Text="Pontuação calculada com medições reais: arranque, disco, temperatura, antivírus, firewall, atualizações, fragmentação, serviços e energia."
+                       Style="{StaticResource Secondary}"
+                       TextWrapping="Wrap"
+                       MaxWidth="640"
+                       HorizontalAlignment="Left"
+                       Margin="0,6,0,0" />
+            <TextBlock Text="{Binding GeneratedAtText}" Style="{StaticResource Caption}" Margin="0,10,0,0" />
+            <TextBlock Text="{Binding SummaryLine}" Style="{StaticResource Caption}" Margin="0,4,0,0"
+                       TextWrapping="Wrap" MaxWidth="640" HorizontalAlignment="Left" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0">
+            <Button Style="{StaticResource ButtonPrimary}"
+                    Height="46"
+                    MinWidth="190"
+                    Command="{Binding RunAssessmentCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}">
+              <StackPanel Orientation="Horizontal">
+                <iconPacks:PackIconMaterial Kind="ChartBox" Width="18" Height="18" VerticalAlignment="Center" />
+                <TextBlock Text="Analisar agora" Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+              </StackPanel>
+            </Button>
+            <TextBlock Text="{Binding ProgressText}"
+                       Style="{StaticResource Caption}"
+                       Margin="0,8,0,0"
+                       MaxWidth="190"
+                       TextWrapping="Wrap"
+                       HorizontalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ===================== PONTUAÇÃO GLOBAL ===================== -->
+      <Grid Margin="0,16,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Style="{StaticResource Card}" Padding="22,20">
+          <StackPanel VerticalAlignment="Center">
+            <controls:ScoreRing Value="{Binding OverallScore}"
+                                Text="{Binding OverallScoreText}"
+                                Caption="Pontuação global"
+                                Width="196" Height="196"
+                                RingBrush="{Binding GradeHealth, Converter={StaticResource HealthToBrush}}" />
+
+            <Border Style="{StaticResource Badge}"
+                    HorizontalAlignment="Center"
+                    Margin="0,14,0,0"
+                    Background="{Binding GradeHealth, Converter={StaticResource HealthToSoftBrush}}"
+                    BorderBrush="{Binding GradeHealth, Converter={StaticResource HealthToBrush}}">
+              <TextBlock Text="{Binding GradeText}"
+                         Style="{StaticResource BadgeText}"
+                         Foreground="{Binding GradeHealth, Converter={StaticResource HealthToBrush}}" />
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <!-- Diagnóstico -->
+        <Border Grid.Column="1" Style="{StaticResource Card}" Margin="12,0,0,0" Padding="20">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="Stethoscope" Width="17" Height="17"
+                                          Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+              <TextBlock Text="Diagnóstico" Style="{StaticResource H3}" Margin="9,0,0,0" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="1"
+                       Text="{Binding Diagnosis}"
+                       Style="{StaticResource Body}"
+                       TextWrapping="Wrap"
+                       Margin="0,10,0,0"
+                       VerticalAlignment="Top" />
+
+            <StackPanel Grid.Row="2" Margin="0,14,0,0">
+              <TextBlock Text="{Binding ScoreHint}" Style="{StaticResource Caption}" TextWrapping="Wrap" />
+              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Content="Ver Relatório Completo (PDF)"
+                        Command="{Binding ExportReportCommand}"
+                        CommandParameter="pdf"
+                        IsEnabled="{Binding HasReport}" />
+                <Button Style="{StaticResource ButtonGhost}"
+                        Content="Exportar HTML"
+                        Margin="10,0,0,0"
+                        Command="{Binding ExportReportCommand}"
+                        CommandParameter="html"
+                        IsEnabled="{Binding HasReport}" />
+                <Button Style="{StaticResource ButtonGhost}"
+                        Content="Pasta dos relatórios"
+                        Margin="4,0,0,0"
+                        Command="{Binding OpenReportsFolderCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- ===================== SUB-PONTUAÇÕES ===================== -->
+      <TextBlock Text="Áreas avaliadas" Style="{StaticResource SectionLabel}" Margin="2,20,0,10" />
+
+      <ItemsControl ItemsSource="{Binding Breakdowns}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="18,16">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+
+                  <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource H3}" />
+                    <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}"
+                               Margin="10,3,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+
+                  <Grid Grid.Row="1" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <controls:MetricBar Grid.Column="0"
+                                        Value="{Binding Score}"
+                                        Fill="{Binding Health, Converter={StaticResource HealthToBrush}}"
+                                        Height="7"
+                                        VerticalAlignment="Center" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0">
+                      <TextBlock Text="{Binding ScoreText}" Style="{StaticResource MetricValueSmall}" FontSize="15" />
+                      <TextBlock Text="{Binding GradeText}" Style="{StaticResource Caption}" Margin="8,3,0,0" />
+                    </StackPanel>
+                  </Grid>
+
+                  <!-- Critérios medidos -->
+                  <ItemsControl Grid.Row="2" ItemsSource="{Binding Criteria}" Margin="0,12,0,0">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,7">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                          </Grid.ColumnDefinitions>
+
+                          <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                     Fill="{Binding Penalty, Converter={StaticResource ScoreToBrush}}" />
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource Caption}" Margin="8,0,0,0"
+                                       VerticalAlignment="Center"
+                                       ToolTip="{Binding Advice}" />
+                          </StackPanel>
+
+                          <TextBlock Grid.Column="1" Text="{Binding MeasuredValue}"
+                                     Style="{StaticResource Caption}"
+                                     Margin="12,0,12,0"
+                                     VerticalAlignment="Center" />
+
+                          <TextBlock Grid.Column="2"
+                                     Text="{Binding Penalty, StringFormat={}{0:0} pts}"
+                                     Style="{StaticResource Caption}"
+                                     VerticalAlignment="Center">
+                            <TextBlock.Style>
+                              <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                                <Style.Triggers>
+                                  <DataTrigger Binding="{Binding IsProblem}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource BrushWarning}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                  </DataTrigger>
+                                </Style.Triggers>
+                              </Style>
+                            </TextBlock.Style>
+                          </TextBlock>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Grid>
+
+                <TextBlock Grid.Column="1" Text="{Binding Weight, StringFormat={}Peso {0:P0}}"
+                           Style="{StaticResource Caption}"
+                           VerticalAlignment="Top"
+                           Margin="16,4,0,0" />
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- ===================== RECOMENDAÇÕES DA AVALIAÇÃO ===================== -->
+      <Border Style="{StaticResource Card}" Margin="0,8,0,0" Padding="18,16"
+              Visibility="{Binding Recommendations.Count, Converter={StaticResource CountToVisibility}}">
+        <StackPanel>
+          <Grid>
+            <StackPanel Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="LightbulbOn" Width="16" Height="16"
+                                          Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+              <TextBlock Text="Recomendações desta avaliação" Style="{StaticResource H3}" Margin="9,0,0,0" />
+            </StackPanel>
+            <Button Style="{StaticResource ButtonGhost}"
+                    HorizontalAlignment="Right"
+                    Content="Ver todas"
+                    Command="{Binding GoToRecommendationsCommand}" />
+          </Grid>
+
+          <ItemsControl ItemsSource="{Binding Recommendations}" Margin="0,10,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid Margin="0,0,0,8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+
+                  <iconPacks:PackIconMaterial Grid.Column="0"
+                                              Kind="{Binding IconKind, Converter={StaticResource IconKind}}"
+                                              Width="16" Height="16"
+                                              Foreground="{StaticResource BrushTextSecondary}"
+                                              VerticalAlignment="Center" />
+
+                  <StackPanel Grid.Column="1" Margin="12,0,12,0">
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}" TextWrapping="Wrap" />
+                  </StackPanel>
+
+                  <Border Grid.Column="2" Style="{StaticResource Badge}"
+                          Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}"
+                          VerticalAlignment="Center">
+                    <TextBlock Text="{Binding PriorityText}" Style="{StaticResource BadgeText}"
+                               Foreground="{StaticResource BrushTextOnAccent}" />
+                  </Border>
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

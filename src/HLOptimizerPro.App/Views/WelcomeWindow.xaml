@@ -1,0 +1,293 @@
+<!--
+  ============================================================================
+  Tela de boas-vindas / login (3.1)
+  ============================================================================
+  Estrutura:
+    • Esquerda: identidade da aplicação (logótipo vetorial, slogan, benefícios e selos).
+    • Direita:  formulário de entrada (utilizador, senha com mostrar/ocultar, lembrar-me,
+                esqueceu a senha, Entrar, Entrar com Microsoft, Criar conta, Agora não).
+  A janela tem barra de título personalizada (arrastar, minimizar e fechar).
+-->
+<Window x:Class="HLOptimizerPro.App.Views.WelcomeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="HL Optimizer Pro — Bem-vindo"
+        Width="1020" Height="660"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        FontFamily="{StaticResource FontBody}"
+        TextOptions.TextFormattingMode="Ideal">
+
+  <Border Background="{StaticResource BrushAppBackground}"
+          BorderBrush="{StaticResource BrushGlassBorderStrong}"
+          BorderThickness="1"
+          CornerRadius="16"
+          Margin="14"
+          Effect="{StaticResource EffectPanelShadow}">
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="1.05*" />
+        <ColumnDefinition Width="0.95*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- ======================= COLUNA ESQUERDA: IDENTIDADE ======================= -->
+      <Border Grid.Column="0"
+              Background="{StaticResource BrushSidebar}"
+              CornerRadius="16,0,0,16"
+              Padding="38,34">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <!-- Logótipo e nome -->
+          <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <Image Source="{StaticResource LogoImage}" Width="58" Height="58" />
+            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="HL Optimizer Pro" Style="{StaticResource H2}" FontSize="20" />
+              <TextBlock Text="{Binding Slogan}" Style="{StaticResource Caption}" Margin="0,2,0,0" />
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Estado da licença -->
+          <Border Grid.Row="1" Style="{StaticResource Badge}" HorizontalAlignment="Left" Margin="0,22,0,0">
+            <StackPanel Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="StarFourPoints" Width="13" Height="13"
+                                          Foreground="{StaticResource BrushAccentBright}"
+                                          VerticalAlignment="Center" />
+              <TextBlock Text="{Binding LicenseText}" Style="{StaticResource BadgeText}" Margin="6,0,0,0" />
+            </StackPanel>
+          </Border>
+
+          <!-- Benefícios -->
+          <StackPanel Grid.Row="2" Margin="0,26,0,0">
+            <TextBlock Text="O que vai ganhar" Style="{StaticResource H3}" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding Benefits}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0"
+                            Width="34" Height="34"
+                            CornerRadius="10"
+                            Background="{StaticResource BrushAccentSubtle}"
+                            BorderBrush="{StaticResource BrushGlassBorder}"
+                            BorderThickness="1">
+                      <iconPacks:PackIconMaterial Kind="{Binding IconKind, Converter={StaticResource IconKind}}"
+                                                  Width="17" Height="17"
+                                                  Foreground="{StaticResource BrushAccentBright}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}" />
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <!-- Selos tecnológicos (rodapé) -->
+          <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,20,0,0">
+            <Border Style="{StaticResource Badge}" Margin="0,0,8,0">
+              <TextBlock Text=".NET 8" Style="{StaticResource BadgeText}" />
+            </Border>
+            <Border Style="{StaticResource Badge}" Margin="0,0,8,0">
+              <TextBlock Text="C# WPF" Style="{StaticResource BadgeText}" />
+            </Border>
+            <Border Style="{StaticResource Badge}">
+              <TextBlock Text="MVVM" Style="{StaticResource BadgeText}" />
+            </Border>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ======================= COLUNA DIREITA: LOGIN ======================= -->
+      <Grid Grid.Column="1" Margin="0,0,0,0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Barra de título personalizada -->
+        <Grid Grid.Row="0" Height="42" Background="Transparent" MouseLeftButtonDown="OnTitleBarMouseDown">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{StaticResource ButtonWindowControl}"
+                    Content="—"
+                    ToolTip="Minimizar"
+                    Click="OnMinimizeClick" />
+            <Button Style="{StaticResource ButtonClose}"
+                    Content="✕"
+                    ToolTip="Fechar"
+                    Click="OnCloseClick" />
+          </StackPanel>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="42,10,42,34">
+          <StackPanel>
+            <TextBlock Text="Bem-vindo de volta!" Style="{StaticResource H1}" FontSize="27" />
+            <TextBlock Text="Inicie sessão para manter as suas otimizações, preferências e histórico neste computador."
+                       Style="{StaticResource Secondary}"
+                       Margin="0,6,0,26"
+                       MaxWidth="380"
+                       HorizontalAlignment="Left" />
+
+            <!-- Utilizador -->
+            <TextBlock Text="Utilizador ou e-mail" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+            <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"
+                     x:Name="UserTextBox"
+                     Margin="0,0,0,16" />
+
+            <!-- Senha -->
+            <TextBlock Text="Senha" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+            <Grid Margin="0,0,0,10">
+              <PasswordBox x:Name="PasswordInput"
+                           PasswordChanged="OnPasswordChanged"
+                           Visibility="{Binding ShowPassword, Converter={StaticResource BoolToVisibility}, ConverterParameter=inverter}" />
+              <TextBox x:Name="PasswordVisible"
+                       Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
+                       Visibility="{Binding ShowPassword, Converter={StaticResource BoolToVisibility}}" />
+              <ToggleButton x:Name="ShowPasswordToggle"
+                            HorizontalAlignment="Right"
+                            Width="34" Height="34"
+                            Margin="0,0,4,0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            IsChecked="{Binding ShowPassword}"
+                            ToolTip="Mostrar/ocultar a senha">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="Transparent" CornerRadius="8">
+                      <iconPacks:PackIconMaterial x:Name="EyeIcon"
+                                                  Kind="EyeOffOutline"
+                                                  Width="16" Height="16"
+                                                  Foreground="{StaticResource BrushTextSecondary}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="EyeIcon" Property="Kind" Value="EyeOutline" />
+                        <Setter TargetName="EyeIcon" Property="Foreground" Value="{StaticResource BrushAccentBright}" />
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+            </Grid>
+
+            <!-- Lembrar-me / esqueceu a senha -->
+            <Grid Margin="0,4,0,20">
+              <CheckBox Content="Lembrar-me" IsChecked="{Binding RememberMe}" VerticalAlignment="Center" />
+              <Button Content="Esqueceu a senha?"
+                      Style="{StaticResource ButtonGhost}"
+                      HorizontalAlignment="Right"
+                      Padding="4,2"
+                      Command="{Binding ShowForgotPasswordCommand}" />
+            </Grid>
+
+            <!-- Mensagem de erro / ajuda -->
+            <Border Visibility="{Binding ErrorMessage, Converter={StaticResource EmptyStringToVisibility}}"
+                    Background="{StaticResource BrushDangerSoft}"
+                    BorderBrush="{StaticResource BrushDanger}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="12,10"
+                    Margin="0,0,0,14">
+              <StackPanel Orientation="Horizontal">
+                <iconPacks:PackIconMaterial Kind="AlertCircleOutline" Width="16" Height="16"
+                                            Foreground="{StaticResource BrushDanger}"
+                                            VerticalAlignment="Top" />
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Style="{StaticResource Caption}"
+                           Foreground="{StaticResource BrushDanger}"
+                           Margin="8,0,0,0"
+                           MaxWidth="330" />
+              </StackPanel>
+            </Border>
+
+            <!-- Ações principais -->
+            <Button Content="Entrar"
+                    Style="{StaticResource ButtonPrimary}"
+                    Height="44"
+                    Command="{Binding SignInCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+
+            <Grid Margin="0,12,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Height="1" Background="{StaticResource BrushDivider}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="ou" Style="{StaticResource Caption}" Margin="12,0" />
+              <Border Grid.Column="2" Height="1" Background="{StaticResource BrushDivider}" VerticalAlignment="Center" />
+            </Grid>
+
+            <Button Content="Entrar com a Microsoft"
+                    Style="{StaticResource ButtonSecondary}"
+                    Margin="0,12,0,0"
+                    Command="{Binding MicrosoftSignInCommand}">
+              <Button.ContentTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="MicrosoftWindows" Width="15" Height="15" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding}" Margin="9,0,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+                </DataTemplate>
+              </Button.ContentTemplate>
+            </Button>
+
+            <Button Content="Criar conta"
+                    Style="{StaticResource ButtonGhost}"
+                    Margin="0,10,0,0"
+                    Command="{Binding CreateAccountCommand}" />
+
+            <Button Content="Agora não (usar sem conta)"
+                    Style="{StaticResource ButtonGhost}"
+                    Margin="0,2,0,0"
+                    Command="{Binding SkipCommand}" />
+
+            <!-- Rodapé de segurança -->
+            <StackPanel Orientation="Horizontal" Margin="0,22,0,0" HorizontalAlignment="Center">
+              <iconPacks:PackIconMaterial Kind="LockOutline" Width="13" Height="13"
+                                          Foreground="{StaticResource BrushTextMuted}"
+                                          VerticalAlignment="Center" />
+              <TextBlock Text="A senha é guardada apenas neste computador, com hash PBKDF2 (100 000 iterações)."
+                         Style="{StaticResource Caption}"
+                         Margin="7,0,0,0"
+                         VerticalAlignment="Center" />
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+
+        <!-- Sobreposição de carregamento (mostrada durante o início de sessão) -->
+        <Border Grid.RowSpan="2"
+                Background="#D90B1530"
+                CornerRadius="0,16,16,0"
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Image Source="{StaticResource LogoImage}" Width="72" Height="72" />
+            <TextBlock Text="{Binding BusyMessage}"
+                       Style="{StaticResource Secondary}"
+                       Margin="0,18,0,0"
+                       HorizontalAlignment="Center" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
