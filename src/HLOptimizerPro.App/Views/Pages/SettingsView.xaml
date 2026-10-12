@@ -1,0 +1,295 @@
+<!--
+  ============================================================================
+  Configuração (3.8)
+  ============================================================================
+  Idioma, resolução/escala, iniciar com o Windows, notificações, modo escuro, segurança
+  (ponto de restauro, backup .reg, confirmações, modo Simular), privacidade/telemetria,
+  perfil e conta, histórico de atividades, deteção de sistema e ações de saída.
+-->
+<UserControl x:Class="HLOptimizerPro.App.Views.Pages.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Style="{StaticResource PageTransition}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
+      <StackPanel>
+
+        <!-- ===================== INTERFACE ===================== -->
+        <Border Style="{StaticResource Card}" Padding="18,16">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="Palette" Width="16" Height="16"
+                                          Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+              <TextBlock Text="Interface" Style="{StaticResource H3}" Margin="9,0,0,0" />
+            </StackPanel>
+
+            <Grid Margin="0,14,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+
+              <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                <TextBlock Text="Idioma" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                <ComboBox ItemsSource="{Binding Languages}"
+                          SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+                          DisplayMemberPath="Label" />
+                <TextBlock Text="Português (pt-PT) é o idioma predefinido."
+                           Style="{StaticResource Caption}" Margin="0,5,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                <TextBlock Text="Escala da interface" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                <ComboBox ItemsSource="{Binding Scales}"
+                          SelectedItem="{Binding SelectedScale, Mode=TwoWay}"
+                          DisplayMemberPath="Label" />
+                <TextBlock Text="{Binding ScreenInfoText}" Style="{StaticResource Caption}"
+                           Margin="0,5,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="Resolução preferida" Style="{StaticResource Caption}" Margin="0,0,0,5" />
+                <ComboBox ItemsSource="{Binding Resolutions}"
+                          SelectedItem="{Binding SelectedResolution, Mode=TwoWay}" />
+                <TextBlock Text="«Auto» usa a resolução nativa do ecrã (recomendado)."
+                           Style="{StaticResource Caption}" Margin="0,5,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+            </Grid>
+
+            <UniformGrid Columns="3" Margin="0,16,0,0">
+              <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Content="Modo escuro"
+                        IsChecked="{Binding DarkMode}" Margin="0,0,14,0" />
+              <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Content="Animações"
+                        IsChecked="{Binding AnimationsEnabled}" Margin="0,0,14,0" />
+              <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Content="Notificações"
+                        IsChecked="{Binding NotificationsEnabled}" />
+            </UniformGrid>
+
+            <Grid Margin="0,14,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Intervalo de atualização das métricas" Style="{StaticResource Caption}"
+                           Margin="0,0,0,5" />
+                <ComboBox ItemsSource="{Binding Intervals}"
+                          SelectedItem="{Binding RealtimeIntervalMs, Mode=TwoWay}"
+                          Width="120" HorizontalAlignment="Left" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Content="Iniciar com o Windows"
+                          IsChecked="{Binding StartWithWindows}" Margin="0,0,14,0" />
+                <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Content="Iniciar minimizado"
+                          IsChecked="{Binding StartMinimized}" Margin="0,0,14,0" />
+                <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Content="Minimizar para a bandeja"
+                          IsChecked="{Binding MinimizeToTray}" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- ===================== SEGURANÇA ===================== -->
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0" Padding="18,16">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="ShieldCheckOutline" Width="16" Height="16"
+                                          Foreground="{StaticResource BrushSuccess}" VerticalAlignment="Center" />
+              <TextBlock Text="Segurança e reversibilidade" Style="{StaticResource H3}" Margin="9,0,0,0" />
+            </StackPanel>
+
+            <UniformGrid Columns="2" Margin="0,14,0,0">
+              <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Margin="0,0,14,10"
+                        Content="Criar ponto de restauro antes de alterações"
+                        IsChecked="{Binding CreateRestorePointBeforeChanges}"
+                        ToolTip="Recomendado: permite voltar atrás no Windows inteiro se algo correr mal" />
+              <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Margin="0,0,14,10"
+                        Content="Exportar chaves de registo (.reg) antes de escrever"
+                        IsChecked="{Binding BackupRegistryBeforeChanges}"
+                        ToolTip="Guarda uma cópia da chave afetada na pasta de backups" />
+              <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Margin="0,0,14,0"
+                        Content="Confirmar operações de risco médio/alto"
+                        IsChecked="{Binding ConfirmRiskyActions}" />
+              <CheckBox Style="{StaticResource ToggleSwitchWithLabel}"
+                        Content="Modo Simular (não altera nada)"
+                        IsChecked="{Binding SimulationMode}" />
+            </UniformGrid>
+
+            <TextBlock Text="Desativar estas proteções torna as otimizações irreversíveis. O modo Simular é a forma mais segura de ver o que seria alterado."
+                       Style="{StaticResource Caption}" Margin="0,12,0,0" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <!-- ===================== PRIVACIDADE ===================== -->
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0" Padding="18,16">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <iconPacks:PackIconMaterial Kind="ShieldLockOutline" Width="16" Height="16"
+                                          Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+              <TextBlock Text="Privacidade" Style="{StaticResource H3}" Margin="9,0,0,0" />
+            </StackPanel>
+
+            <CheckBox Style="{StaticResource ToggleSwitchWithLabel}" Margin="0,14,0,0"
+                      Content="Partilhar telemetria anónima de utilização"
+                      IsChecked="{Binding TelemetryEnabled}" />
+
+            <Border Style="{StaticResource CardCompact}" Margin="0,12,0,0"
+                    Background="{StaticResource BrushBgSunken}">
+              <TextBlock Text="{Binding TelemetryStateText}" Style="{StaticResource Caption}"
+                         TextWrapping="Wrap" />
+            </Border>
+
+            <TextBlock Text="A telemetria é opcional e sempre anónima (versão, sistema operativo e número de otimizações). Nunca são enviados ficheiros, nomes, caminhos ou conteúdos."
+                       Style="{StaticResource Caption}" Margin="0,10,0,0" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <!-- ===================== PERFIL E CONTA ===================== -->
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0" Padding="18,16">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="0,0,14,0">
+              <StackPanel Orientation="Horizontal">
+                <iconPacks:PackIconMaterial Kind="AccountCircleOutline" Width="16" Height="16"
+                                            Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+                <TextBlock Text="Perfil e conta" Style="{StaticResource H3}" Margin="9,0,0,0" />
+              </StackPanel>
+
+              <TextBlock Text="Nome apresentado" Style="{StaticResource Caption}" Margin="0,14,0,5" />
+              <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+
+              <TextBlock Text="E-mail" Style="{StaticResource Caption}" Margin="0,12,0,5" />
+              <TextBox Text="{Binding Email}" IsReadOnly="True" />
+
+              <TextBlock Text="{Binding AccountTypeText}" Style="{StaticResource Caption}" Margin="0,8,0,0" />
+              <TextBlock Text="{Binding LicenseText}" Style="{StaticResource Caption}" Margin="0,4,0,0"
+                         Foreground="{StaticResource BrushAccentBright}" />
+
+              <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                <Button Style="{StaticResource ButtonSecondary}" Content="Guardar perfil"
+                        Command="{Binding SaveCommand}" Margin="0,0,8,0" />
+                <Button Style="{StaticResource ButtonGhost}" Content="Terminar sessão"
+                        Command="{Binding SignOutCommand}" />
+              </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1">
+              <StackPanel Orientation="Horizontal">
+                <iconPacks:PackIconMaterial Kind="MonitorDashboard" Width="16" Height="16"
+                                            Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+                <TextBlock Text="Sistema e dados" Style="{StaticResource H3}" Margin="9,0,0,0" />
+              </StackPanel>
+
+              <TextBlock Text="{Binding SystemSummary}" Style="{StaticResource Caption}" Margin="0,14,0,0"
+                         TextWrapping="Wrap" />
+              <TextBlock Text="{Binding StorageText}" Style="{StaticResource Caption}" Margin="0,8,0,0"
+                         TextWrapping="Wrap" />
+              <TextBlock Text="{Binding DataFolderText}" Style="{StaticResource Mono}" FontSize="10.5"
+                         Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,0" TextWrapping="Wrap" />
+
+              <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                <Button Style="{StaticResource ButtonSecondary}" Content="Detetar sistema"
+                        Command="{Binding DetectSystemCommand}" Margin="0,0,8,0" />
+                <Button Style="{StaticResource ButtonGhost}" Content="Abrir pasta de dados"
+                        Command="{Binding OpenDataFolderCommand}" Margin="0,0,8,0" />
+                <Button Style="{StaticResource ButtonGhost}" Content="Restaurar predefinições"
+                        Command="{Binding ResetSettingsCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- ===================== HISTÓRICO ===================== -->
+        <Border Style="{StaticResource Card}" Margin="0,16,0,0" Padding="18,16">
+          <StackPanel>
+            <Grid>
+              <StackPanel Orientation="Horizontal">
+                <iconPacks:PackIconMaterial Kind="History" Width="16" Height="16"
+                                            Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+                <TextBlock Text="Histórico de atividades" Style="{StaticResource H3}" Margin="9,0,0,0" />
+                <TextBlock Text="(otimizações, limpezas, medições e erros)"
+                           Style="{StaticResource Caption}" Margin="8,3,0,0" />
+              </StackPanel>
+
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource ButtonSmallSecondary}" Content="Exportar CSV"
+                        Margin="0,0,6,0" Command="{Binding ExportHistoryCommand}" />
+                <Button Style="{StaticResource ButtonSmallSecondary}" Content="Limpar histórico"
+                        Command="{Binding ClearHistoryCommand}" />
+              </StackPanel>
+            </Grid>
+
+            <Border Style="{StaticResource CardCompact}" Margin="0,12,0,0" Padding="0">
+              <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding History}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid Margin="12,7">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="{Binding TimeText}" Style="{StaticResource Mono}"
+                                   FontSize="11" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{Binding Category}" Style="{StaticResource Caption}"
+                                   Margin="10,0" VerticalAlignment="Center" MinWidth="90" />
+                        <TextBlock Grid.Column="2" Text="{Binding StatusText}" Style="{StaticResource Caption}"
+                                   Margin="0,0,10,0" VerticalAlignment="Center">
+                          <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding Success}" Value="False">
+                                  <Setter Property="Foreground" Value="{StaticResource BrushDanger}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Simulated}" Value="True">
+                                  <Setter Property="Foreground" Value="{StaticResource BrushWarning}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Grid.Column="3" Text="{Binding Description}" Style="{StaticResource Body}"
+                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- ===================== BARRA DE AÇÕES ===================== -->
+    <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,16,0,0" Padding="16,12">
+      <Grid>
+        <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource Caption}" VerticalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+          <Button Style="{StaticResource ButtonPrimary}" Content="Salvar Configurações"
+                  MinWidth="170" Margin="0,0,10,0"
+                  Command="{Binding SaveCommand}"
+                  IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+          <Button Style="{StaticResource ButtonSecondary}" Content="Sair"
+                  Command="{Binding ExitApplicationCommand}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

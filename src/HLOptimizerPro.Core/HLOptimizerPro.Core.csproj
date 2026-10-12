@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- =====================================================================
+       Camada de dominio/infraestrutura.
+       Nao depende de WPF: apenas modelos, contratos e servicos de sistema.
+       Todos os servicos sao testaveis (interfaces + injecao de dependencia).
+       ===================================================================== -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>HLOptimizerPro.Core</RootNamespace>
+    <AssemblyName>HLOptimizerPro.Core</AssemblyName>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>AnyCPU;x64</Platforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>   <!-- usado por NtSetSystemInformation (limpeza de standby list) -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ============ Monitorizacao / sistema ============ -->
+    <PackageReference Include="System.Management" Version="8.0.0" />                      <!-- WMI: hardware, arranque, firewall, antivirus -->
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />  <!-- CPU, RAM, disco -->
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.3" />                <!-- Temperaturas, GPU, ventoinhas -->
+
+    <!-- ============ Logs ============ -->
+    <PackageReference Include="Serilog" Version="3.1.1" />
+
+    <!-- ============ Persistencia / configuracao ============ -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Os testes verificam helpers internos (construção/validação de pacotes DNS e cálculo de
+       latência), que ficam internos de propósito para não fazerem parte da API pública. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>HLOptimizerPro.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

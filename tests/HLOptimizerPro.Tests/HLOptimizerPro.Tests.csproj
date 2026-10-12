@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- =====================================================================
+       Testes unitarios dos servicos principais:
+         • pontuacao do sistema (ScoringService)
+         • limpeza de ficheiros (CleanupService)
+         • benchmark de DNS (DnsBenchmarkService)
+         • reversibilidade das otimizacoes (OptimizationAction)
+       Os testes nunca tocam no registo real nem em ficheiros do utilizador:
+       usam implementacoes falsas das abstracoes de sistema (I*Provider).
+       ===================================================================== -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>HLOptimizerPro.Tests</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HLOptimizerPro.Core\HLOptimizerPro.Core.csproj" />
+  </ItemGroup>
+
+</Project>

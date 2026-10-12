@@ -1,0 +1,156 @@
+<!--
+  ============================================================================
+  Ferramenta App Tuner (3.4-c)
+  ============================================================================
+  Aplicações populares (Discord, Chrome, Steam, OBS, Spotify, Edge, Firefox) com o estado real
+  (Otimizado / Pronto / Não instalado), comutador para escolher, prioridade de CPU, afinidade de
+  núcleos e plano de energia. Aplicar passa pelo motor de otimizações (com backup e reversão total).
+-->
+<UserControl x:Class="HLOptimizerPro.App.Views.Pages.AppTunerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Style="{StaticResource PageTransition}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- ===================== CABEÇALHO ===================== -->
+    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="20,18">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+          <TextBlock Text="Otimização por aplicação" Style="{StaticResource H2}" FontSize="19" />
+          <TextBlock Text="{Binding SummaryText}" Style="{StaticResource Secondary}" Margin="0,6,0,0" />
+          <TextBlock Text="{Binding LastRunText}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button Style="{StaticResource ButtonGhost}" Content="Selecionar instaladas"
+                  Command="{Binding SelectInstalledCommand}" Margin="0,0,8,0" />
+          <Button Style="{StaticResource ButtonGhost}" Content="Limpar seleção"
+                  Command="{Binding ClearSelectionCommand}" Margin="0,0,8,0" />
+          <Button Style="{StaticResource ButtonSecondary}" Content="Detetar novamente"
+                  Command="{Binding DetectCommand}" Margin="0,0,8,0" />
+          <Button Style="{StaticResource ButtonSecondary}" Content="Reverter tudo"
+                  ToolTip="Repõe todas as configurações originais guardadas no diário"
+                  Command="{Binding RevertAllCommand}" Margin="0,0,8,0" />
+          <Button Style="{StaticResource ButtonPrimary}" Content="Otimizar Selecionados"
+                  Command="{Binding OptimizeSelectedCommand}"
+                  IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- ===================== LISTA DE APLICAÇÕES ===================== -->
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Margin="0,16,0,0" Padding="0,0,6,0">
+      <ItemsControl ItemsSource="{Binding Rows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="16,14">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Ícone -->
+                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12"
+                        Background="{StaticResource BrushAccentSubtle}"
+                        BorderBrush="{StaticResource BrushGlassBorder}" BorderThickness="1"
+                        VerticalAlignment="Center">
+                  <iconPacks:PackIconMaterial Kind="{Binding IconGlyph, Converter={StaticResource IconKind}}"
+                                              Width="21" Height="21"
+                                              Foreground="{StaticResource BrushAccentBright}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Nome, estado e descrição -->
+                <StackPanel Grid.Column="1" Margin="14,0,14,0" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource H3}" />
+                    <Border Style="{StaticResource Badge}" Margin="10,0,0,0"
+                            Background="{Binding StateHealth, Converter={StaticResource HealthToSoftBrush}}"
+                            BorderBrush="{Binding StateHealth, Converter={StaticResource HealthToBrush}}">
+                      <TextBlock Text="{Binding StateText}" Style="{StaticResource BadgeText}"
+                                 Foreground="{Binding StateHealth, Converter={StaticResource HealthToBrush}}" />
+                    </Border>
+                    <Border Style="{StaticResource Badge}" Margin="6,0,0,0"
+                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}">
+                      <TextBlock Text="{Binding RunningText}" Style="{StaticResource BadgeText}" />
+                    </Border>
+                  </StackPanel>
+
+                  <TextBlock Text="{Binding Notes}" Style="{StaticResource Caption}" Margin="0,5,0,0"
+                             TextWrapping="Wrap" MaxWidth="560" HorizontalAlignment="Left" />
+                  <TextBlock Text="{Binding ExpectedGain}" Style="{StaticResource Caption}"
+                             Foreground="{StaticResource BrushSuccess}" Margin="0,3,0,0" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding ProcessNamesText, StringFormat={}Processos: {0}}"
+                             Style="{StaticResource Caption}" Margin="0,3,0,0" />
+                </StackPanel>
+
+                <!-- Prioridade -->
+                <StackPanel Grid.Column="2" Width="150" Margin="0,0,14,0" VerticalAlignment="Center">
+                  <TextBlock Text="Prioridade de CPU" Style="{StaticResource SectionLabel}" Margin="0,0,0,5" />
+                  <ComboBox ItemsSource="{Binding DataContext.Priorities, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            SelectedItem="{Binding PriorityName, Mode=TwoWay}"
+                            IsEnabled="{Binding IsInstalled}" />
+                  <CheckBox Content="Afinidade de núcleos" Margin="0,8,0,0"
+                            IsChecked="{Binding UseAffinity}"
+                            IsEnabled="{Binding IsInstalled}" />
+                  <CheckBox Content="Plano de energia" Margin="0,4,0,0"
+                            IsChecked="{Binding ApplyPowerPlan}"
+                            IsEnabled="{Binding IsInstalled}" />
+                </StackPanel>
+
+                <!-- Ações -->
+                <StackPanel Grid.Column="3" VerticalAlignment="Center" Width="150">
+                  <Button Style="{StaticResource ButtonSmallSecondary}"
+                          Content="Aplicar agora"
+                          ToolTip="Aplica prioridade/afinidade imediatamente (a aplicação tem de estar aberta)"
+                          IsEnabled="{Binding IsRunning}"
+                          Command="{Binding DataContext.ApplyNowCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                          CommandParameter="{Binding}" />
+                  <TextBlock Text="{Binding AffinityText}" Style="{StaticResource Caption}" Margin="0,6,0,0"
+                             TextWrapping="Wrap" HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding PowerPlanText}" Style="{StaticResource Caption}" Margin="0,2,0,0"
+                             TextWrapping="Wrap" HorizontalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Comutador de seleção -->
+                <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="10,0,0,0">
+                  <CheckBox Style="{StaticResource ToggleSwitch}"
+                            IsChecked="{Binding IsSelected}"
+                            IsEnabled="{Binding IsInstalled}"
+                            ToolTip="Incluir esta aplicação em «Otimizar Selecionados»" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- ===================== NOTA DE SEGURANÇA ===================== -->
+    <Border Grid.Row="2" Style="{StaticResource CardCompact}" Margin="0,12,0,0">
+      <StackPanel Orientation="Horizontal">
+        <iconPacks:PackIconMaterial Kind="ShieldCheckOutline" Width="16" Height="16"
+                                    Foreground="{StaticResource BrushSuccess}" VerticalAlignment="Top" />
+        <TextBlock Text="Nada é removido ou apagado: apenas a prioridade, a afinidade de núcleos e o plano de energia são ajustados, e o valor original de cada um é guardado para reversão a 100 % (botão «Reverter tudo» ou o diário em «Otimizações»)."
+                   Style="{StaticResource Caption}" Margin="10,0,0,0" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

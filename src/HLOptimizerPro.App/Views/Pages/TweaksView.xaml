@@ -1,0 +1,234 @@
+<!--
+  ============================================================================
+  Ferramenta Tweaks por perfil (3.4-d)
+  ============================================================================
+  Quatro perfis (Competitivo, Streaming, Balanceado, Extremo) com a lista exata do que é ajustado,
+  aviso de risco no perfil Extremo, botões «Aplicar Perfil» e «Personalizar Avançado» (seleção
+  individual dos ajustes) e reversão total a partir do diário de alterações.
+-->
+<UserControl x:Class="HLOptimizerPro.App.Views.Pages.TweaksView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             Style="{StaticResource PageTransition}">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- ===================== SELETOR DE PERFIS ===================== -->
+    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="20,18">
+      <StackPanel>
+        <Grid>
+          <StackPanel Orientation="Horizontal">
+            <iconPacks:PackIconMaterial Kind="Tune" Width="17" Height="17"
+                                        Foreground="{StaticResource BrushAccentBright}" VerticalAlignment="Center" />
+            <TextBlock Text="Escolha um perfil de otimização" Style="{StaticResource H3}" Margin="9,0,0,0" />
+            <TextBlock Text="(pode personalizar depois de escolher)"
+                       Style="{StaticResource Caption}" Margin="8,3,0,0" />
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{StaticResource ButtonGhost}" Content="Reverter tweaks aplicados"
+                    Margin="0,0,8,0" Command="{Binding RevertCommand}" />
+            <Button Style="{StaticResource ButtonSecondary}" Content="Personalizar Avançado"
+                    Command="{Binding ToggleAdvancedCommand}" />
+          </StackPanel>
+        </Grid>
+
+        <!-- Cartões dos perfis -->
+        <ItemsControl ItemsSource="{Binding Profiles}" Margin="0,14,0,0">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <UniformGrid Columns="4" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Button Margin="4"
+                      Padding="0"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      FocusVisualStyle="{x:Null}"
+                      Cursor="Hand"
+                      Command="{Binding DataContext.SelectProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      CommandParameter="{Binding}">
+                <Button.Template>
+                  <ControlTemplate TargetType="Button">
+                    <Border x:Name="Root" Padding="16,14" CornerRadius="{StaticResource RadiusCard}"
+                            Background="{StaticResource BrushGlassPanel}"
+                            BorderBrush="{StaticResource BrushGlassBorder}"
+                            BorderThickness="1">
+                      <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                        <Setter TargetName="Root" Property="Background" Value="{StaticResource BrushAccentSubtle}" />
+                        <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+                      </DataTrigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Button.Template>
+
+                <StackPanel>
+                  <StackPanel Orientation="Horizontal">
+                    <Border Width="34" Height="34" CornerRadius="10"
+                            Background="{StaticResource BrushBgSunken}"
+                            BorderBrush="{StaticResource BrushGlassBorder}" BorderThickness="1">
+                      <iconPacks:PackIconMaterial Kind="{Binding IconKind, Converter={StaticResource IconKind}}"
+                                                  Width="17" Height="17"
+                                                  Foreground="{StaticResource BrushAccentBright}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource H3}" Margin="10,6,0,0" />
+                  </StackPanel>
+
+                  <TextBlock Text="{Binding Summary}" Style="{StaticResource Caption}" Margin="0,10,0,0"
+                             TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding RecommendedFor, StringFormat={}Ideal para: {0}}"
+                             Style="{StaticResource Caption}"
+                             Foreground="{StaticResource BrushTextMuted}"
+                             Margin="0,8,0,0" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Warning}" Style="{StaticResource Caption}"
+                             Foreground="{StaticResource BrushWarning}"
+                             Margin="0,8,0,0" TextWrapping="Wrap"
+                             Visibility="{Binding Warning, Converter={StaticResource EmptyStringToVisibility}}" />
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <!-- ===================== DETALHE DO PERFIL ===================== -->
+    <ScrollViewer Grid.Row="1" Margin="0,16,0,0" VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
+      <StackPanel>
+        <Border Style="{StaticResource Card}" Padding="20,18">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="1.1*" />
+              <ColumnDefinition Width="1.4*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- O que será ajustado -->
+            <StackPanel Grid.Column="0" Margin="0,0,18,0">
+              <TextBlock Text="{Binding SelectedProfile.Name, StringFormat={}Perfil: {0}}"
+                         Style="{StaticResource H2}" FontSize="18" />
+              <TextBlock Text="{Binding SelectedProfileSummary}" Style="{StaticResource Secondary}"
+                         Margin="0,6,0,0" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding SelectedProfileRecommendedFor}" Style="{StaticResource Caption}"
+                         Margin="0,6,0,0" />
+
+              <TextBlock Text="O que será ajustado" Style="{StaticResource SectionLabel}" Margin="0,16,0,8" />
+              <TextBlock Text="{Binding AdjustmentListText}" Style="{StaticResource Body}"
+                         TextWrapping="Wrap" LineHeight="21" />
+
+              <Border Style="{StaticResource CardCompact}" Margin="0,14,0,0"
+                      Background="{StaticResource BrushWarningSoft}"
+                      BorderBrush="{StaticResource BrushWarning}"
+                      Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Orientation="Horizontal">
+                  <iconPacks:PackIconMaterial Kind="AlertOutline" Width="16" Height="16"
+                                              Foreground="{StaticResource BrushWarning}" VerticalAlignment="Top" />
+                  <TextBlock Text="{Binding SelectedProfileWarning}" Style="{StaticResource Caption}"
+                             Foreground="{StaticResource BrushWarning}" Margin="10,0,0,0"
+                             TextWrapping="Wrap" MaxWidth="420" />
+                </StackPanel>
+              </Border>
+
+              <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                <Button Style="{StaticResource ButtonPrimary}"
+                        Content="Aplicar Perfil"
+                        MinWidth="170"
+                        Command="{Binding ApplyProfileCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Content="Aplicar Só os Selecionados"
+                        Margin="10,0,0,0"
+                        Command="{Binding ApplySelectedCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}"
+                        Visibility="{Binding IsAdvancedMode, Converter={StaticResource BoolToVisibility}}" />
+              </StackPanel>
+
+              <TextBlock Text="{Binding LastRunText}" Style="{StaticResource Caption}" Margin="0,10,0,0" />
+              <TextBlock Text="{Binding CoverageText}" Style="{StaticResource Caption}" Margin="0,4,0,0" />
+            </StackPanel>
+
+            <!-- Ajustes individuais (modo avançado) -->
+            <Border Grid.Column="1" Style="{StaticResource CardCompact}"
+                    Visibility="{Binding IsAdvancedMode, Converter={StaticResource BoolToVisibility}}">
+              <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="*" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                  <TextBlock Text="Personalização avançada" Style="{StaticResource SectionLabel}" />
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource ButtonSmallSecondary}" Content="Tudo"
+                            Margin="0,0,6,0" Command="{Binding SelectAllAdjustmentsCommand}" />
+                    <Button Style="{StaticResource ButtonSmallSecondary}" Content="Nada"
+                            Command="{Binding ClearAdjustmentsCommand}" />
+                  </StackPanel>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" MaxHeight="380" VerticalScrollBarVisibility="Auto"
+                              Padding="0,0,6,0">
+                  <ItemsControl ItemsSource="{Binding Adjustments}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{StaticResource BrushBgSunken}"
+                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,6">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="Auto" />
+                              <ColumnDefinition Width="*" />
+                              <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <CheckBox Grid.Column="0" VerticalAlignment="Top" Margin="0,2,0,0"
+                                      IsChecked="{Binding IsSelected}" IsEnabled="{Binding IsAvailable}" />
+
+                            <StackPanel Grid.Column="1" Margin="10,0,8,0">
+                              <TextBlock Text="{Binding Title}" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                              <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}"
+                                         TextWrapping="Wrap" />
+                              <TextBlock Text="{Binding Target}" Style="{StaticResource Mono}" FontSize="10.5"
+                                         Foreground="{StaticResource BrushTextMuted}" Margin="0,3,0,0"
+                                         TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                              <Border Style="{StaticResource Badge}"
+                                      Background="{Binding RiskLevel, Converter={StaticResource HealthToSoftBrush}}"
+                                      BorderBrush="{Binding RiskLevel, Converter={StaticResource HealthToBrush}}">
+                                <TextBlock Text="{Binding RiskLevel}" Style="{StaticResource BadgeText}"
+                                           Foreground="{Binding RiskLevel, Converter={StaticResource HealthToBrush}}" />
+                              </Border>
+                              <TextBlock Text="{Binding StatusText}" Style="{StaticResource Caption}"
+                                         Margin="0,6,0,0" HorizontalAlignment="Center" />
+                            </StackPanel>
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+
+                <TextBlock Grid.Row="2" Text="Cada ajuste guarda o valor original; pode reverter a qualquer momento."
+                           Style="{StaticResource Caption}" Margin="0,10,0,0" TextWrapping="Wrap" />
+              </Grid>
+            </Border>
+          </Grid>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>
