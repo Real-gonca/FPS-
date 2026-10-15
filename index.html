@@ -9,6 +9,25 @@
       content="Treinador de mira offline no browser: controlo de recoil, tracking, flicks, troca de alvo e tempo de reação. Não interage com qualquer jogo."
     />
     <link rel="stylesheet" href="css/style.css" />
+    <!--
+      modulepreload: sem isto o browser carrega os 16 módulos em cascata
+      (um pedido por cada import resolvido), o que atrasa muito o arranque.
+      Assim vão todos em paralelo.
+    -->
+    <link rel="modulepreload" href="js/core/util.js" />
+    <link rel="modulepreload" href="js/core/draw.js" />
+    <link rel="modulepreload" href="js/core/engine.js" />
+    <link rel="modulepreload" href="js/core/mode.js" />
+    <link rel="modulepreload" href="js/patterns.js" />
+    <link rel="modulepreload" href="js/modes/recoil.js" />
+    <link rel="modulepreload" href="js/modes/tracking.js" />
+    <link rel="modulepreload" href="js/modes/flick.js" />
+    <link rel="modulepreload" href="js/modes/grid.js" />
+    <link rel="modulepreload" href="js/modes/reaction.js" />
+    <link rel="modulepreload" href="js/views/train.js" />
+    <link rel="modulepreload" href="js/views/stats.js" />
+    <link rel="modulepreload" href="js/views/settings.js" />
+    <link rel="modulepreload" href="js/views/guide.js" />
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23ff7a1a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%232ee6a8'/%3E%3C/svg%3E"

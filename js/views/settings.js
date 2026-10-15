@@ -163,7 +163,6 @@ export class SettingsView {
       this.app.refreshStats?.();
       this.app.toast('Histórico apagado.');
     };
-    void row;
 
     this.updateReadout();
     this.drawPreview();
