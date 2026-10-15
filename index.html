@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Range Lab — Treinador de Mira e Controlo de Recoil</title>
+    <meta
+      name="description"
+      content="Treinador de mira offline no browser: controlo de recoil, tracking, flicks, troca de alvo e tempo de reação. Não interage com qualquer jogo."
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23ff7a1a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%232ee6a8'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="26" height="26">
+              <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4" opacity=".55" />
+              <circle cx="16" cy="16" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4" />
+              <circle cx="16" cy="16" r="1.8" fill="currentColor" />
+            </svg>
+          </div>
+          <div>
+            <div class="brand-name">RANGE&nbsp;LAB</div>
+            <div class="brand-sub">treino de mira · offline</div>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Secções">
+          <button class="nav-item is-active" data-view="train">
+            <span class="nav-ico">◎</span><span class="nav-txt">Treino</span>
+          </button>
+          <button class="nav-item" data-view="stats">
+            <span class="nav-ico">▤</span><span class="nav-txt">Progresso</span>
+          </button>
+          <button class="nav-item" data-view="settings">
+            <span class="nav-ico">⚙</span><span class="nav-txt">Definições</span>
+          </button>
+          <button class="nav-item" data-view="guide">
+            <span class="nav-ico">✦</span><span class="nav-txt">Guia</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-foot">
+          <div class="fair">
+            <strong>Fair play.</strong> O Range Lab é um ginásio independente: corre só no browser, não
+            lê, escreve nem se liga a qualquer jogo ou processo externo. A skill que ganhas aqui é tua
+            e passa em qualquer verificação de torneio.
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-left">
+            <h1 id="viewTitle">Treino</h1>
+            <p id="viewSub">Escolhe um modo e começa a série.</p>
+          </div>
+          <div class="topbar-right">
+            <div class="pill" id="sensPill" title="Sensibilidade do treinador">sens 1.00×</div>
+            <button class="btn ghost" id="routineBtn" type="button">Rotina diária 15 min</button>
+          </div>
+        </header>
+
+        <!-- ============================== TREINO ============================== -->
+        <section class="view is-active" id="view-train">
+          <div class="modebar" id="modeTabs" role="tablist"></div>
+
+          <div id="routineBar" class="routine-bar" hidden></div>
+
+          <div class="stage-wrap">
+            <div class="stage">
+              <canvas id="scene" tabindex="0" aria-label="Área de treino"></canvas>
+              <div class="stage-status" id="statusLine">Pronto</div>
+              <div class="overlay" id="overlay" hidden></div>
+            </div>
+
+            <div class="side">
+              <div class="card">
+                <h2 id="modeTitle">Controlo de Recoil</h2>
+                <p class="tagline" id="modeTagline"></p>
+                <ol class="how" id="modeHow"></ol>
+                <div class="tip" id="modeTip"></div>
+              </div>
+              <div class="card">
+                <h3 class="card-h">Parâmetros</h3>
+                <div id="modeOptions" class="opts"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card results" id="resultsCard" hidden>
+            <h3 class="card-h">Resultado da série</h3>
+            <div id="results"></div>
+          </div>
+        </section>
+
+        <!-- ============================= PROGRESSO ============================ -->
+        <section class="view" id="view-stats">
+          <div class="stats-head">
+            <div class="stat-tiles" id="statTiles"></div>
+          </div>
+          <div class="mode-cards" id="modeCards"></div>
+          <div class="card">
+            <h3 class="card-h">Histórico recente</h3>
+            <div class="table-wrap"><table class="table" id="historyTable"></table></div>
+          </div>
+        </section>
+
+        <!-- ============================= DEFINIÇÕES =========================== -->
+        <section class="view" id="view-settings">
+          <div class="settings-grid">
+            <div class="card">
+              <h3 class="card-h">Rato e sensibilidade</h3>
+              <div id="setSens" class="opts"></div>
+              <div class="readout" id="sensReadout"></div>
+            </div>
+            <div class="card">
+              <h3 class="card-h">Mira (crosshair)</h3>
+              <div class="cross-preview"><canvas id="crossPreview" width="280" height="120"></canvas></div>
+              <div id="setCross" class="opts"></div>
+            </div>
+            <div class="card">
+              <h3 class="card-h">Apresentação e som</h3>
+              <div id="setMisc" class="opts"></div>
+            </div>
+            <div class="card">
+              <h3 class="card-h">Os teus dados</h3>
+              <p class="muted">
+                Tudo fica guardado localmente neste browser (<code>localStorage</code>). Nada é enviado
+                para lado nenhum.
+              </p>
+              <div class="btn-row">
+                <button class="btn ghost" id="exportBtn" type="button">Exportar JSON</button>
+                <button class="btn danger" id="clearBtn" type="button">Apagar histórico</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================ GUIA ============================== -->
+        <section class="view" id="view-guide">
+          <div class="guide" id="guideBody"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
