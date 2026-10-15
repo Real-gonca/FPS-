@@ -1,19 +1,27 @@
 /**
  * Range Lab — smoke test de arranque com um DOM fingido.
  *
- * Corre com:  node tests/dom.smoke.mjs
+ *   node tests/dom.smoke.mjs             testa os módulos em js/
+ *   node tests/dom.smoke.mjs --bundle    testa js/app.bundle.js (o que o browser carrega)
  *
  * Não substitui um browser: o canvas é um stub (todas as chamadas de desenho
  * são ignoradas). Serve para apanhar erros de arranque — módulos que falham,
  * ids em falta no HTML, exceções nos construtores das vistas — que de outra
  * forma só apareceriam como uma página em branco.
  */
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const HTML = readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+const USE_BUNDLE = process.argv.includes('--bundle');
+const TARGET = USE_BUNDLE ? '../js/app.bundle.js' : '../js/app.js';
+if (USE_BUNDLE && !existsSync(path.join(ROOT, 'js', 'app.bundle.js'))) {
+  console.error('js/app.bundle.js não existe. Corre primeiro: npm run build');
+  process.exit(1);
+}
 
 // ---------------------------------------------------------------------------
 // Stub de contexto 2D: qualquer método é aceite e não faz nada.
@@ -297,7 +305,7 @@ const ok = (cond, msg, extra = '') => {
 };
 const section = (t) => console.log(`\n${t}`);
 
-section('Arranque da aplicação');
+section(`Arranque da aplicação — ${USE_BUNDLE ? 'bundle' : 'módulos'}`);
 
 let bootError = null;
 // o boot() engole exceções e mostra um cartão de erro — por isso também
@@ -306,14 +314,14 @@ const realError = console.error;
 const captured = [];
 console.error = (...args) => captured.push(args.map(String).join(' '));
 try {
-  await import('../js/app.js');
+  await import(TARGET);
   flushFrames(4);
 } catch (err) {
   bootError = err;
 } finally {
   console.error = realError;
 }
-ok(!bootError, 'js/app.js arranca sem exceções', bootError && (bootError.stack || bootError.message));
+ok(!bootError, `${TARGET} arranca sem exceções`, bootError && (bootError.stack || bootError.message));
 ok(captured.length === 0, 'nenhum erro apanhado pelo boot()', captured.join('\n'));
 
 const app = globalThis.window?.rangelab;
@@ -417,6 +425,13 @@ section('Coerência HTML ↔ JS');
   }
   const missing = [...wanted].filter((id) => !new RegExp(`id="${id}"`).test(HTML));
   ok(missing.length === 0, `todos os ids usados no JS existem no index.html${missing.length ? ': falta ' + missing.join(', ') : ''}`);
+
+  const m = HTML.match(/js\/app\.bundle\.js\?v=([a-f0-9]+)/);
+  ok(!!m, 'index.html carrega js/app.bundle.js com ?v=<hash>');
+  if (m && USE_BUNDLE) {
+    const bundleSrc = readFileSync(path.join(ROOT, 'js', 'app.bundle.js'), 'utf8');
+    ok(bundleSrc.includes(`hash ${m[1]}`), `o bundle servido corresponde ao hash no HTML (${m[1]})`);
+  }
 }
 
 console.log(`\n${failures === 0 ? 'SMOKE TEST OK' : `${failures} FALHA(S)`}`);

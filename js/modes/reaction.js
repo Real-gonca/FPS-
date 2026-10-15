@@ -3,7 +3,7 @@ import { Mode, optionRow } from '../core/mode.js';
 import { clamp, fmt, fmtInt, mean, percentile, rand, store } from '../core/util.js';
 import { label, grid, crosshair, roundRect } from '../core/draw.js';
 
-const DEFAULT_OPTS = {
+const REACTION_DEFAULTS = {
   trials: 10,
   nogoRate: 0.25,
 };
@@ -13,7 +13,7 @@ export class ReactionMode extends Mode {
     super(app);
     this.id = 'reaction';
     this.needsLock = false;
-    this.opts = store.optsFor(this.id, DEFAULT_OPTS);
+    this.opts = store.optsFor(this.id, REACTION_DEFAULTS);
     this.results = [];
     this.falseStarts = 0;
     this.state = 'wait'; // wait | go | nogo | feedback | done

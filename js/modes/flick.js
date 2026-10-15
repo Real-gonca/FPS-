@@ -3,7 +3,7 @@ import { Mode, optionRow } from '../core/mode.js';
 import { clamp, dist, fmt, fmtInt, mean, rand, store } from '../core/util.js';
 import { label, grid, crosshair } from '../core/draw.js';
 
-const DEFAULT_OPTS = {
+const FLICK_DEFAULTS = {
   count: 30,
   size: 22,
   spread: 1,
@@ -15,7 +15,7 @@ export class FlickMode extends Mode {
     super(app);
     this.id = 'flick';
     this.needsLock = false;
-    this.opts = store.optsFor(this.id, DEFAULT_OPTS);
+    this.opts = store.optsFor(this.id, FLICK_DEFAULTS);
     this.targets = [];
     this.cur = null;
     this.hits = 0;

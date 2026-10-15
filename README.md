@@ -23,25 +23,56 @@ Precisas de servir os ficheiros por HTTP (os módulos ES não funcionam a partir
 de `file://`).
 
 ```bash
-# opção 1 — python
-python3 -m http.server 8080 --bind 0.0.0.0
-
-# opção 2 — npm
-npm start
+npm start         # ou: python3 serve.py 8080
 ```
 
 Depois abre <http://localhost:8080>.
 
-Não há instalação, não há `node_modules`, não há build. Zero dependências.
+Não há instalação, não há `node_modules`, não há dependências externas.
+
+O `serve.py` envia `Cache-Control: no-store` — é de propósito. Com o
+`http.server` normal o browser aplica cache heurística e pode continuar a servir
+um ficheiro antigo depois de corrigido.
+
+## Build
+
+O browser carrega **um único ficheiro**, `js/app.bundle.js`, gerado a partir dos
+módulos em `js/`:
+
+```bash
+npm run build
+```
+
+Duas razões para o bundle existir:
+
+1. **Cascata de pedidos.** Com 16 módulos separados o browser fazia 17 pedidos
+   sequenciais (cada `import` só é pedido depois do pai ser analisado) — ~10 s
+   até arrancar atrás de um proxy. Assim são 2 pedidos.
+2. **Cache.** O `index.html` referencia o bundle com `?v=<hash do código>`,
+   reescrito em cada build. Se o código mudar, o URL muda: é impossível o browser
+   servir uma versão antiga.
+
+Os módulos em `js/` continuam a ser a **fonte de verdade** — o bundler é só
+concatenação com deteção de colisões de nomes. O `npm test` faz build primeiro e
+testa as duas formas (módulos e bundle), portanto um bundle esquecido ou partido
+é apanhado imediatamente.
 
 ## Testes
 
-A lógica (padrões de recoil, simulação de séries, métricas e pontuações) tem
-testes que correm em Node, sem browser:
-
 ```bash
-npm test          # ou: node tests/logic.test.mjs
+npm test
 ```
+
+Corre três suites, todas em Node e sem browser:
+
+| Suite | O que cobre |
+|-------|-------------|
+| `tests/logic.test.mjs` | Padrões de recoil, simulação de séries completas dos 5 modos, métricas, pontuações e aconselhamento (relógio e motor fingidos) |
+| `tests/dom.smoke.mjs` | Arranque real da app num DOM fingido: as 4 vistas, os 5 modos, um `draw()` de cada, a rotina diária e a coerência de ids entre HTML e JS |
+| `tests/dom.smoke.mjs --bundle` | O mesmo, mas contra o bundle que o browser carrega, incluindo a correspondência do hash no `index.html` |
+
+O smoke test também captura `console.error`, porque o `boot()` engole exceções e
+mostra um cartão de erro — sem isso, um arranque falhado parecia um sucesso.
 
 ---
 
@@ -97,20 +128,27 @@ exportar em JSON nas Definições.
 ## Estrutura
 
 ```
-index.html
+index.html              carrega js/app.bundle.js?v=<hash>
 css/style.css
+serve.py                servidor estático sem cache
+tools/bundle.mjs        bundler (zero dependências) -> js/app.bundle.js
 js/
-  app.js              arranque, navegação, toasts
-  patterns.js         arquétipos genéricos de recoil + gerador de padrões
+  app.bundle.js         GERADO — o ficheiro que o browser carrega
+  app.js                arranque, navegação, toasts
+  patterns.js           arquétipos genéricos de recoil + gerador de padrões
   core/
-    engine.js         canvas, ciclo de render, rato/teclado, pointer lock, som
-    mode.js           classe base dos modos + controlos de opções
-    draw.js           primitivas de desenho (alvos, miras, gráficos)
-    util.js           matemática, PRNG determinístico, armazenamento local
-  modes/              recoil.js  tracking.js  flick.js  grid.js  reaction.js
-  views/              train.js  stats.js  settings.js  guide.js
-tests/logic.test.mjs  testes de lógica (Node, sem browser)
+    engine.js           canvas, ciclo de render, rato/teclado, pointer lock, som
+    mode.js             classe base dos modos + controlos de opções
+    draw.js             primitivas de desenho (alvos, miras, gráficos)
+    util.js             matemática, PRNG determinístico, armazenamento local
+  modes/                recoil.js  tracking.js  flick.js  grid.js  reaction.js
+  views/                train.js  stats.js  settings.js  guide.js
+tests/
+  logic.test.mjs        testes de lógica (Node, sem browser)
+  dom.smoke.mjs         smoke test de arranque com DOM fingido
 ```
+
+Edita sempre os módulos em `js/`, nunca o `app.bundle.js`.
 
 ## Nota sobre otimização de PC
 

@@ -3,7 +3,7 @@ import { Mode, optionRow } from '../core/mode.js';
 import { clamp, dist, fmt, mean, rand, store } from '../core/util.js';
 import { crosshair, label, grid, roundRect } from '../core/draw.js';
 
-const DEFAULT_OPTS = {
+const TRACKING_DEFAULTS = {
   duration: 30,
   speed: 1,
   size: 1,
@@ -15,7 +15,7 @@ export class TrackingMode extends Mode {
     super(app);
     this.id = 'tracking';
     this.needsLock = true;
-    this.opts = store.optsFor(this.id, DEFAULT_OPTS);
+    this.opts = store.optsFor(this.id, TRACKING_DEFAULTS);
     this.t = 0;
     this.onTarget = 0;
     this.streak = 0;

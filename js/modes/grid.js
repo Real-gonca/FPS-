@@ -3,7 +3,7 @@ import { Mode, optionRow } from '../core/mode.js';
 import { clamp, dist, fmt, fmtInt, mean, store } from '../core/util.js';
 import { label, grid, crosshair, roundRect } from '../core/draw.js';
 
-const DEFAULT_OPTS = {
+const GRID_DEFAULTS = {
   grid: 3,
   simultaneous: 1,
   duration: 30,
@@ -15,7 +15,7 @@ export class GridMode extends Mode {
     super(app);
     this.id = 'grid';
     this.needsLock = false;
-    this.opts = store.optsFor(this.id, DEFAULT_OPTS);
+    this.opts = store.optsFor(this.id, GRID_DEFAULTS);
     this.cells = [];
     this.active = [];
     this.hits = 0;

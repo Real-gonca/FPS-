@@ -10,7 +10,7 @@ import { PROFILES, PROFILE_LIST, buildPattern } from '../patterns.js';
 import { clamp, mean, percentile, dist, fmt, fmtInt, store, gaussian, mulberry32 } from '../core/util.js';
 import { silhouette, bullseye, hole, crosshair, label, grid, barChart } from '../core/draw.js';
 
-const DEFAULT_OPTS = {
+const RECOIL_DEFAULTS = {
   profile: 'ar',
   climbScale: 1,
   swayScale: 1,
@@ -25,7 +25,7 @@ export class RecoilMode extends Mode {
     super(app);
     this.id = 'recoil';
     this.needsLock = true;
-    this.opts = store.optsFor(this.id, DEFAULT_OPTS);
+    this.opts = store.optsFor(this.id, RECOIL_DEFAULTS);
     this.holes = [];
     this.ghost = [];
     this.devs = [];
@@ -160,7 +160,7 @@ export class RecoilMode extends Mode {
     reset.className = 'btn ghost small';
     reset.textContent = 'Voltar aos valores do perfil';
     reset.addEventListener('click', () => {
-      this.opts = { ...DEFAULT_OPTS, profile: this.opts.profile };
+      this.opts = { ...RECOIL_DEFAULTS, profile: this.opts.profile };
       store.setOpts(this.id, this.opts);
       this.buildOptions(box);
       this.reset();

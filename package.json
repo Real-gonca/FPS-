@@ -1,14 +1,17 @@
 {
   "name": "range-lab",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Treinador de mira e controlo de recoil 100% offline no browser. Não interage com qualquer jogo.",
   "scripts": {
-    "start": "python3 -m http.server 8080 --bind 0.0.0.0",
-    "test": "node tests/logic.test.mjs && node tests/dom.smoke.mjs",
+    "start": "python3 serve.py 8080",
+    "build": "node tools/bundle.mjs",
+    "pretest": "node tools/bundle.mjs",
+    "test": "node tests/logic.test.mjs && node tests/dom.smoke.mjs && node tests/dom.smoke.mjs --bundle",
     "test:logic": "node tests/logic.test.mjs",
-    "test:dom": "node tests/dom.smoke.mjs"
+    "test:dom": "node tests/dom.smoke.mjs",
+    "test:bundle": "node tools/bundle.mjs && node tests/dom.smoke.mjs --bundle"
   },
   "keywords": ["aim-trainer", "recoil-control", "fps", "training", "offline"],
   "license": "MIT"
