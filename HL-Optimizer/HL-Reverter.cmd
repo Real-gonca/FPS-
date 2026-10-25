@@ -5,7 +5,7 @@ rem  Arquivo: HL-Reverter.cmd
 rem  Restaura o estado anterior a partir do backup mais recente em _HL-Backup
 rem ============================================================================
 setlocal EnableExtensions
-title HL Optimizer - Reverter backup
+title HL Optimizer v2.0.0 - Reverter backup
 cd /d "%~dp0"
 
 fltmc >nul 2>&1

@@ -5,7 +5,7 @@ rem  Arquivo: HL-Optimizer.cmd
 rem  Eleva privilegio e abre o painel principal do HL-Optimizer.ps1
 rem ============================================================================
 setlocal EnableExtensions
-title HL Optimizer v1.0.0 - FPS / Games / Emulators
+title HL Optimizer v2.0.0 - FPS / Games / Emulators
 cd /d "%~dp0"
 
 rem --- checa privilegio de administrador (fltmc falha sem admin) --------------

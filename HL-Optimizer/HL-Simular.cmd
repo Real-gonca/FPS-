@@ -6,7 +6,7 @@ rem  Roda o perfil EQUILIBRADO em modo DryRun: mostra tudo que SERIA feito,
 rem  sem alterar nada no sistema. Use isto antes de aplicar de verdade.
 rem ============================================================================
 setlocal EnableExtensions
-title HL Optimizer - Simulacao (DryRun)
+title HL Optimizer v2.0.0 - Simulacao (DryRun)
 cd /d "%~dp0"
 
 fltmc >nul 2>&1

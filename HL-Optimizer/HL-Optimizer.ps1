@@ -10,11 +10,14 @@
   MARCA / PROPRIETÁRIA DESTE ARQUIVO : HL
   PRODUTO  : HL Optimizer
   ARQUIVO  : HL-Optimizer.ps1
-  VERSÃO   : 1.0.0
+  VERSÃO   : 2.0.0 (build 2026.10-r2)
   MOTOR    : Windows PowerShell 5.1 (nativo, offline, sem módulos externos)
   FOCO     : FPS médio, 1% low (stutter) e tempo de carregamento em jogos e
              emuladores (Android: BlueStacks/LDPlayer/MuMu/MEmu | Console:
              PCSX2/Dolphin/RPCS3/Ryujinx).
+  NOVO 2.0 : motor de tweaks data-driven (catalogo), instalador winget,
+             Windows Update via COM, startup/tarefas/Hyper-V, historico de
+             undo, config export/import, relatorio HTML, benchmark comparativo.
 --------------------------------------------------------------------------------
   AVISO: este script ALTERA serviços, registro e plano de energia.
          Sempre rode primeiro:  .\HL-Optimizer.ps1 -DryRun
@@ -36,6 +39,13 @@ param(
     [switch]$NonInteractive,
     [switch]$SkipRestorePoint,
     [switch]$NoPanel,
+    [switch]$AllowExperimental,
+    [switch]$ListTweaks,
+    [switch]$ListApps,
+    [switch]$Report,
+    [string[]]$ApplyTweaks,
+    [string]$ApplyPreset,
+    [string]$ImportConfig,
     [string]$LogDir
 )
 
@@ -44,8 +54,8 @@ param(
 # ==============================================================================
 $script:Brand          = 'HL Optimizer'
 $script:BrandShort     = 'HL'
-$script:BrandVersion   = '1.0.0'
-$script:BrandBuild     = '2026.10'
+$script:BrandVersion   = '2.0.0'
+$script:BrandBuild     = '2026.10-r2'
 $script:BrandTag       = 'FPS / Games / Emulators'
 $script:BrandOwner     = 'HL'
 $script:Root           = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -64,6 +74,7 @@ $script:Reverting    = $false
 $script:SessionId   = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
 $script:PanelWidth  = 78
 $script:EmulatorCache = $null
+$script:AllowExperimental = [bool]$AllowExperimental
 
 if ($WhatIfPreference) { $script:DryRun = $true }
 
@@ -784,6 +795,1777 @@ function Set-GpuPreferenceHigh {
 }
 
 # ==============================================================================
+#  7b. MOTOR DE TWEAKS (data-driven) + CATÁLOGO
+#      Cada tweak e um objeto com itens (Reg / Svc / Appx / Task).
+#      O motor sabe: detectar estado, aplicar, verificar, salvar backup e desfazer.
+# ==============================================================================
+function RegItem  { param([string]$P, [string]$N, $V, [string]$T = 'DWord') @{ Kind = 'Reg';  Path = $P; Name = $N; Value = $V; Type = $T } }
+function SvcItem  { param([string]$N, [string]$Start = 'Disabled')      @{ Kind = 'Svc';  Name = $N; Start = $Start } }
+function AppxItem { param([string]$N)                                   @{ Kind = 'Appx'; Name = $N } }
+function TaskItem { param([string]$P, [string]$N)                       @{ Kind = 'Task'; Path = $P; Name = $N } }
+function KeyItem  { param([string]$P)                                   @{ Kind = 'RegKey'; Path = $P } }
+
+function New-Tweak {
+    param(
+        [string]$Id, [string]$Cat, [string]$Name, [string]$Desc, $Items,
+        [string]$Gain = '', [string]$Risk = 'baixo', [string]$Guard = '',
+        [switch]$Reboot, [switch]$Experimental
+    )
+    [pscustomobject]@{
+        Id = $Id; Cat = $Cat; Name = $Name; Desc = $Desc; Items = @($Items)
+        Gain = $Gain; Risk = $Risk; Guard = $Guard
+        Reboot = [bool]$Reboot; Experimental = [bool]$Experimental
+    }
+}
+
+$script:TweakCatalog = @(
+    # ---------------------------------------------------------------- GAMING
+    (New-Tweak -Id 'game-dvr' -Cat 'Gaming' -Name 'Desligar Game DVR / Capturas' -Gain '5-15%' -Risk 'perde clipes da Game Bar' `
+        -Desc 'Maior ganho real entre os servicos: a gravacao em segundo plano consome CPU/GPU o tempo todo.' -Items @(
+            (RegItem 'HKCU:\System\GameConfigStore' 'GameDVR_Enabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'AppCaptureEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR' 'HistoricalCaptureEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\GameBar' 'UseNexusForGameBarEnabled' 0),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR' 'AllowGameDVR' 0)
+        ))
+    (New-Tweak -Id 'game-mode-on' -Cat 'Gaming' -Name 'Manter Modo de Jogo LIGADO' -Gain '0-3%' -Risk 'nenhum' `
+        -Desc 'Muita gente desliga por engano. Hoje o Modo de Jogo ajuda mais do que atrapalha: mantemos ligado.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\GameBar' 'AutoGameModeEnabled' 1),
+            (RegItem 'HKCU:\Software\Microsoft\GameBar' 'AllowAutoGameMode' 1)
+        ))
+    (New-Tweak -Id 'fse-off' -Cat 'Gaming' -Name 'Desligar otimizacoes de tela cheia (FSE)' -Gain '0-5%' -Risk 'experimental; testar por jogo' -Experimental `
+        -Desc 'Forca modo exclusivo de tela cheia. Em alguns jogos reduz latencia; em outros causa stutter ou alt-tab lento.' -Items @(
+            (RegItem 'HKCU:\System\GameConfigStore' 'GameDVR_FSEBehaviorMode' 2),
+            (RegItem 'HKCU:\System\GameConfigStore' 'GameDVR_HonorUserFSEBehaviorMode' 1),
+            (RegItem 'HKCU:\System\GameConfigStore' 'GameDVR_DXGIHonorFSEWindowsCompatible' 1),
+            (RegItem 'HKCU:\System\GameConfigStore' 'GameDVR_FSEBehavior' 2)
+        ))
+    (New-Tweak -Id 'mmcss-games' -Cat 'Gaming' -Name 'Prioridade MMCSS para jogos' -Gain '0-3% / menos stutter' -Risk 'baixo' `
+        -Desc 'Sobe a prioridade do subsistema multimidia para tarefas de jogo (GPU Priority 8, SFIO High).' -Items @(
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games' 'GPU Priority' 8),
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games' 'Priority' 6),
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games' 'Scheduling Category' 'High' 'String'),
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games' 'SFIO Priority' 'High' 'String')
+        ))
+    (New-Tweak -Id 'priority-sep' -Cat 'Gaming' -Name 'Prioridade de primeiro plano (38)' -Gain '0-3%' -Risk 'nenhum relevante' `
+        -Desc 'Win32PrioritySeparation=38 (0x26): favorece o app em primeiro plano com quantum curto.' -Items @(
+            (RegItem 'HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl' 'Win32PrioritySeparation' 38)
+        ))
+    (New-Tweak -Id 'visualfx' -Cat 'Gaming' -Name 'Efeitos visuais: melhor desempenho' -Gain '1-2%' -Risk 'sem animacoes do Windows' `
+        -Desc 'Mantem fontes suavizadas, remove animacoes e sombras.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' 'VisualFXSetting' 2)
+        ))
+    (New-Tweak -Id 'mouse-accel' -Cat 'Gaming' -Name 'Desligar aceleracao do mouse' -Gain 'precisao' -Risk 'preferencia pessoal: alguns preferem ligado' `
+        -Desc 'Remove "Melhorar precisao do ponteiro". Para FPS competitivo costuma ser obrigatorio.' -Items @(
+            (RegItem 'HKCU:\Control Panel\Mouse' 'MouseSpeed' '0' 'String'),
+            (RegItem 'HKCU:\Control Panel\Mouse' 'MouseThreshold1' '0' 'String'),
+            (RegItem 'HKCU:\Control Panel\Mouse' 'MouseThreshold2' '0' 'String')
+        ))
+    (New-Tweak -Id 'hags-on' -Cat 'Gaming' -Name 'Ligar HAGS (agendamento de GPU)' -Gain 'teste: +-2..5%' -Risk 'pode piorar em alguns drivers; testar' -Reboot -Experimental `
+        -Desc 'Hardware-accelerated GPU Scheduling. Nao e ganho garantido: ative, rebote e compare o 1% low.' -Items @(
+            (RegItem 'HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers' 'HwSchMode' 2)
+        ))
+
+    # ------------------------------------------------------------ TELEMETRIA
+    (New-Tweak -Id 'telemetry-policy' -Cat 'Telemetria' -Name 'Telemetria no minimo (politica)' -Gain '~0%' -Risk 'privacidade; sem relatorios para a MS' `
+        -Desc 'AllowTelemetry=0 nas duas arvores de politica + esconde notificacoes de feedback.' -Items @(
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection' 'AllowTelemetry' 0),
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection' 'AllowTelemetry' 0),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection' 'DoNotShowFeedbackNotifications' 1)
+        ))
+    (New-Tweak -Id 'diagtrack' -Cat 'Telemetria' -Name 'Servicos de telemetria / erros' -Gain '~0-1%' -Risk 'sem relatorio de erros detalhado' `
+        -Desc 'Desabilita DiagTrack (Experiencias do Usuario Conectado), dmwappushservice e WerSvc.' -Items @(
+            (SvcItem 'DiagTrack'),
+            (SvcItem 'dmwappushservice'),
+            (SvcItem 'WerSvc')
+        ))
+    (New-Tweak -Id 'advertising-id' -Cat 'Telemetria' -Name 'Desligar ID de anuncios' -Gain '~0%' -Risk 'nenhum' `
+        -Desc 'Impede rastreio de publicidade entre apps.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' 'Enabled' 0)
+        ))
+    (New-Tweak -Id 'activity-history' -Cat 'Telemetria' -Name 'Desligar historico de atividades' -Gain '~0%' -Risk 'perde historico entre dispositivos' `
+        -Desc 'Politica de sistema: nao publica, nao envia e nao coleta atividades.' -Items @(
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' 'EnableActivityFeed' 0),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' 'PublishUserActivities' 0),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' 'UploadUserActivities' 0)
+        ))
+    (New-Tweak -Id 'feedback-siuf' -Cat 'Telemetria' -Name 'Sem pedidos de feedback' -Gain '~0%' -Risk 'nenhum' `
+        -Desc 'Zera a frequencia de pesquisas de satisfacao (SIUF).' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Siuf\Rules' 'NumberOfSIUFInPeriod' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Siuf\Rules' 'PeriodInNanoSeconds' 0)
+        ))
+    (New-Tweak -Id 'tailored-exp' -Cat 'Telemetria' -Name 'Sem experiencias personalizadas' -Gain '~0%' -Risk 'nenhum' `
+        -Desc 'Desliga sugestoes baseadas em dados de diagnostico.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Privacy' 'TailoredExperiencesWithDiagnosticDataEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SubscribedContent-338393Enabled' 0)
+        ))
+    (New-Tweak -Id 'suggestions-off' -Cat 'Telemetria' -Name 'Sem apps/sugestoes silenciosas' -Gain '~0-1%' -Risk 'nenhum' `
+        -Desc 'Bloqueia instalacao silenciosa de apps promovidos e sugestoes do sistema.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'ContentDeliveryAllowed' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SilentInstalledAppsEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'PreInstalledAppsEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'OemPreInstalledAppsEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SystemPaneSuggestionsEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SoftLandingEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'RotatingLockScreenOverlayEnabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SubscribedContent-310093Enabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SubscribedContent-338388Enabled' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager' 'SubscribedContent-338389Enabled' 0)
+        ))
+    (New-Tweak -Id 'start-suggestions' -Cat 'Telemetria' -Name 'Sem sugestoes no menu Iniciar' -Gain '0-1%' -Risk 'nenhum' `
+        -Desc 'Remove "apps recomendados" e dicas do Iniciar.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ShowSuggestions' 0),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'Start_IrisRecommendations' 0)
+        ))
+    (New-Tweak -Id 'websearch-off' -Cat 'Telemetria' -Name 'Sem resultados da web na busca' -Gain '0-1%' -Risk 'busca do Iniciar so encontra arquivos locais' `
+        -Desc 'Impede que cada busca no menu Iniciar vire uma requisicao de rede para o Bing.' -Items @(
+            (RegItem 'HKCU:\Software\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions' 1)
+        ))
+    (New-Tweak -Id 'telemetry-tasks' -Cat 'Telemetria' -Name 'Tarefas agendadas de telemetria' -Gain '~0-1%' -Risk 'nenhum' `
+        -Desc 'Desabilita as tarefas de compatibilidade/CEIP que acordam o disco em segundo plano.' -Items @(
+            (TaskItem '\Microsoft\Windows\Application Experience' 'Microsoft Compatibility Appraiser'),
+            (TaskItem '\Microsoft\Windows\Application Experience' 'ProgramDataUpdater'),
+            (TaskItem '\Microsoft\Windows\Autochk' 'Proxy'),
+            (TaskItem '\Microsoft\Windows\Customer Experience Improvement Program' 'Consolidator'),
+            (TaskItem '\Microsoft\Windows\Customer Experience Improvement Program' 'UsbCeip'),
+            (TaskItem '\Microsoft\Windows\Feedback\Siuf' 'DmClient'),
+            (TaskItem '\Microsoft\Windows\Feedback\Siuf' 'DmClientOnScenarioDownload'),
+            (TaskItem '\Microsoft\Windows\Windows Error Reporting' 'QueueReporting')
+        ))
+
+    # --------------------------------------------------------------- DEBLOAT
+    (New-Tweak -Id 'debloat-xbox' -Cat 'Debloat' -Name 'Apps do Xbox' -Gain '~0-1%' -Risk 'sem Game Bar/overlay; nao use se tiver Game Pass' `
+        -Desc 'Remove os 5 pacotes do Xbox. Reversivel: o app volta pela Store.' -Items @(
+            (AppxItem 'Microsoft.XboxApp'),
+            (AppxItem 'Microsoft.XboxGamingOverlay'),
+            (AppxItem 'Microsoft.XboxGameOverlay'),
+            (AppxItem 'Microsoft.XboxSpeechToTextOverlay'),
+            (AppxItem 'Microsoft.Xbox.TCUI')
+        ))
+    (New-Tweak -Id 'debloat-bing' -Cat 'Debloat' -Name 'Apps Bing (noticias, clima, esportes)' -Gain '~0-1%' -Risk 'sem esses apps' `
+        -Desc 'Remove os apps promovidos da Microsoft que puxam rede em segundo plano.' -Items @(
+            (AppxItem 'Microsoft.BingNews'),
+            (AppxItem 'Microsoft.BingWeather'),
+            (AppxItem 'Microsoft.BingSports'),
+            (AppxItem 'Microsoft.BingFinance')
+        ))
+    (New-Tweak -Id 'debloat-3d' -Cat 'Debloat' -Name '3D Viewer / Paint 3D' -Gain '~0%' -Risk 'sem esses apps' `
+        -Desc 'Apps de realidade misturada/3D raramente usados.' -Items @(
+            (AppxItem 'Microsoft.Microsoft3DViewer'),
+            (AppxItem 'Microsoft.MSPaint3D')
+        ))
+    (New-Tweak -Id 'debloat-solitaire' -Cat 'Debloat' -Name 'Solitaire Collection + anuncios' -Gain '~0%' -Risk 'nenhum' `
+        -Desc 'Remove o jogo pre-instalado com anuncios.' -Items @(
+            (AppxItem 'Microsoft.MicrosoftSolitaireCollection')
+        ))
+    (New-Tweak -Id 'debloat-comms' -Cat 'Debloat' -Name 'People / Skype / Teams pessoal / Mail' -Gain '~0-1%' -Risk 'sem esses apps' `
+        -Desc 'Comunicacao que pouca gente usa no PC de jogo.' -Items @(
+            (AppxItem 'Microsoft.People'),
+            (AppxItem 'Microsoft.SkypeApp'),
+            (AppxItem 'MicrosoftTeams'),
+            (AppxItem 'MSTeams'),
+            (AppxItem 'Microsoft.WindowsCommunicationsApps'),
+            (AppxItem 'Microsoft.YourPhone'),
+            (AppxItem 'Microsoft.PhoneLink')
+        ))
+    (New-Tweak -Id 'debloat-media' -Cat 'Debloat' -Name 'Groove Music / Filmes / Clipchamp' -Gain '~0%' -Risk 'sem esses apps' `
+        -Desc 'Midia padrao do Windows que ninguem abre.' -Items @(
+            (AppxItem 'Microsoft.ZuneMusic'),
+            (AppxItem 'Microsoft.ZuneVideo'),
+            (AppxItem 'Clipchamp.Clipchamp')
+        ))
+    (New-Tweak -Id 'debloat-help' -Cat 'Debloat' -Name 'Dicas / Obter Ajuda / Feedback Hub' -Gain '~0%' -Risk 'nenhum' `
+        -Desc 'Apps de ajuda e feedback que so ocupam espaco e tarefas.' -Items @(
+            (AppxItem 'Microsoft.GetHelp'),
+            (AppxItem 'Microsoft.Getstarted'),
+            (AppxItem 'Microsoft.WindowsFeedbackHub')
+        ))
+    (New-Tweak -Id 'debloat-misc' -Cat 'Debloat' -Name 'Office Hub / To Do / Power Automate / Maps' -Gain '~0-1%' -Risk 'sem esses apps' `
+        -Desc 'Servicos em segundo plano que aparecem no boot sem serem usados.' -Items @(
+            (AppxItem 'Microsoft.MicrosoftOfficeHub'),
+            (AppxItem 'Microsoft.Todos'),
+            (AppxItem 'Microsoft.PowerAutomateDesktop'),
+            (AppxItem 'Microsoft.MixedReality.Portal'),
+            (AppxItem 'Microsoft.WindowsMaps')
+        ))
+    (New-Tweak -Id 'debloat-copilot' -Cat 'Debloat' -Name 'Apps de IA / Copilot (quando presentes)' -Gain '~0-1%' -Risk 'sem Copilot' `
+        -Desc 'Remove por padrao de nome, entao funciona em versoes diferentes do Windows 11.' -Items @(
+            (AppxItem 'Microsoft.Copilot*'),
+            (AppxItem 'Microsoft.Windows.Ai*'),
+            (AppxItem 'Microsoft.WindowsAi*')
+        ))
+    (New-Tweak -Id 'debloat-3rdparty' -Cat 'Debloat' -Name 'Apps de terceiros pre-instalados' -Gain '~0-1%' -Risk 'nenhum' `
+        -Desc 'Spotify/TikTok/Instagram/Facebook que vem em algumas instalacoes OEM.' -Items @(
+            (AppxItem 'SpotifyAB.SpotifyMusic'),
+            (AppxItem 'Bytedance.TikTok*'),
+            (AppxItem 'Facebook.Instagram*'),
+            (AppxItem 'Facebook.Facebook*')
+        ))
+
+    # -------------------------------------------------------------- SERVICOS
+    (New-Tweak -Id 'sysmain-off' -Cat 'Servicos' -Name 'SysMain / Superfetch' -Gain '0-3%' -Risk 'só em SSD; em HDD piora' -Guard 'SSD' `
+        -Desc 'Em SSD o prefetch e inutil. Em HDD ele ajuda: o motor bloqueia automaticamente nesse caso.' -Items @(
+            (SvcItem 'SysMain')
+        ))
+    (New-Tweak -Id 'wsearch-off' -Cat 'Servicos' -Name 'Windows Search (indexacao)' -Gain '0-3%' -Risk 'busca do Iniciar mais lenta' `
+        -Desc 'Alternativa segura: manter ligado e remover pastas de jogos da indexacao.' -Items @(
+            (SvcItem 'WSearch')
+        ))
+    (New-Tweak -Id 'spooler-off' -Cat 'Servicos' -Name 'Fila de impressao' -Gain '~0%' -Risk 'sem impressora instalada' -Guard 'NoPrinter' `
+        -Desc 'Servico historicamente explorado e desnecessario em PC sem impressora.' -Items @(
+            (SvcItem 'Spooler')
+        ))
+    (New-Tweak -Id 'bluetooth-off' -Cat 'Servicos' -Name 'Servicos de Bluetooth' -Gain '0-1%' -Risk 'sem Bluetooth' -Guard 'NoBluetooth' `
+        -Desc 'Desliga bthserv/BTAGService quando nao ha dispositivo Bluetooth ativo.' -Items @(
+            (SvcItem 'bthserv'),
+            (SvcItem 'BTAGService')
+        ))
+    (New-Tweak -Id 'xbox-services' -Cat 'Servicos' -Name 'Servicos do Xbox (4)' -Gain '~0%' -Risk 'sem Game Pass/controle Xbox' -Guard 'NoXbox' `
+        -Desc 'XblAuthManager, XblGameSave, XboxNetApiSvc e XboxGipSvc. O motor recusa se achar Game Pass em uso.' -Items @(
+            (SvcItem 'XblAuthManager'),
+            (SvcItem 'XblGameSave'),
+            (SvcItem 'XboxNetApiSvc'),
+            (SvcItem 'XboxGipSvc')
+        ))
+    (New-Tweak -Id 'useless-services' -Cat 'Servicos' -Name 'Servicos inuteis (7)' -Gain '~0-1%' -Risk 'nenhum' `
+        -Desc 'RetailDemo, MapsBroker, PhoneSvc, Fax, RemoteRegistry, WinRM e WMPNetworkSvc.' -Items @(
+            (SvcItem 'RetailDemo'),
+            (SvcItem 'MapsBroker'),
+            (SvcItem 'PhoneSvc'),
+            (SvcItem 'Fax'),
+            (SvcItem 'RemoteRegistry'),
+            (SvcItem 'WinRM'),
+            (SvcItem 'WMPNetworkSvc')
+        ))
+
+    # ------------------------------------------------------------------- UI
+    (New-Tweak -Id 'ctx-menu-classic' -Cat 'UI' -Name 'Menu de contexto classico (Win11)' -Gain '~0%' -Risk 'perde o menu novo; reinicie o Explorer' `
+        -Desc 'Volta o menu completo do botao direito. Muito pedido por quem usa WinRAR/7-Zip.' -Items @(
+            (KeyItem 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32')
+        ))
+    (New-Tweak -Id 'show-ext' -Cat 'UI' -Name 'Mostrar extensoes de arquivo' -Gain '~0%' -Risk 'nenhum' `
+        -Desc 'Seguranca basica: ve .exe, .pdf, .jpg e nao apenas o nome.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'HideFileExt' 0)
+        ))
+    (New-Tweak -Id 'taskbar-left' -Cat 'UI' -Name 'Barra de tarefas alinhada a esquerda' -Gain '~0%' -Risk 'preferencia' `
+        -Desc 'Ganho indireto: menos animacao de realinhamento e icones no lugar de sempre.' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarAl' 0)
+        ))
+    (New-Tweak -Id 'taskbar-search-icon' -Cat 'UI' -Name 'Busca so como icone' -Gain '~0%' -Risk 'preferencia' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'SearchboxTaskbarMode' 1)
+        ) -Desc 'Menos um processo de UI desenhando caixa de busca.')
+    (New-Tweak -Id 'transparency-off' -Cat 'UI' -Name 'Desligar transparencias' -Gain '0-1%' -Risk 'visual' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' 'EnableTransparency' 0)
+        ) -Desc 'O compositor deixa de fazer blur em cada janela.')
+    (New-Tweak -Id 'end-task' -Cat 'UI' -Name 'Botao "Finalizar tarefa" na barra' -Gain '~0%' -Risk 'nenhum' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarEndTask' 1)
+        ) -Desc 'Mata travamentos sem abrir o Gerenciador de Tarefas.')
+    (New-Tweak -Id 'widgets-off' -Cat 'UI' -Name 'Desligar Widgets / Noticias' -Gain '0-1%' -Risk 'sem widgets' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarDa' 0),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Dsh' 'AllowNewsAndInterests' 0)
+        ) -Desc 'O painel de widgets carrega conteudo da web em segundo plano.')
+    (New-Tweak -Id 'copilot-off' -Cat 'UI' -Name 'Desligar Copilot' -Gain '0-1%' -Risk 'sem Copilot' -Items @(
+            (RegItem 'HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot' 'TurnOffWindowsCopilot' 1),
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'ShowCopilotButton' 0)
+        ) -Desc 'Remove o botao e a politica do assistente.')
+    (New-Tweak -Id 'chat-icon-off' -Cat 'UI' -Name 'Remover icone Chat/Teams da barra' -Gain '~0%' -Risk 'nenhum' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarMn' 0)
+        ) -Desc 'Tira o icone que abre o Teams pessoal.')
+    (New-Tweak -Id 'recall-off' -Cat 'UI' -Name 'Desligar Recall (Win11 24H2)' -Gain '~0-2%' -Risk 'experimental' -Experimental -Items @(
+            (RegItem 'HKCU:\Software\Policies\Microsoft\Windows\WindowsAI' 'DisableAIDataAnalysis' 1)
+        ) -Desc 'Recall faz captura/screenshot continuo do que voce faz. Desligar libera CPU, disco e IA.')
+    (New-Tweak -Id 'gamebar-hotkey' -Cat 'UI' -Name 'Nao abrir Game Bar com o botao Xbox' -Gain '~0%' -Risk 'perde atalho' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\GameBar' 'UseNexusForGameBarEnabled' 0)
+        ) -Desc 'Evita abrir overlay por acidente durante o jogo.')
+
+    # ----------------------------------------------------------------- BOOT
+    (New-Tweak -Id 'startup-delay' -Cat 'Boot' -Name 'Remover atraso de inicializacao' -Gain 'boot mais rapido' -Risk 'nenhum' -Items @(
+            (RegItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' 0)
+        ) -Desc 'Corta o atraso artificial de 10s dos apps de inicializacao.')
+    (New-Tweak -Id 'fast-startup-off' -Cat 'Boot' -Name 'Desligar Inicializacao Rapida' -Gain 'estabilidade' -Risk 'boot um pouco mais lento; corrige dual boot' -Reboot -Items @(
+            (RegItem 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power' 'HiberbootEnabled' 0)
+        ) -Desc 'O "fast startup" mantem drivers em hibernacao e causa bugs de GPU/emulador depois de desligar.')
+
+    # ----------------------------------------------------------------- REDE
+    (New-Tweak -Id 'net-throttling' -Cat 'Rede' -Name 'Remover throttle de rede multimidia' -Gain 'sem ganho comprovado' -Risk 'experimental' -Experimental -Items @(
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile' 'NetworkThrottlingIndex' -1),
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile' 'SystemResponsiveness' 10)
+        ) -Desc 'Clássico de guia de "gaming". Sem evidencia solida; deixe para o modo experimental.')
+    (New-Tweak -Id 'do-mode' -Cat 'Rede' -Name 'Otimizacao de Entrega sem P2P' -Gain '0-2% de disco/rede' -Risk 'nao compartilha updates na LAN' -Items @(
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config' 'DODownloadMode' 1),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization' 'DODownloadMode' 1)
+        ) -Desc 'Bloqueia upload de updates para outros PCs, que consome disco e rede sem voce ver.')
+
+    # --------------------------------------------------------------- UPDATE
+    (New-Tweak -Id 'store-auto-update' -Cat 'Update' -Name 'Desligar update automatico da Store' -Gain '~0-1%' -Risk 'apps desatualizados' -Items @(
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore' 'AutoDownload' 2),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\WindowsStore' 'AutoInstallMinutes' 0)
+        ) -Desc 'A Store baixando apps em segundo plano e um dos causadores classicos de stutter.')
+    (New-Tweak -Id 'driver-auto' -Cat 'Update' -Name 'Sem drivers automaticos do Windows Update' -Gain 'estabilidade' -Risk 'experimental: pode faltar driver novo' -Experimental -Reboot -Items @(
+            (RegItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching' 'SearchOrderConfig' 0),
+            (RegItem 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' 'ExcludeWUDriversInQualityUpdate' 1)
+        ) -Desc 'Evita que o Windows troque seu driver de GPU no meio do mes.')
+)
+
+# ==============================================================================
+#  7c. MOTOR: guardas, deteccao de estado, aplicacao, desfazer por tweak
+# ==============================================================================
+# --- caches (Appx e tarefas sao caros de consultar; carregamos 1x por sessao) ---
+$script:AppxCache = $null
+$script:TaskCache = $null
+
+function Get-AppxInstalledHL {
+    param([switch]$Refresh)
+    if ($null -eq $script:AppxCache -or $Refresh) {
+        $script:AppxCache = @(Get-AppxPackage -ErrorAction SilentlyContinue)
+    }
+    return $script:AppxCache
+}
+
+function Get-ScheduledTasksHL {
+    param([switch]$Refresh)
+    if ($null -eq $script:TaskCache -or $Refresh) {
+        $script:TaskCache = @(Get-ScheduledTask -ErrorAction SilentlyContinue)
+    }
+    return $script:TaskCache
+}
+
+function Get-TaskHL {
+    param([string]$TaskPath, [string]$TaskName)
+    foreach ($t in (Get-ScheduledTasksHL)) {
+        if ($t.TaskPath -eq $TaskPath -and $t.TaskName -eq $TaskName) { return $t }
+    }
+    return $null
+}
+
+function Test-TweakGuard {
+    param($Tweak)
+    switch ([string]$Tweak.Guard) {
+        'SSD' {
+            $dt = Get-DiskType -DriveLetter 'C'
+            if ($dt -ne 'SSD') {
+                Write-Log ('PULADO: ' + $Tweak.Name + ' exige SSD (detectado: ' + $dt + ')') 'WARN'
+                return $false
+            }
+        }
+        'NoPrinter' {
+            $pr = @()
+            try { $pr = @(Get-Printer -ErrorAction Stop) } catch { }
+            if ($pr.Count -gt 0) { Write-Log ('PULADO: ' + $Tweak.Name + ' - ha impressora instalada') 'WARN'; return $false }
+        }
+        'NoBluetooth' {
+            $bt = 0
+            try { $bt = @(Get-PnpDevice -Class Bluetooth -ErrorAction Stop | Where-Object { $_.Status -eq 'OK' }).Count } catch { }
+            if ($bt -gt 0) { Write-Log ('PULADO: ' + $Tweak.Name + ' - Bluetooth ativo') 'WARN'; return $false }
+        }
+        'NoXbox' {
+            $gaming = @(Get-AppxPackage -Name 'Microsoft.GamingApp' -ErrorAction SilentlyContinue)
+            $xbl = (Get-Service -Name 'XblAuthManager' -ErrorAction SilentlyContinue).Status -eq 'Running'
+            if ($gaming.Count -gt 0 -or $xbl) { Write-Log ('PULADO: ' + $Tweak.Name + ' - Game Pass / Xbox em uso') 'WARN'; return $false }
+        }
+    }
+    return $true
+}
+
+function New-RegKeySafe {
+    param([string]$Path, [string]$Gain = '', [string]$Risk = '')
+    if (Test-Path -LiteralPath $Path) { Write-Log ('Chave ja existe: ' + $Path) 'VERIF'; return }
+    if ($script:DryRun) { Write-Log ('[DRY-RUN] criaria chave ' + $Path) 'DRYRUN'; return }
+    try {
+        $null = New-Item -Path $Path -Force -ErrorAction Stop
+        Write-Log ('Chave criada: ' + $Path) 'OK'
+        Save-BackupEntry -Type 'RegKey' -Target $Path -Before @{ exists = $false } -After @{ exists = $true } -Gain $Gain -Risk $Risk
+    } catch { Write-Log ('Falha ao criar chave ' + $Path + ': ' + $_.Exception.Message) 'ERRO' }
+}
+
+function Remove-AppxSafe {
+    param([string]$Pattern, [string]$Why = '')
+    $pkgs = @(Get-AppxInstalledHL -Refresh | Where-Object { $_.Name -like $Pattern })
+    if ($pkgs.Count -eq 0) { Write-Log ('App ja ausente: ' + $Pattern) 'VERIF'; return }
+    foreach ($p in $pkgs) {
+        if ($script:DryRun) { Write-Log ('[DRY-RUN] removeria app ' + $p.Name + ' (fora do padrao ' + $Pattern + ')') 'DRYRUN'; continue }
+        try {
+            Remove-AppxPackage -Package $p.PackageFullName -ErrorAction Stop
+            Write-Log ('App removido: ' + $p.Name + '  ' + $Why) 'OK'
+            $null = Get-AppxInstalledHL -Refresh
+            Save-BackupEntry -Type 'Appx' -Target $p.PackageFullName `
+                -Before @{ installed = $true; location = [string]$p.InstallLocation } `
+                -After @{ installed = $false } -Gain '~0-1%' -Risk 'app removido (volta pela Store)' `
+                -RevertHint 'Add-AppxPackage -Register <InstallLocation>\AppxManifest.xml'
+        } catch {
+            Write-Log ('Nao foi possivel remover ' + $p.Name + ': ' + $_.Exception.Message) 'WARN'
+        }
+    }
+}
+
+function Set-ScheduledTaskStateSafe {
+    param([string]$TaskPath, [string]$TaskName, [ValidateSet('Disabled', 'Ready')][string]$State = 'Disabled', [string]$Why = '')
+    $t = Get-TaskHL -TaskPath $TaskPath -TaskName $TaskName
+    if (-not $t) { Write-Log ('Tarefa nao encontrada (ignorada): ' + $TaskPath + $TaskName) 'VERIF'; return }
+    if ([string]$t.State -eq $State) { Write-Log ('Tarefa ja em ' + $State + ': ' + $TaskName) 'VERIF'; return }
+    if ($script:DryRun) { Write-Log ('[DRY-RUN] tarefa ' + $TaskName + ' -> ' + $State) 'DRYRUN'; return }
+    $before = [string]$t.State
+    try {
+        if ($State -eq 'Disabled') { $null = Disable-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName -ErrorAction Stop }
+        else { $null = Enable-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName -ErrorAction Stop }
+        $null = Get-ScheduledTasksHL -Refresh
+        $t2 = Get-TaskHL -TaskPath $TaskPath -TaskName $TaskName
+        $after = 'Disabled'
+        if ($t2) { $after = [string]$t2.State }
+        Write-Log ('Tarefa ' + $TaskName + ': ' + $before + ' -> ' + $after) 'OK'
+        Save-BackupEntry -Type 'ScheduledTask' -Target ($TaskPath.TrimEnd('\') + '\' + $TaskName) -Before @{ state = $before } -After @{ state = $after } `
+            -Gain '~0-1%' -Risk 'tarefa desativada' -RevertHint ('Enable-ScheduledTask -TaskPath ' + $TaskPath + ' -TaskName ' + $TaskName)
+    } catch { Write-Log ('Falha na tarefa ' + $TaskName + ': ' + $_.Exception.Message) 'ERRO' }
+}
+
+function Get-TweakState {
+    param($Tweak)
+    $done = 0; $pend = 0; $na = 0
+    foreach ($it in $Tweak.Items) {
+        switch ([string]$it.Kind) {
+            'Reg' {
+                $s = Get-RegValueState -Path $it.Path -Name $it.Name
+                if ($s.Exists -and ("$($s.Value)" -eq "$($it.Value)")) { $done++ } else { $pend++ }
+            }
+            'RegKey' {
+                if (Test-Path -LiteralPath $it.Path) { $done++ } else { $pend++ }
+            }
+            'Svc' {
+                $s = Get-ServiceState -Name $it.Name
+                if (-not $s.Found) { $na++ }
+                elseif ($s.StartType -eq 'Disabled') { $done++ }
+                else { $pend++ }
+            }
+            'Appx' {
+                $p = @(Get-AppxInstalledHL | Where-Object { $_.Name -like $it.Name })
+                if ($p.Count -eq 0) { $done++ } else { $pend++ }
+            }
+            'Task' {
+                $t = Get-TaskHL -TaskPath $it.Path -TaskName $it.Name
+                if (-not $t) { $na++ }
+                elseif ([string]$t.State -eq 'Disabled') { $done++ }
+                else { $pend++ }
+            }
+            default { $na++ }
+        }
+    }
+    if ($done -eq 0 -and $pend -eq 0) { return 'N/D' }
+    if ($pend -eq 0) { return 'APLICADO' }
+    if ($done -eq 0) { return 'PENDENTE' }
+    return 'PARCIAL'
+}
+
+function Invoke-TweakItem {
+    param($Item, $Tweak)
+    switch ([string]$Item.Kind) {
+        'Reg'    { Set-RegValueSafe -Path $Item.Path -Name $Item.Name -Value $Item.Value -Type $Item.Type -Gain $Tweak.Gain -Risk $Tweak.Risk }
+        'RegKey' { New-RegKeySafe -Path $Item.Path -Gain $Tweak.Gain -Risk $Tweak.Risk }
+        'Svc'    { Set-ServiceStateSafe -Name $Item.Name -StartType $Item.Start -StopService -Gain $Tweak.Gain -Risk $Tweak.Risk -Why ('tweak:' + $Tweak.Id) }
+        'Appx'   { Remove-AppxSafe -Pattern $Item.Name -Why ('tweak:' + $Tweak.Id) }
+        'Task'   { Set-ScheduledTaskStateSafe -TaskPath $Item.Path -TaskName $Item.Name -State 'Disabled' -Why ('tweak:' + $Tweak.Id) }
+        default  { Write-Log ('Tipo de item desconhecido no tweak ' + $Tweak.Id) 'WARN' }
+    }
+}
+
+function Invoke-Tweak {
+    param($Tweak, [switch]$Force)
+    if ($Tweak.Experimental -and -not ($Force -or $script:AllowExperimental -or $IncludeExperimental)) {
+        Write-Log ('Experimental bloqueado: ' + $Tweak.Name + ' (use -IncludeExperimental ou escolha no menu)') 'WARN'
+        return
+    }
+    if (-not (Test-TweakGuard -Tweak $Tweak)) { return }
+    Write-Log ('Tweak [' + $Tweak.Id + '] ' + $Tweak.Name + ' | ganho: ' + $Tweak.Gain + ' | risco: ' + $Tweak.Risk) 'ACAO'
+    foreach ($it in $Tweak.Items) { Invoke-TweakItem -Item $it -Tweak $Tweak }
+    if ($Tweak.Reboot) {
+        $script:RebootNeeded = $true
+        Write-Log ('Requer REINICIO: ' + $Tweak.Name) 'WARN'
+    }
+}
+
+function Invoke-TweakSet {
+    param([string[]]$Ids, [switch]$Force)
+    $applied = 0
+    foreach ($id in $Ids) {
+        $tw = Get-TweakById -Id $id
+        if (-not $tw) { Write-Log ('Tweak inexistente no catalogo: ' + $id) 'WARN'; continue }
+        $st = Get-TweakState -Tweak $tw
+        if ($st -eq 'APLICADO') { Write-Log ('Ja aplicado: ' + $tw.Name) 'VERIF'; continue }
+        Invoke-Tweak -Tweak $tw
+        $applied++
+    }
+    Write-Log ('Tweaks processados: ' + $applied + ' de ' + $Ids.Count) 'INFO'
+}
+
+function Get-TweakById {
+    param([string]$Id)
+    foreach ($t in $script:TweakCatalog) { if ($t.Id -eq $Id) { return $t } }
+    return $null
+}
+
+function Get-TweakCategories {
+    $cats = New-Object System.Collections.ArrayList
+    foreach ($t in $script:TweakCatalog) { if (-not ($cats -contains $t.Cat)) { $null = $cats.Add($t.Cat) } }
+    return $cats
+}
+
+function Find-Tweak {
+    param([string]$Text)
+    if (-not $Text) { return @() }
+    return @($script:TweakCatalog | Where-Object { $_.Id -like ('*' + $Text + '*') -or $_.Name -like ('*' + $Text + '*') -or $_.Desc -like ('*' + $Text + '*') -or $_.Cat -like ('*' + $Text + '*') })
+}
+
+function ConvertTo-IndexList {
+    param([string]$Text, [int]$Max)
+    $out = New-Object System.Collections.ArrayList
+    if (-not $Text) { return $out }
+    foreach ($part in ($Text -split ',')) {
+        $p = $part.Trim()
+        if (-not $p) { continue }
+        if ($p -match '^(\d+)\s*-\s*(\d+)$') {
+            $a = [int]$Matches[1]; $b = [int]$Matches[2]
+            if ($a -gt $b) { $tmp = $a; $a = $b; $b = $tmp }
+            for ($i = $a; $i -le $b; $i++) { if ($i -ge 1 -and $i -le $Max -and -not ($out -contains ($i - 1))) { $null = $out.Add($i - 1) } }
+            continue
+        }
+        $n = 0
+        if ([int]::TryParse($p, [ref]$n)) {
+            if ($n -ge 1 -and $n -le $Max -and -not ($out -contains ($n - 1))) { $null = $out.Add($n - 1) }
+        }
+    }
+    return $out
+}
+
+function Undo-Tweak {
+    param($Tweak)
+    $targets = @()
+    foreach ($it in $Tweak.Items) {
+        switch ([string]$it.Kind) {
+            'Reg'    { $targets += ($it.Path + '\' + $it.Name) }
+            'RegKey' { $targets += $it.Path }
+            'Svc'    { $targets += $it.Name }
+            'Appx'   { $targets += $it.Name }
+            'Task'   { $targets += ($it.Path.TrimEnd('\') + '\' + $it.Name) }
+        }
+    }
+    $dirs = @()
+    if (Test-Path -LiteralPath $script:BackupRoot) {
+        $dirs = @(Get-ChildItem -LiteralPath $script:BackupRoot -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
+    }
+    $ok = 0
+    foreach ($t in $targets) {
+        $found = $null
+        foreach ($d in $dirs) {
+            $sf = Join-Path $d.FullName 'state.json'
+            if (-not (Test-Path -LiteralPath $sf)) { continue }
+            try { $state = Get-Content -LiteralPath $sf -Raw -Encoding UTF8 | ConvertFrom-Json } catch { continue }
+            $hit = @($state.changes) | Where-Object { $_.target -eq $t -or $_.target -like ($t + '*') } | Select-Object -First 1
+            if ($hit) { $found = $hit; break }
+        }
+        if ($found) { if (Restore-ChangeEntry -Entry $found) { $ok++ } }
+        else { Write-Log ('Sem backup para desfazer: ' + $t) 'WARN' }
+    }
+    Write-Log ('Desfeitos ' + $ok + ' de ' + $targets.Count + ' alvo(s) do tweak ' + $Tweak.Id) 'INFO'
+}
+
+function Show-TweakCategory {
+    param([string]$Cat)
+    $list = @($script:TweakCatalog | Where-Object { $_.Cat -eq $Cat })
+    while ($true) {
+        Write-Section ('CATEGORIA: ' + $Cat)
+        Write-Host '  #   Estado       Ganho              Nome' -ForegroundColor DarkGray
+        Write-Host '  --  -----------  -----------------  ------------------------------------------' -ForegroundColor DarkGray
+        $i = 0
+        foreach ($t in $list) {
+            $i++
+            $st = Get-TweakState -Tweak $t
+            $color = 'Yellow'
+            if ($st -eq 'APLICADO') { $color = 'Green' }
+            elseif ($st -eq 'PARCIAL') { $color = 'Cyan' }
+            elseif ($st -eq 'N/D') { $color = 'DarkGray' }
+            $flags = ''
+            if ($t.Experimental) { $flags += ' [EXP]' }
+            if ($t.Reboot) { $flags += ' [REB]' }
+            Write-Host ('  ' + ([string]$i).PadRight(3) + ' ' + $st.PadRight(12) + ' ' + $t.Gain.PadRight(18) + ' ' + $t.Name + $flags) -ForegroundColor $color
+        }
+        Write-Host ''
+        Write-Host '  Numero(s) = aplicar   (ex: 1,3,5 ou 2-4)      D + numeros = desfazer' -ForegroundColor DarkGray
+        Write-Host '  I + numero = detalhes        all = todos      0 = voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        if ($in -eq '0' -or $in -eq '') { return }
+        if ($in -eq 'all') { $in = '1-' + $list.Count }
+
+        if ($in -match '^[dD]\s*(.+)$') {
+            $idxs = ConvertTo-IndexList -Text $Matches[1] -Max $list.Count
+            foreach ($ix in $idxs) {
+                $tw = $list[$ix]
+                if (Confirm-Action ('Desfazer "' + $tw.Name + '" usando os backups?')) { Undo-Tweak -Tweak $tw }
+            }
+            continue
+        }
+        if ($in -match '^[iI]\s*(\d+)$') {
+            $n = [int]$Matches[1]
+            if ($n -ge 1 -and $n -le $list.Count) {
+                $tw = $list[$n - 1]
+                Write-Host ''
+                Write-Host ('  ' + $tw.Name) -ForegroundColor Cyan
+                Write-Host ('  Categoria : ' + $tw.Cat) -ForegroundColor Gray
+                Write-Host ('  Ganho     : ' + $tw.Gain + '   | Risco: ' + $tw.Risk) -ForegroundColor Gray
+                if ($tw.Reboot) { Write-Host '  Requer reinicio: SIM' -ForegroundColor Yellow }
+                if ($tw.Experimental) { Write-Host '  EXPERIMENTAL: teste e compare antes de manter' -ForegroundColor Yellow }
+                Write-Host ('  ' + $tw.Desc) -ForegroundColor Gray
+                Write-Host '  Itens:' -ForegroundColor DarkGray
+                foreach ($it in $tw.Items) {
+                    $line = ''
+                    switch ([string]$it.Kind) {
+                        'Reg'    { $line = 'Reg  ' + $it.Path + ' \ ' + $it.Name + ' = ' + $it.Value + ' (' + $it.Type + ')' }
+                        'RegKey' { $line = 'Chave ' + $it.Path }
+                        'Svc'    { $line = 'Svc  ' + $it.Name + ' -> ' + $it.Start }
+                        'Appx'   { $line = 'App  ' + $it.Name }
+                        'Task'   { $line = 'Task ' + $it.Path + $it.Name }
+                    }
+                    Write-Host ('    - ' + $line) -ForegroundColor DarkGray
+                }
+                Show-Pause
+            }
+            continue
+        }
+
+        $idxs = ConvertTo-IndexList -Text $in -Max $list.Count
+        if ($idxs.Count -eq 0) { Write-Host '  Entrada invalida.' -ForegroundColor Yellow; continue }
+        $sel = @()
+        foreach ($ix in $idxs) { $sel += $list[$ix] }
+        Write-Host ''
+        foreach ($tw in $sel) { Write-Host ('  + ' + $tw.Name + '  (' + $tw.Gain + ')') -ForegroundColor Green }
+        if (-not (Confirm-Action ('Aplicar ' + $sel.Count + ' tweak(s)?'))) { continue }
+        foreach ($tw in $sel) { Invoke-Tweak -Tweak $tw -Force }
+        Write-Log ('Categoria ' + $Cat + ': ' + $sel.Count + ' tweak(s) processado(s)') 'INFO'
+        Show-Summary
+        Show-Pause
+    }
+}
+
+function Show-TweakBrowser {
+    while ($true) {
+        Write-Section 'CATALOGO DE TWEAKS'
+        $cats = Get-TweakCategories
+        $i = 0
+        foreach ($c in $cats) {
+            $i++
+            $all = @($script:TweakCatalog | Where-Object { $_.Cat -eq $c })
+            $ap = 0
+            foreach ($t in $all) { if ((Get-TweakState -Tweak $t) -eq 'APLICADO') { $ap++ } }
+            $bar = ('#' * [int]($ap * 10 / [math]::Max($all.Count, 1)))
+            Write-Host ('  [' + $i + '] ' + $c.PadRight(12) + ' ' + $ap + '/' + $all.Count + ' aplicados  ' + $bar) -ForegroundColor $(if ($ap -eq $all.Count) { 'Green' } else { 'Gray' })
+        }
+        Write-Host ''
+        Write-Host '  [S] Buscar   [P] Presets 1-clique   [E] Mostrar experimentais   [0] Voltar' -ForegroundColor DarkGray
+        Write-Host ''
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        if ($in -eq '0' -or $in -eq '') { return }
+        if ($in -match '^[sS]\s*(.*)$') {
+            $txt = $Matches[1]
+            if (-not $txt) { Write-Host '  Texto da busca: ' -NoNewline; $txt = (Read-Host).Trim() }
+            $res = Find-Tweak -Text $txt
+            Write-Section ('BUSCA: ' + $txt + ' (' + $res.Count + ' resultado(s))')
+            $k = 0
+            foreach ($t in $res) {
+                $k++
+                Write-Host ('  ' + $k + '. [' + $t.Cat + '] ' + $t.Name + '  - ' + (Get-TweakState -Tweak $t)) -ForegroundColor Gray
+            }
+            if ($res.Count -gt 0) {
+                Write-Host '  Numeros para aplicar (ou 0 para voltar): ' -NoNewline
+                $s2 = (Read-Host).Trim()
+                $idxs = ConvertTo-IndexList -Text $s2 -Max $res.Count
+                if ($idxs.Count -gt 0) {
+                    $sel = @(); foreach ($ix in $idxs) { $sel += $res[$ix] }
+                    if (Confirm-Action ('Aplicar ' + $sel.Count + ' tweak(s)?')) {
+                        foreach ($tw in $sel) { Invoke-Tweak -Tweak $tw -Force }
+                        Show-Summary
+                    }
+                    Show-Pause
+                }
+            } else { Show-Pause }
+            continue
+        }
+        if ($in -match '^[pP]') { Show-PresetMenu; continue }
+        if ($in -match '^[eE]') {
+            Write-Section 'TWEAKS EXPERIMENTAIS'
+            foreach ($t in @($script:TweakCatalog | Where-Object { $_.Experimental })) {
+                Write-Host ('  - [' + $t.Cat + '] ' + $t.Name + '  (' + $t.Gain + ')') -ForegroundColor Yellow
+            }
+            Write-Log 'Ao aplicar, escolha o tweak pelo numero dentro da categoria.' 'INFO'
+            Show-Pause
+            continue
+        }
+        $n = 0
+        if ([int]::TryParse($in, [ref]$n) -and $n -ge 1 -and $n -le $cats.Count) {
+            Show-TweakCategory -Cat $cats[$n - 1]
+            continue
+        }
+        Write-Host '  Opcao invalida.' -ForegroundColor Yellow
+    }
+}
+
+# ==============================================================================
+#  7d. CATALOGO DE APPS (winget) + INSTALADOR
+# ==============================================================================
+$script:AppCatalog = @(
+    @{ Cat = 'Navegadores'; Id = 'Google.Chrome'; Name = 'Google Chrome' }
+    @{ Cat = 'Navegadores'; Id = 'Mozilla.Firefox'; Name = 'Mozilla Firefox' }
+    @{ Cat = 'Navegadores'; Id = 'Brave.Brave'; Name = 'Brave' }
+    @{ Cat = 'Navegadores'; Id = 'Vivaldi.Vivaldi'; Name = 'Vivaldi' }
+    @{ Cat = 'Navegadores'; Id = 'Opera.Opera'; Name = 'Opera' }
+
+    @{ Cat = 'Gaming'; Id = 'Valve.Steam'; Name = 'Steam' }
+    @{ Cat = 'Gaming'; Id = 'EpicGames.EpicGamesLauncher'; Name = 'Epic Games Launcher' }
+    @{ Cat = 'Gaming'; Id = 'GOG.Galaxy'; Name = 'GOG Galaxy' }
+    @{ Cat = 'Gaming'; Id = 'ElectronicArts.EADesktop'; Name = 'EA app' }
+    @{ Cat = 'Gaming'; Id = 'Ubisoft.Connect'; Name = 'Ubisoft Connect' }
+    @{ Cat = 'Gaming'; Id = 'Discord.Discord'; Name = 'Discord' }
+    @{ Cat = 'Gaming'; Id = 'Playnite.Playnite'; Name = 'Playnite (launcher unico)' }
+    @{ Cat = 'Gaming'; Id = 'Overwolf.Overwolf'; Name = 'Overwolf' }
+    @{ Cat = 'Gaming'; Id = 'RetroArch.RetroArch'; Name = 'RetroArch' }
+    @{ Cat = 'Gaming'; Id = 'BlueStack.BlueStacks'; Name = 'BlueStacks 5 (Android)' }
+
+    @{ Cat = 'Benchmark'; Id = 'CPUID.CPU-Z'; Name = 'CPU-Z' }
+    @{ Cat = 'Benchmark'; Id = 'TechPowerUp.GPU-Z'; Name = 'GPU-Z' }
+    @{ Cat = 'Benchmark'; Id = 'REALiX.HWiNFO'; Name = 'HWiNFO64' }
+    @{ Cat = 'Benchmark'; Id = 'CrystalDewWorld.CrystalDiskInfo'; Name = 'CrystalDiskInfo' }
+    @{ Cat = 'Benchmark'; Id = 'CrystalDewWorld.CrystalDiskMark'; Name = 'CrystalDiskMark' }
+    @{ Cat = 'Benchmark'; Id = 'Microsoft.Sysinternals.ProcessExplorer'; Name = 'Process Explorer' }
+    @{ Cat = 'Benchmark'; Id = 'Microsoft.Sysinternals.Autoruns'; Name = 'Autoruns' }
+
+    @{ Cat = 'Midia'; Id = 'VideoLAN.VLC'; Name = 'VLC' }
+    @{ Cat = 'Midia'; Id = 'Spotify.Spotify'; Name = 'Spotify' }
+    @{ Cat = 'Midia'; Id = 'OBSProject.OBSStudio'; Name = 'OBS Studio' }
+    @{ Cat = 'Midia'; Id = 'HandBrake.HandBrake'; Name = 'HandBrake' }
+    @{ Cat = 'Midia'; Id = 'Audacity.Audacity'; Name = 'Audacity' }
+    @{ Cat = 'Midia'; Id = 'GIMP.GIMP'; Name = 'GIMP' }
+    @{ Cat = 'Midia'; Id = 'KDE.Kdenlive'; Name = 'Kdenlive' }
+    @{ Cat = 'Midia'; Id = 'ShareX.ShareX'; Name = 'ShareX' }
+
+    @{ Cat = 'Dev'; Id = 'Microsoft.VisualStudioCode'; Name = 'VS Code' }
+    @{ Cat = 'Dev'; Id = 'Git.Git'; Name = 'Git' }
+    @{ Cat = 'Dev'; Id = 'Microsoft.PowerShell'; Name = 'PowerShell 7' }
+    @{ Cat = 'Dev'; Id = 'Microsoft.WindowsTerminal'; Name = 'Windows Terminal' }
+    @{ Cat = 'Dev'; Id = 'Notepad++.Notepad++'; Name = 'Notepad++' }
+    @{ Cat = 'Dev'; Id = 'OpenJS.NodeJS.LTS'; Name = 'Node.js LTS' }
+    @{ Cat = 'Dev'; Id = 'Python.Python.3.12'; Name = 'Python 3.12' }
+    @{ Cat = 'Dev'; Id = 'Docker.DockerDesktop'; Name = 'Docker Desktop (usa Hyper-V!)' }
+    @{ Cat = 'Dev'; Id = 'Postman.Postman'; Name = 'Postman' }
+
+    @{ Cat = 'Utilitarios'; Id = '7zip.7zip'; Name = '7-Zip' }
+    @{ Cat = 'Utilitarios'; Id = 'RARLab.WinRAR'; Name = 'WinRAR' }
+    @{ Cat = 'Utilitarios'; Id = 'voidtools.Everything'; Name = 'Everything (busca)' }
+    @{ Cat = 'Utilitarios'; Id = 'Microsoft.PowerToys'; Name = 'PowerToys' }
+    @{ Cat = 'Utilitarios'; Id = 'Rufus.Rufus'; Name = 'Rufus' }
+    @{ Cat = 'Utilitarios'; Id = 'Ventoy.Ventoy'; Name = 'Ventoy' }
+    @{ Cat = 'Utilitarios'; Id = 'Bitwarden.Bitwarden'; Name = 'Bitwarden' }
+    @{ Cat = 'Utilitarios'; Id = 'KeePassXCTeam.KeePassXC'; Name = 'KeePassXC' }
+    @{ Cat = 'Utilitarios'; Id = 'Wireshark.Wireshark'; Name = 'Wireshark' }
+    @{ Cat = 'Utilitarios'; Id = 'PuTTY.PuTTY'; Name = 'PuTTY' }
+    @{ Cat = 'Utilitarios'; Id = 'BleachBit.BleachBit'; Name = 'BleachBit' }
+
+    @{ Cat = 'Comunicacao'; Id = 'Zoom.Zoom'; Name = 'Zoom' }
+    @{ Cat = 'Comunicacao'; Id = 'Telegram.TelegramDesktop'; Name = 'Telegram Desktop' }
+    @{ Cat = 'Comunicacao'; Id = 'SlackTechnologies.Slack'; Name = 'Slack' }
+
+    @{ Cat = 'Escritorio'; Id = 'TheDocumentFoundation.LibreOffice'; Name = 'LibreOffice' }
+    @{ Cat = 'Escritorio'; Id = 'ONLYOFFICE.DesktopEditors'; Name = 'ONLYOFFICE' }
+    @{ Cat = 'Escritorio'; Id = 'SumatraPDF.SumatraPDF'; Name = 'SumatraPDF' }
+
+    @{ Cat = 'Seguranca'; Id = 'Malwarebytes.Malwarebytes'; Name = 'Malwarebytes' }
+    @{ Cat = 'Seguranca'; Id = 'GenDigital.NortonSecurity'; Name = 'Norton 360' }
+)
+
+function Test-Winget {
+    $cmd = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if (-not $cmd) {
+        Write-Log 'winget nao encontrado. Instale o "App Installer" na Microsoft Store.' 'ERRO'
+        return $false
+    }
+    return $true
+}
+
+function Show-AppInstaller {
+    if (-not (Test-Winget)) { Show-Pause; return }
+    $cats = New-Object System.Collections.ArrayList
+    foreach ($a in $script:AppCatalog) { if (-not ($cats -contains $a.Cat)) { $null = $cats.Add($a.Cat) } }
+    while ($true) {
+        Write-Section 'INSTALADOR DE APPS (winget)'
+        $i = 0
+        foreach ($c in $cats) {
+            $i++
+            $n = @($script:AppCatalog | Where-Object { $_.Cat -eq $c }).Count
+            Write-Host ('  [' + $i + '] ' + $c.PadRight(14) + $n + ' apps') -ForegroundColor Gray
+        }
+        Write-Host ''
+        Write-Host '  [B] Buscar no winget   [U] Desinstalar um app   [0] Voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        if ($in -eq '0' -or $in -eq '') { return }
+        if ($in -match '^[bB]') {
+            Write-Host '  Buscar: ' -NoNewline
+            $q = (Read-Host).Trim()
+            if ($q) {
+                Write-Log ('winget search ' + $q) 'ACAO'
+                & winget.exe search $q --accept-source-agreements 2>&1 | Select-Object -First 25 | ForEach-Object { Write-Host ('  ' + $_) -ForegroundColor Gray }
+                Show-Pause
+            }
+            continue
+        }
+        if ($in -match '^[uU]') {
+            Write-Host '  ID do winget para desinstalar (ex: Valve.Steam): ' -NoNewline
+            $id = (Read-Host).Trim()
+            if ($id -and (Confirm-Action ('Desinstalar ' + $id + '?'))) {
+                & winget.exe uninstall --id $id -e --accept-source-agreements 2>&1 | ForEach-Object { Write-Host ('  ' + $_) -ForegroundColor Gray }
+                Show-Pause
+            }
+            continue
+        }
+        $n = 0
+        if ([int]::TryParse($in, [ref]$n) -and $n -ge 1 -and $n -le $cats.Count) {
+            $cat = $cats[$n - 1]
+            $apps = @($script:AppCatalog | Where-Object { $_.Cat -eq $cat })
+            Write-Section ('APPS: ' + $cat)
+            $k = 0
+            $installedText = ''
+            try { $installedText = ((& winget.exe list --accept-source-agreements 2>$null) -join "`n") } catch { }
+            foreach ($a in $apps) {
+                $k++
+                $inst = ''
+                if ($installedText -and ($installedText -match [regex]::Escape($a.Id))) { $inst = '  [instalado]' }
+                Write-Host ('  ' + ([string]$k).PadRight(3) + $a.Name.PadRight(32) + $a.Id + $inst) -ForegroundColor $(if ($inst) { 'Green' } else { 'Gray' })
+            }
+            Write-Host ''
+            Write-Host '  Numeros para instalar (ex: 1,3 / 2-4 / all)  0 = voltar' -ForegroundColor DarkGray
+            Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+            $sel = (Read-Host).Trim()
+            if ($sel -eq '0' -or $sel -eq '') { continue }
+            if ($sel -eq 'all') { $sel = '1-' + $apps.Count }
+            $idxs = ConvertTo-IndexList -Text $sel -Max $apps.Count
+            if ($idxs.Count -eq 0) { continue }
+            $chosen = @(); foreach ($ix in $idxs) { $chosen += $apps[$ix] }
+            Write-Host ''
+            foreach ($c in $chosen) { Write-Host ('  + ' + $c.Name + '  (' + $c.Id + ')') -ForegroundColor Green }
+            if (-not (Confirm-Action ('Instalar ' + $chosen.Count + ' app(s) via winget?'))) { continue }
+            $okc = 0
+            foreach ($c in $chosen) {
+                Write-Log ('winget install ' + $c.Id) 'ACAO'
+                if ($script:DryRun) { Write-Log ('[DRY-RUN] instalaria ' + $c.Id) 'DRYRUN'; continue }
+                try {
+                    $out = & winget.exe install --id $c.Id -e --silent --accept-package-agreements --accept-source-agreements 2>&1
+                    $code = $LASTEXITCODE
+                    if ($code -eq 0) { Write-Log ('Instalado: ' + $c.Name) 'OK'; $okc++ }
+                    else { Write-Log ('Falha (' + $code + ') ao instalar ' + $c.Id + ': ' + (($out | Select-Object -Last 2) -join ' ')) 'ERRO' }
+                } catch { Write-Log ('Erro ao instalar ' + $c.Id + ': ' + $_.Exception.Message) 'ERRO' }
+            }
+            Write-Log ('Instalados: ' + $okc + ' de ' + $chosen.Count) 'INFO'
+            Show-Pause
+            continue
+        }
+        Write-Host '  Opcao invalida.' -ForegroundColor Yellow
+    }
+}
+
+# ==============================================================================
+#  7e. PRESETS (aplicacao em 1 clique)
+# ==============================================================================
+$script:Presets = @(
+    @{ Id = 'gamer'; Name = 'HL Gamer'; Profile = 'Balanced'; Desc = 'FPS em jogos nativos: Game DVR off, MMCSS, prioridade, telemetria e debloat basico.'; Tweaks = @('game-dvr', 'game-mode-on', 'mmcss-games', 'priority-sep', 'visualfx', 'telemetry-policy', 'diagtrack', 'suggestions-off', 'store-auto-update', 'do-mode', 'telemetry-tasks', 'widgets-off', 'startup-delay') }
+    @{ Id = 'emulador'; Name = 'HL Emulador'; Profile = 'Balanced'; Desc = 'Emuladores Android/console: tudo do Gamer + exclusoes no Defender + GPU por app.'; Tweaks = @('game-dvr', 'game-mode-on', 'priority-sep', 'visualfx', 'telemetry-policy', 'diagtrack', 'suggestions-off', 'store-auto-update', 'do-mode', 'telemetry-tasks', 'widgets-off', 'startup-delay', 'useless-services'); Emulator = $true }
+    @{ Id = 'privacidade'; Name = 'HL Privacidade'; Profile = 'Safe'; Desc = 'Sem telemetria, sem ID de anuncios, sem historico, sem sugestoes e sem busca web.'; Tweaks = @('telemetry-policy', 'diagtrack', 'advertising-id', 'activity-history', 'feedback-siuf', 'tailored-exp', 'suggestions-off', 'start-suggestions', 'websearch-off', 'telemetry-tasks') }
+    @{ Id = 'minimal'; Name = 'HL Minimalista'; Profile = 'Balanced'; Desc = 'Tira o excesso de apps do Windows e desliga widgets/Copilot. Sem mexer em servicos.'; Tweaks = @('debloat-bing', 'debloat-3d', 'debloat-solitaire', 'debloat-media', 'debloat-help', 'debloat-misc', 'widgets-off', 'chat-icon-off', 'copilot-off', 'suggestions-off') }
+    @{ Id = 'notebook'; Name = 'HL Notebook'; Profile = 'Safe'; Desc = 'Menos calor e consumo, mantendo FPS: energia, telemetria, sugestoes e boot mais rapido.'; Tweaks = @('game-dvr', 'telemetry-policy', 'diagtrack', 'suggestions-off', 'startup-delay', 'transparency-off') }
+)
+
+function Show-PresetMenu {
+    Write-Section 'PRESETS 1-CLIQUE'
+    $i = 0
+    foreach ($p in $script:Presets) {
+        $i++
+        Write-Host ('  [' + $i + '] ' + $p.Name) -ForegroundColor Cyan
+        Write-Host ('      ' + $p.Desc) -ForegroundColor DarkGray
+        Write-Host ('      ' + $p.Tweaks.Count + ' tweaks + perfil ' + $p.Profile) -ForegroundColor DarkGray
+    }
+    Write-Host ''
+    Write-Host '  Numero = aplicar preset      0 = voltar' -ForegroundColor DarkGray
+    Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+    $in = (Read-Host).Trim()
+    if ($in -eq '0' -or $in -eq '') { return }
+    $n = 0
+    if (-not [int]::TryParse($in, [ref]$n) -or $n -lt 1 -or $n -gt $script:Presets.Count) { return }
+    $pr = $script:Presets[$n - 1]
+    Write-Host ''
+    Write-Host ('  ' + $pr.Name + ' -> ' + $pr.Tweaks.Count + ' tweaks + perfil ' + $pr.Profile) -ForegroundColor White
+    if (-not (Confirm-Action 'Aplicar este preset agora?')) { return }
+    if (-not $script:SkipRestorePoint -and -not $script:DryRun) { New-RestorePointHL }
+    switch ($pr.Profile) {
+        'Safe' { Invoke-ProfileSafe }
+        'Balanced' { Invoke-ProfileBalanced }
+        'Extreme' { Invoke-ProfileExtreme }
+    }
+    Invoke-TweakSet -Ids $pr.Tweaks
+    if ($pr.Emulator) { Invoke-EmulatorFocus }
+    Show-Summary
+    Show-Pause
+}
+
+# ==============================================================================
+#  7f. CONFIG EXPORT / IMPORT
+# ==============================================================================
+function Export-HLConfig {
+    param([string]$Path)
+    if (-not $Path) { $Path = Join-Path $script:Root ('HL-config_' + (Get-Date -Format 'yyyy-MM-dd_HH-mm') + '.json') }
+    $applied = @()
+    foreach ($t in $script:TweakCatalog) { if ((Get-TweakState -Tweak $t) -eq 'APLICADO') { $applied += $t.Id } }
+    $cfg = [ordered]@{
+        brand = $script:Brand; version = $script:BrandVersion
+        exportedAt = (Get-Date).ToString('s'); host = $env:COMPUTERNAME
+        profile = $Profile; powerScheme = (Get-ActivePowerScheme).Name
+        appliedTweaks = $applied
+        presets = @($script:Presets | ForEach-Object { $_.Id })
+        note = 'Importe em outro PC com: .\HL-Optimizer.ps1 -ImportConfig <arquivo>'
+    }
+    try {
+        ($cfg | ConvertTo-Json -Depth 5) | Set-Content -LiteralPath $Path -Encoding UTF8
+        Write-Log ('Config exportada: ' + $Path) 'OK'
+        Write-Host ('  ' + $Path) -ForegroundColor Cyan
+    } catch { Write-Log ('Falha ao exportar config: ' + $_.Exception.Message) 'ERRO' }
+}
+
+function Import-HLConfig {
+    param([string]$Path)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { Write-Log 'Arquivo de config nao encontrado.' 'ERRO'; return }
+    try { $cfg = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json }
+    catch { Write-Log ('Config invalida: ' + $_.Exception.Message) 'ERRO'; return }
+    Write-Section 'IMPORTAR CONFIG'
+    Write-Host ('  Exportado em : ' + $cfg.exportedAt + '  (host ' + $cfg.host + ')') -ForegroundColor Gray
+    Write-Host ('  Perfil       : ' + $cfg.profile) -ForegroundColor Gray
+    $ids = @($cfg.appliedTweaks)
+    Write-Host ('  Tweaks       : ' + $ids.Count) -ForegroundColor Gray
+    foreach ($id in $ids) {
+        $tw = Get-TweakById -Id $id
+        if ($tw) { Write-Host ('    - ' + $tw.Name) -ForegroundColor DarkGray }
+        else { Write-Host ('    - ' + $id + '  (desconhecido nesta versao)') -ForegroundColor Yellow }
+    }
+    if (-not (Confirm-Action 'Aplicar estes tweaks neste PC?')) { return }
+    Invoke-TweakSet -Ids $ids
+    Show-Summary
+}
+
+function Show-ConfigMenu {
+    while ($true) {
+        Write-Section 'CONFIG (exportar / importar)'
+        Write-Host '  [1] Exportar config atual (JSON)' -ForegroundColor Gray
+        Write-Host '  [2] Importar config de um arquivo JSON' -ForegroundColor Gray
+        Write-Host '  [3] Ver pasta de backups e logs' -ForegroundColor Gray
+        Write-Host '  [0] Voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        switch ($in) {
+            '1' { Export-HLConfig; Show-Pause }
+            '2' {
+                Write-Host '  Caminho do JSON: ' -NoNewline
+                $p = (Read-Host).Trim().Trim('"')
+                Import-HLConfig -Path $p
+                Show-Pause
+            }
+            '3' { Open-FolderHL -Path $script:BackupRoot; Open-FolderHL -Path $script:LogDir }
+            '0' { return }
+            default { }
+        }
+    }
+}
+
+# ==============================================================================
+#  7g. HISTORICO DE BACKUPS / UNDO
+# ==============================================================================
+function Show-UndoHistory {
+    Write-Section 'HISTORICO DE BACKUPS'
+    $dirs = @()
+    if (Test-Path -LiteralPath $script:BackupRoot) {
+        $dirs = @(Get-ChildItem -LiteralPath $script:BackupRoot -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
+    }
+    if ($dirs.Count -eq 0) { Write-Log 'Nenhum backup encontrado. Nada a desfazer.' 'WARN'; return }
+    $i = 0
+    foreach ($d in $dirs) {
+        $i++
+        $count = 0; $prof = '?'; $reboot = $false
+        $sf = Join-Path $d.FullName 'state.json'
+        if (Test-Path -LiteralPath $sf) {
+            try { $st = Get-Content -LiteralPath $sf -Raw -Encoding UTF8 | ConvertFrom-Json; $count = @($st.changes).Count; $prof = $st.profile; $reboot = [bool]$st.rebootRequired } catch { }
+        }
+        Write-Host ('  [' + $i + '] ' + $d.Name + '   perfil: ' + $prof + '   alteracoes: ' + $count + $(if ($reboot) { '   [reboot]' } else { '' })) -ForegroundColor Gray
+    }
+    Write-Host ''
+    Write-Host '  Numero = restaurar este backup      0 = voltar' -ForegroundColor DarkGray
+    Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+    $in = (Read-Host).Trim()
+    if ($in -eq '0' -or $in -eq '') { return }
+    $n = 0
+    if (-not [int]::TryParse($in, [ref]$n) -or $n -lt 1 -or $n -gt $dirs.Count) { return }
+    Invoke-RevertHL -Path $dirs[$n - 1].FullName
+    Show-Pause
+}
+
+# ==============================================================================
+#  7h. RELATORIO HTML
+# ==============================================================================
+function ConvertTo-HtmlSafe {
+    param([string]$Text)
+    if ($null -eq $Text) { return '' }
+    return ($Text -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;' -replace '"', '&quot;')
+}
+
+function Export-HtmlReportHL {
+    param([string]$Path)
+    if (-not $Path) { $Path = Join-Path $script:LogDir ('hl-relatorio_' + $script:SessionId + '.html') }
+    $v = Get-SystemSnapshot
+    $script:SysInfo = $v
+    $rows = ''
+    foreach ($c in $script:Changes) {
+        $before = ''
+        if ($c.before) { $before = ($c.before.GetEnumerator() | ForEach-Object { $_.Key + '=' + $_.Value }) -join '; ' }
+        $after = ''
+        if ($c.after) { $after = ($c.after.GetEnumerator() | ForEach-Object { $_.Key + '=' + $_.Value }) -join '; ' }
+        $rows += '<tr><td>' + (ConvertTo-HtmlSafe $c.type) + '</td><td>' + (ConvertTo-HtmlSafe $c.target) + '</td><td>' + (ConvertTo-HtmlSafe $before) + '</td><td>' + (ConvertTo-HtmlSafe $after) + '</td><td>' + (ConvertTo-HtmlSafe $c.gain) + '</td></tr>'
+    }
+    $applied = 0; $total = @($script:TweakCatalog).Count
+    foreach ($t in $script:TweakCatalog) { if ((Get-TweakState -Tweak $t) -eq 'APLICADO') { $applied++ } }
+    $badges = ''
+    foreach ($b in (Get-HealthBadges)) {
+        $cls = 'warn'
+        if ($b.State -eq 'good') { $cls = 'good' } elseif ($b.State -eq 'bad') { $cls = 'bad' }
+        $badges += '<div class="badge ' + $cls + '"><span>' + (ConvertTo-HtmlSafe $b.Label) + '</span><b>' + (ConvertTo-HtmlSafe $b.Value) + '</b></div>'
+    }
+    $html = @"
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>HL Optimizer - Relatorio</title>
+<style>
+ body{background:#0f1216;color:#d7dee8;font-family:Segoe UI,Arial,sans-serif;margin:0;padding:32px}
+ h1{color:#38d6c4;margin:0 0 4px} h2{color:#8fd3ff;border-bottom:1px solid #24303c;padding-bottom:6px;margin-top:32px}
+ .sub{color:#7c8b9c}
+ table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+ th,td{border:1px solid #24303c;padding:6px 8px;text-align:left;vertical-align:top}
+ th{background:#182028;color:#9fb3c8}
+ tr:nth-child(even){background:#141a21}
+ .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+ .badge{background:#161d25;border:1px solid #24303c;border-radius:8px;padding:8px 12px;min-width:210px}
+ .badge span{display:block;color:#7c8b9c;font-size:12px}
+ .badge.good b{color:#4ade80}.badge.warn b{color:#fbbf24}.badge.bad b{color:#f87171}
+ .foot{margin-top:28px;color:#5f6f80;font-size:12px}
+ .kpi{display:flex;gap:24px;margin-top:16px}
+ .kpi div{background:#161d25;border:1px solid #24303c;border-radius:8px;padding:12px 16px}
+ .kpi b{display:block;font-size:22px;color:#38d6c4}
+</style></head><body>
+<h1>HL Optimizer</h1>
+<div class="sub">Marca: HL &middot; v$($script:BrandVersion) build $($script:BrandBuild) &middot; relatorio gerado em $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</div>
+<div class="kpi">
+  <div><span>Host</span><b>$(ConvertTo-HtmlSafe $env:COMPUTERNAME)</b></div>
+  <div><span>Tweaks aplicados</span><b>$applied/$total</b></div>
+  <div><span>Alteracoes nesta sessao</span><b>$($script:Changes.Count)</b></div>
+  <div><span>Perfil</span><b>$(ConvertTo-HtmlSafe $Profile)</b></div>
+</div>
+<h2>Saude do sistema</h2>
+<div class="badges">$badges</div>
+<h2>Hardware</h2>
+<table><tr><th>Item</th><th>Valor</th></tr>
+<tr><td>CPU</td><td>$(ConvertTo-HtmlSafe $v.Cpu)</td></tr>
+<tr><td>RAM</td><td>$($v.RamGb) GB</td></tr>
+<tr><td>GPU</td><td>$(ConvertTo-HtmlSafe (Get-GpuVendor))</td></tr>
+<tr><td>Disco do sistema</td><td>$(ConvertTo-HtmlSafe $v.DiskType)</td></tr>
+<tr><td>Plano de energia</td><td>$(ConvertTo-HtmlSafe $v.PowerName)</td></tr>
+<tr><td>Emuladores</td><td>$(ConvertTo-HtmlSafe (($v.Emulators) -join ', '))</td></tr>
+</table>
+<h2>Alteracoes desta sessao</h2>
+<table><tr><th>Tipo</th><th>Alvo</th><th>Antes</th><th>Depois</th><th>Ganho</th></tr>$rows</table>
+<h2>Como desfazer</h2>
+<p>Execute <code>HL-Reverter.cmd</code> ou <code>.\HL-Optimizer.ps1 -Revert</code>. Backups em <code>_HL-Backup\</code>.</p>
+<div class="foot">HL Optimizer &middot; marca e proprietaria: HL &middot; este relatorio nao sai do seu PC.</div>
+</body></html>
+"@
+    try {
+        if (-not $script:DryRun) {
+            Set-Content -LiteralPath $Path -Value $html -Encoding UTF8
+            Write-Log ('Relatorio HTML: ' + $Path) 'OK'
+        } else { Write-Log ('[DRY-RUN] geraria relatorio em ' + $Path) 'DRYRUN' }
+        Write-Host ('  ' + $Path) -ForegroundColor Cyan
+        if (-not $script:DryRun) { try { Start-Process $Path } catch { } }
+    } catch { Write-Log ('Falha ao gerar relatorio: ' + $_.Exception.Message) 'ERRO' }
+}
+
+# ==============================================================================
+#  7i. RESTAURACAO DE UMA ALTERACAO (usado pelo revert e pelo undo por tweak)
+# ==============================================================================
+function Set-StartupApprovedBytes {
+    param([string]$Key, [string]$Name, [bool]$Enabled)
+    if (-not (Test-Path -LiteralPath $Key)) { $null = New-Item -Path $Key -Force -ErrorAction Stop }
+    $bytes = [byte[]](3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    if ($Enabled) { $bytes = [byte[]](2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) }
+    $null = New-ItemProperty -LiteralPath $Key -Name $Name -Value $bytes -PropertyType Binary -Force -ErrorAction Stop
+}
+
+function Restore-ChangeEntry {
+    param($Entry)
+    if (-not $Entry) { return $false }
+    if ($script:DryRun) {
+        Write-Log ('[DRY-RUN] reverteria ' + $Entry.type + ' ' + $Entry.target) 'DRYRUN'
+        return $true
+    }
+    try {
+        switch ([string]$Entry.type) {
+            'Registry' {
+                $full = [string]$Entry.target
+                $idx = $full.LastIndexOf('\')
+                if ($idx -lt 1) { return $false }
+                $path = $full.Substring(0, $idx)
+                $name = $full.Substring($idx + 1)
+                $existed = ([string]$Entry.before.exists -eq 'True')
+                if ($existed) {
+                    $type = 'DWord'
+                    if ($Entry.before.type) { $type = [string]$Entry.before.type }
+                    $val = $Entry.before.value
+                    if ($type -eq 'DWord') { $val = [int]$val }
+                    elseif ($type -eq 'QWord') { $val = [int64]$val }
+                    if (-not (Test-Path -LiteralPath $path)) { $null = New-Item -Path $path -Force }
+                    $null = New-ItemProperty -LiteralPath $path -Name $name -Value $val -PropertyType $type -Force -ErrorAction Stop
+                    Write-Log ('  registro restaurado: ' + $name + ' = ' + $val) 'OK'
+                } else {
+                    if (Test-Path -LiteralPath $path) {
+                        Remove-ItemProperty -LiteralPath $path -Name $name -Force -ErrorAction SilentlyContinue
+                        Write-Log ('  valor criado removido: ' + $name) 'OK'
+                    }
+                }
+                return $true
+            }
+            'RegKey' {
+                if ([string]$Entry.before.exists -ne 'True') {
+                    if (Test-Path -LiteralPath ([string]$Entry.target)) {
+                        Remove-Item -LiteralPath ([string]$Entry.target) -Recurse -Force -ErrorAction Stop
+                        Write-Log ('  chave criada removida: ' + $Entry.target) 'OK'
+                        return $true
+                    }
+                }
+                return $false
+            }
+            'Service' {
+                $map = @{ 'Disabled' = 'disabled'; 'Manual' = 'demand'; 'Automatic' = 'auto'; 'AutomaticDelayedStart' = 'delayed-auto' }
+                $orig = [string]$Entry.before.startType
+                if ($map.ContainsKey($orig)) {
+                    $null = & sc.exe config ([string]$Entry.target) start= $map[$orig] 2>&1
+                    if ([string]$Entry.before.status -eq 'Running') { Start-Service -Name ([string]$Entry.target) -ErrorAction SilentlyContinue }
+                    Write-Log ('  servico restaurado: ' + $Entry.target + ' -> ' + $orig) 'OK'
+                    return $true
+                }
+                return $false
+            }
+            'PowerScheme' {
+                if ($Entry.before.guid) {
+                    $null = & powercfg.exe /setactive ([string]$Entry.before.guid) 2>&1
+                    Write-Log ('  plano de energia restaurado: ' + $Entry.before.name) 'OK'
+                    return $true
+                }
+                return $false
+            }
+            'BcdEdit' {
+                if ([string]$Entry.target -eq 'hypervisorlaunchtype') {
+                    $v = 'auto'
+                    if ($Entry.before.value) { $v = [string]$Entry.before.value }
+                    $null = & bcdedit.exe /set hypervisorlaunchtype $v 2>&1
+                    Write-Log ('  hypervisorlaunchtype restaurado: ' + $v + ' (requer reinicio)') 'OK'
+                    return $true
+                }
+                return $false
+            }
+            'DefenderExclusion' {
+                Remove-MpPreference -ExclusionPath ([string]$Entry.target) -ErrorAction Stop
+                Write-Log ('  exclusao removida: ' + $Entry.target) 'OK'
+                return $true
+            }
+            'Appx' {
+                $loc = [string]$Entry.before.location
+                if ($loc -and (Test-Path -LiteralPath (Join-Path $loc 'AppxManifest.xml'))) {
+                    Add-AppxPackage -Register (Join-Path $loc 'AppxManifest.xml') -DisableDevelopmentMode -ErrorAction Stop
+                    Write-Log ('  app reativado: ' + $Entry.target) 'OK'
+                    return $true
+                }
+                Write-Log ('  nao foi possivel restaurar o app (reinstale pela Store): ' + $Entry.target) 'WARN'
+                return $false
+            }
+            'ScheduledTask' {
+                $full = [string]$Entry.target
+                $idx = $full.LastIndexOf('\')
+                if ($idx -lt 1) { return $false }
+                $path = $full.Substring(0, $idx)
+                if (-not $path) { $path = '\' }
+                $name = $full.Substring($idx + 1)
+                $null = Enable-ScheduledTask -TaskPath $path -TaskName $name -ErrorAction Stop
+                Write-Log ('  tarefa reativada: ' + $name) 'OK'
+                return $true
+            }
+            'Startup' {
+                $enabled = ([string]$Entry.before.enabled -eq 'True')
+                Set-StartupApprovedBytes -Key ([string]$Entry.target) -Name ([string]$Entry.before.name) -Enabled $enabled
+                Write-Log ('  startup restaurado: ' + $Entry.before.name) 'OK'
+                return $true
+            }
+            'Info' {
+                Write-Log ('  sem reversao automatica para: ' + $Entry.target) 'INFO'
+                return $true
+            }
+            'Dns' {
+                $idx = [int]$Entry.before.interfaceIndex
+                $servers = @()
+                if ($Entry.before.servers) { $servers = @(([string]$Entry.before.servers) -split ',' | Where-Object { $_ }) }
+                if ($servers.Count -gt 0) { Set-DnsClientServerAddress -InterfaceIndex $idx -ServerAddresses $servers -ErrorAction Stop }
+                else { Set-DnsClientServerAddress -InterfaceIndex $idx -ResetServerAddresses -ErrorAction Stop }
+                Write-Log ('  DNS restaurado na interface ' + $idx) 'OK'
+                return $true
+            }
+            default {
+                Write-Log ('  tipo desconhecido ignorado: ' + $Entry.type) 'WARN'
+                return $false
+            }
+        }
+    } catch {
+        Write-Log ('  FALHA ao reverter ' + $Entry.target + ': ' + $_.Exception.Message) 'ERRO'
+        return $false
+    }
+}
+
+# ==============================================================================
+#  7j. WINDOWS UPDATE (COM, sem modulos externos)
+# ==============================================================================
+function Get-AvailableUpdatesHL {
+    $res = New-Object System.Collections.ArrayList
+    try {
+        $session = New-Object -ComObject Microsoft.Update.Session
+        $searcher = $session.CreateUpdateSearcher()
+        Write-Log 'Consultando Windows Update (pode levar 30-90s)...' 'ACAO'
+        $found = $searcher.Search("IsInstalled=0 and IsHidden=0 and Type='Software'")
+        foreach ($u in $found.Updates) {
+            $null = $res.Add([pscustomobject]@{
+                Title  = [string]$u.Title
+                Kb     = (@($u.KBArticleIDs) -join ',')
+                SizeMb = [math]::Round(([double]$u.MaxDownloadSize / 1MB), 1)
+                Reboot = ([int]$u.InstallationBehavior.RebootBehavior -ne 0)
+            })
+        }
+    } catch { Write-Log ('Falha ao consultar o Windows Update: ' + $_.Exception.Message) 'ERRO' }
+    return $res
+}
+
+function Install-UpdatesHL {
+    try {
+        $session = New-Object -ComObject Microsoft.Update.Session
+        $searcher = $session.CreateUpdateSearcher()
+        $found = $searcher.Search("IsInstalled=0 and IsHidden=0 and Type='Software'")
+        if ($found.Updates.Count -eq 0) { Write-Log 'Nenhuma atualizacao pendente.' 'OK'; return }
+        $coll = New-Object -ComObject Microsoft.Update.UpdateColl
+        foreach ($u in $found.Updates) {
+            if (-not $u.EulaAccepted) { try { $u.AcceptEula() } catch { } }
+            $null = $coll.Add($u)
+        }
+        Write-Log ('Baixando ' + $coll.Count + ' atualizacao(oes)...') 'ACAO'
+        $dl = $session.CreateUpdateDownloader()
+        $dl.Updates = $coll
+        $null = $dl.Download()
+        Write-Log 'Download concluido. Instalando...' 'ACAO'
+        $inst = $session.CreateUpdateInstaller()
+        $inst.Updates = $coll
+        $r = $inst.Install()
+        Write-Log ('Resultado: codigo ' + $r.ResultCode + ' | reinicio necessario: ' + [bool]$r.RebootRequired) 'OK'
+        if ($r.RebootRequired) { $script:RebootNeeded = $true; Write-Log 'REINICIO necessario para concluir as atualizacoes.' 'WARN' }
+    } catch { Write-Log ('Falha ao instalar atualizacoes: ' + $_.Exception.Message) 'ERRO' }
+}
+
+function Set-PauseUpdatesHL {
+    param([int]$Weeks = 4)
+    $now = Get-Date
+    $start = $now.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    $end = $now.AddDays($Weeks * 7).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    $p = 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+    Set-RegValueSafe -Path $p -Name 'PauseFeatureUpdatesStartTime' -Value $start -Type String -Gain 'evita update no meio do jogo' -Risk 'sem patches por algumas semanas'
+    Set-RegValueSafe -Path $p -Name 'PauseFeatureUpdatesEndTime' -Value $end -Type String
+    Set-RegValueSafe -Path $p -Name 'PauseQualityUpdatesStartTime' -Value $start -Type String
+    Set-RegValueSafe -Path $p -Name 'PauseQualityUpdatesEndTime' -Value $end -Type String
+    Set-RegValueSafe -Path $p -Name 'PauseUpdatesExpiryTime' -Value $end -Type String
+    Write-Log ('Atualizacoes pausadas ate ' + $end) 'OK'
+}
+
+function Resume-UpdatesHL {
+    $p = 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+    foreach ($n in @('PauseFeatureUpdatesStartTime', 'PauseFeatureUpdatesEndTime', 'PauseQualityUpdatesStartTime', 'PauseQualityUpdatesEndTime', 'PauseUpdatesExpiryTime')) {
+        Remove-RegValueSafe -Path $p -Name $n -Gain 'retomar updates' -Risk 'nenhum'
+    }
+    Write-Log 'Atualizacoes retomadas.' 'OK'
+}
+
+function Show-UpdateMenu {
+    while ($true) {
+        Write-Section 'WINDOWS UPDATE'
+        Write-Host '  [1] Ver atualizacoes pendentes' -ForegroundColor Gray
+        Write-Host '  [2] Baixar e instalar todas' -ForegroundColor Gray
+        Write-Host '  [3] Pausar updates por 4 semanas (recomendado antes de jogar)' -ForegroundColor Gray
+        Write-Host '  [4] Retomar updates' -ForegroundColor Gray
+        Write-Host '  [5] Abrir Windows Update nas Configuracoes' -ForegroundColor Gray
+        Write-Host '  [0] Voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        switch ($in) {
+            '1' {
+                $ups = Get-AvailableUpdatesHL
+                if ($ups.Count -eq 0) { Write-Host '  Nada pendente (ou consulta falhou).' -ForegroundColor Green }
+                else {
+                    Write-Host ('  ' + $ups.Count + ' atualizacao(oes):') -ForegroundColor Cyan
+                    foreach ($u in $ups) {
+                        Write-Host ('   - ' + $u.Title + '  [' + $u.Kb + ']  ' + $u.SizeMb + ' MB') -ForegroundColor Gray
+                    }
+                }
+                Show-Pause
+            }
+            '2' { if (Confirm-Action 'Baixar e instalar TODAS as atualizacoes agora? Isso pode demorar.') { Install-UpdatesHL }; Show-Pause }
+            '3' { if (Confirm-Action 'Pausar atualizacoes por 4 semanas?') { Set-PauseUpdatesHL -Weeks 4 }; Show-Pause }
+            '4' { if (Confirm-Action 'Retomar atualizacoes agora?') { Resume-UpdatesHL }; Show-Pause }
+            '5' { try { Start-Process 'ms-settings:windowsupdate' } catch { } }
+            '0' { return }
+            default { }
+        }
+    }
+}
+
+# ==============================================================================
+#  7k. INICIALIZACAO (startup apps)
+# ==============================================================================
+function Get-StartupItemsHL {
+    $items = New-Object System.Collections.ArrayList
+    $defs = @(
+        @{ Hive = 'HKCU'; Run = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'; App = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run' },
+        @{ Hive = 'HKLM'; Run = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'; App = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run' },
+        @{ Hive = 'HKLM32'; Run = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run'; App = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32' }
+    )
+    foreach ($d in $defs) {
+        if (-not (Test-Path -LiteralPath $d.Run)) { continue }
+        try { $props = Get-ItemProperty -LiteralPath $d.Run -ErrorAction Stop } catch { continue }
+        foreach ($p in $props.PSObject.Properties) {
+            if ($p.Name -like 'PS*') { continue }
+            $enabled = $true
+            $ap = Get-RegValueState -Path $d.App -Name $p.Name
+            if ($ap.Exists -and ($ap.Value -is [byte[]]) -and $ap.Value.Length -gt 0) {
+                if ($ap.Value[0] -ge 3) { $enabled = $false }
+            }
+            $null = $items.Add([pscustomobject]@{
+                    Hive = $d.Hive; Name = $p.Name; Command = [string]$p.Value
+                    Enabled = $enabled; AppKey = $d.App
+                })
+        }
+    }
+    return $items
+}
+
+function Set-StartupItemHL {
+    param($Item, [bool]$Enabled)
+    $before = $true
+    $ap = Get-RegValueState -Path $Item.AppKey -Name $Item.Name
+    if ($ap.Exists -and ($ap.Value -is [byte[]]) -and $ap.Value.Length -gt 0 -and $ap.Value[0] -ge 3) { $before = $false }
+    if ($script:DryRun) { Write-Log ('[DRY-RUN] startup ' + $Item.Name + ' -> enabled=' + $Enabled) 'DRYRUN'; return }
+    try {
+        Set-StartupApprovedBytes -Key $Item.AppKey -Name $Item.Name -Enabled $Enabled
+        Write-Log ('Startup ' + $Item.Name + ': ' + $before + ' -> ' + $Enabled) 'OK'
+        Save-BackupEntry -Type 'Startup' -Target $Item.AppKey -Before @{ enabled = $before; name = $Item.Name } -After @{ enabled = $Enabled; name = $Item.Name } `
+            -Gain 'boot mais leve' -Risk 'app nao inicia sozinho'
+    } catch { Write-Log ('Falha ao alterar startup ' + $Item.Name + ': ' + $_.Exception.Message) 'ERRO' }
+}
+
+function Show-StartupManager {
+    while ($true) {
+        Write-Section 'APPS DE INICIALIZACAO'
+        $items = @(Get-StartupItemsHL)
+        if ($items.Count -eq 0) { Write-Log 'Nenhum app de inicializacao encontrado.' 'INFO'; Show-Pause; return }
+        $i = 0
+        foreach ($it in $items) {
+            $i++
+            $st = 'LIGADO '
+            $color = 'Green'
+            if (-not $it.Enabled) { $st = 'desligado'; $color = 'DarkGray' }
+            Write-Host ('  ' + ([string]$i).PadRight(3) + ' [' + $st + '] ' + $it.Hive.PadRight(6) + ' ' + $it.Name.PadRight(28) + $it.Command) -ForegroundColor $color
+        }
+        Write-Host ''
+        Write-Host '  Numero(s) = ligar/desligar (alterna)    0 = voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        if ($in -eq '0' -or $in -eq '') { return }
+        $idxs = ConvertTo-IndexList -Text $in -Max $items.Count
+        foreach ($ix in $idxs) {
+            $it = $items[$ix]
+            Set-StartupItemHL -Item $it -Enabled (-not $it.Enabled)
+        }
+        if ($idxs.Count -gt 0) { Show-Summary; Show-Pause }
+    }
+}
+
+# ==============================================================================
+#  7l. TAREFAS AGENDADAS (auditoria)
+# ==============================================================================
+function Show-ScheduledTaskAudit {
+    while ($true) {
+        Write-Section 'TAREFAS AGENDADAS (nao-Microsoft)'
+        $tasks = @()
+        try {
+            $tasks = @(Get-ScheduledTasksHL -Refresh | Where-Object { $_.TaskPath -notlike '\Microsoft\*' -and $_.TaskName -notlike 'HL*' } | Sort-Object TaskPath, TaskName | Select-Object -First 40)
+        } catch { Write-Log ('Falha ao listar tarefas: ' + $_.Exception.Message) 'ERRO' }
+        if ($tasks.Count -eq 0) { Write-Log 'Nenhuma tarefa de terceiros encontrada.' 'INFO'; Show-Pause; return }
+        $i = 0
+        foreach ($t in $tasks) {
+            $i++
+            $color = 'Gray'
+            if ([string]$t.State -eq 'Disabled') { $color = 'DarkGray' }
+            elseif ([string]$t.State -eq 'Ready') { $color = 'Yellow' }
+            Write-Host ('  ' + ([string]$i).PadRight(3) + ' ' + ([string]$t.State).PadRight(9) + ' ' + $t.TaskPath + $t.TaskName) -ForegroundColor $color
+        }
+        Write-Host ''
+        Write-Host '  Numero(s) = desativar     R + numeros = reativar     0 = voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        if ($in -eq '0' -or $in -eq '') { return }
+        $reenable = $false
+        if ($in -match '^[rR]\s*(.+)$') { $reenable = $true; $in = $Matches[1] }
+        $idxs = ConvertTo-IndexList -Text $in -Max $tasks.Count
+        foreach ($ix in $idxs) {
+            $t = $tasks[$ix]
+            $state = 'Disabled'
+            if ($reenable) { $state = 'Ready' }
+            Set-ScheduledTaskStateSafe -TaskPath $t.TaskPath -TaskName $t.TaskName -State $state -Why 'auditoria'
+        }
+        if ($idxs.Count -gt 0) { Show-Summary; Show-Pause }
+    }
+}
+
+# ==============================================================================
+#  7m. RECURSOS DO WINDOWS (features / virtualizacao)
+# ==============================================================================
+$script:FeatureList = @(
+    @{ Name = 'Microsoft-Hyper-V-All'; Label = 'Hyper-V (completo)'; Note = 'CRITICO: com Hyper-V ativo, BlueStacks/LDPlayer caem para modo lento' }
+    @{ Name = 'Microsoft-Hyper-V-Hypervisor'; Label = 'Hypervisor da Microsoft'; Note = 'idem acima' }
+    @{ Name = 'VirtualMachinePlatform'; Label = 'Plataforma de Maquina Virtual'; Note = 'usada por WSL2/Android/WSA' }
+    @{ Name = 'WindowsHypervisorPlatform'; Label = 'Windows Hypervisor Platform'; Note = 'usada por VirtualBox/emuladores acelerados' }
+    @{ Name = 'Microsoft-Windows-Subsystem-Linux'; Label = 'WSL'; Note = 'Linux no Windows' }
+    @{ Name = 'Containers'; Label = 'Containers'; Note = 'Docker no modo Windows' }
+    @{ Name = 'Containers-DisposableClientVM'; Label = 'Windows Sandbox'; Note = 'maquina descartavel' }
+)
+
+function Get-FeatureStateHL {
+    param([string]$Name)
+    try {
+        $f = Get-WindowsOptionalFeature -Online -FeatureName $Name -ErrorAction Stop
+        return [string]$f.State
+    } catch { return 'N/D' }
+}
+
+function Show-FeaturesManager {
+    while ($true) {
+        Write-Section 'RECURSOS DO WINDOWS / VIRTUALIZACAO'
+        Write-Log 'Desligar Hyper-V/VMP e o maior ganho isolado em emulador Android. Exige reinicio.' 'INFO'
+        $i = 0
+        $states = @()
+        foreach ($f in $script:FeatureList) {
+            $i++
+            $st = Get-FeatureStateHL -Name $f.Name
+            $states += $st
+            $color = 'DarkGray'
+            if ($st -eq 'Enabled') { $color = 'Yellow' } elseif ($st -eq 'Disabled') { $color = 'Green' }
+            Write-Host ('  ' + ([string]$i).PadRight(3) + ' ' + $st.PadRight(9) + ' ' + $f.Label.PadRight(34) + $f.Note) -ForegroundColor $color
+        }
+        Write-Host ''
+        Write-Host '  Numero(s) = ativar/desativar (alterna; exige reinicio)    0 = voltar' -ForegroundColor DarkGray
+        Write-Host '  Dica: Hyper-V ON + emulador Android = perda de 50-90% de FPS.' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        if ($in -eq '0' -or $in -eq '') { return }
+        $idxs = ConvertTo-IndexList -Text $in -Max $script:FeatureList.Count
+        foreach ($ix in $idxs) {
+            $f = $script:FeatureList[$ix]
+            $st = $states[$ix]
+            if ($st -eq 'Enabled') {
+                if (Confirm-Action ('Desativar "' + $f.Label + '"? Pode quebrar WSL2/Docker/WSA. Exige reinicio.')) {
+                    if ($script:DryRun) { Write-Log ('[DRY-RUN] desativaria ' + $f.Name) 'DRYRUN' }
+                    else {
+                        try {
+                            $r = Disable-WindowsOptionalFeature -Online -FeatureName $f.Name -NoRestart -ErrorAction Stop
+                            Write-Log ('Recurso desativado: ' + $f.Label) 'OK'
+                            Save-BackupEntry -Type 'Feature' -Target $f.Name -Before @{ state = 'Enabled' } -After @{ state = 'Disabled' } -Gain 'ganho em emulador' -Risk 'quebra WSL2/Docker' -RequiresReboot $true
+                            $script:RebootNeeded = $true
+                        } catch { Write-Log ('Falha ao desativar ' + $f.Label + ': ' + $_.Exception.Message) 'ERRO' }
+                    }
+                }
+            } elseif ($st -eq 'Disabled') {
+                if (Confirm-Action ('Ativar "' + $f.Label + '"?')) {
+                    if ($script:DryRun) { Write-Log ('[DRY-RUN] ativaria ' + $f.Name) 'DRYRUN' }
+                    else {
+                        try {
+                            $null = Enable-WindowsOptionalFeature -Online -FeatureName $f.Name -NoRestart -ErrorAction Stop
+                            Write-Log ('Recurso ativado: ' + $f.Label) 'OK'
+                            Save-BackupEntry -Type 'Feature' -Target $f.Name -Before @{ state = 'Disabled' } -After @{ state = 'Enabled' } -RequiresReboot $true
+                            $script:RebootNeeded = $true
+                        } catch { Write-Log ('Falha ao ativar ' + $f.Label + ': ' + $_.Exception.Message) 'ERRO' }
+                    }
+                }
+            } else { Write-Log ('Estado desconhecido para ' + $f.Label + ' (carregue como admin)') 'WARN' }
+        }
+        Show-Pause
+    }
+}
+
+# ==============================================================================
+#  7n. INFORMACOES ESTENDIDAS DO SISTEMA
+# ==============================================================================
+function Invoke-SystemInfoExtended {
+    Write-Section 'INFORMACOES DO SISTEMA'
+    $lines = New-Object System.Collections.ArrayList
+    $add = { param($t) Write-Host ('  ' + $t) -ForegroundColor Gray; $null = $lines.Add($t) }
+    try { $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+        & $add ('OS        : ' + $os.Caption + ' ' + $os.Version + ' (build ' + $os.BuildNumber + ')')
+        & $add ('Instalado : ' + $os.InstallDate)
+        & $add ('Uptime    : ' + [math]::Round(((Get-Date) - $os.LastBootUpTime).TotalHours, 1) + ' h')
+        & $add ('RAM livre : ' + [math]::Round($os.FreePhysicalMemory / 1MB, 0) + ' MB de ' + [math]::Round($os.TotalVisibleMemorySize / 1MB, 0) + ' MB')
+    } catch { }
+    try { $cs = Get-CimInstance Win32_ComputerSystem; & $add ('Modelo    : ' + $cs.Manufacturer + ' ' + $cs.Model) } catch { }
+    try { $bb = Get-CimInstance Win32_BaseBoard; & $add ('Placa-mae : ' + $bb.Manufacturer + ' ' + $bb.Product) } catch { }
+    try { $b = Get-CimInstance Win32_BIOS; & $add ('BIOS      : ' + $b.Manufacturer + ' ' + $b.SMBIOSBIOSVersion + ' (' + $b.ReleaseDate + ')') } catch { }
+    try { $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+        & $add ('CPU       : ' + $cpu.Name.Trim())
+        & $add ('Nucleos   : ' + $cpu.NumberOfCores + 'C/' + $cpu.NumberOfLogicalProcessors + 'T  @ ' + $cpu.MaxClockSpeed + ' MHz')
+        & $add ('VT-x/SVM  : ' + $(if ($cpu.VirtualizationFirmwareEnabled) { 'HABILITADO' } else { 'DESABILITADO (BIOS!)' }))
+    } catch { }
+    try {
+        $i = 0
+        foreach ($m in (Get-CimInstance Win32_PhysicalMemory)) {
+            $i++
+            & $add ('RAM slot ' + $i + ': ' + [math]::Round($m.Capacity / 1GB, 0) + ' GB ' + $m.Speed + ' MHz ' + $m.Manufacturer)
+        }
+    } catch { }
+    try {
+        foreach ($g in (Get-CimInstance Win32_VideoController)) {
+            & $add ('GPU       : ' + $g.Name + ' | driver ' + $g.DriverVersion + ' (' + $g.DriverDate + ') | VRAM ' + [math]::Round($g.AdapterRAM / 1GB, 1) + ' GB')
+        }
+    } catch { }
+    try { foreach ($d in (Get-PhysicalDisk)) { & $add ('Disco     : ' + $d.FriendlyName + ' | ' + $d.MediaType + ' | ' + [math]::Round($d.Size / 1GB, 0) + ' GB | saude ' + $d.HealthStatus) } } catch { }
+    $secBoot = 'indisponivel/legado'
+    try { if (Confirm-SecureBootUEFI -ErrorAction Stop) { $secBoot = 'LIGADO' } else { $secBoot = 'desligado' } } catch { }
+    & $add ('SecureBoot: ' + $secBoot)
+    try { $tpm = Get-Tpm -ErrorAction Stop; & $add ('TPM       : ' + $(if ($tpm.TpmPresent) { 'presente' } else { 'ausente' })) } catch { }
+    try {
+        $lic = Get-CimInstance SoftwareLicensingProduct -Filter "PartialProductKey IS NOT NULL AND Name LIKE 'Windows%'" -ErrorAction Stop | Select-Object -First 1
+        if ($lic) { & $add ('Ativacao  : ' + $lic.LicenseStatus + ' (1 = ativado)') }
+    } catch { }
+    try {
+        $dg = Get-CimInstance -Namespace 'root\Microsoft\Windows\DeviceGuard' -Class Win32_DeviceGuard -ErrorAction Stop
+        & $add ('VBS       : status ' + $dg.VirtualizationBasedSecurityStatus + ' | servicos ' + (@($dg.SecurityServicesRunning) -join ','))
+    } catch { }
+    $file = Join-Path $script:LogDir ('hl-sistema_' + $script:SessionId + '.txt')
+    if (-not $script:DryRun) { try { Set-Content -LiteralPath $file -Value $lines -Encoding UTF8; Write-Log ('Salvo: ' + $file) 'OK' } catch { } }
+}
+
+# ==============================================================================
+#  7o. REDE: DNS RAPIDO (com backup) + ONEDRIVE
+# ==============================================================================
+function Set-DnsHL {
+    param([ValidateSet('Cloudflare', 'Google', 'Quad9', 'Automatic')][string]$Provider)
+    $map = @{
+        Cloudflare = @('1.1.1.1', '1.0.0.1')
+        Google     = @('8.8.8.8', '8.8.4.4')
+        Quad9      = @('9.9.9.9', '149.112.112.112')
+        Automatic  = @()
+    }
+    $adapters = @()
+    try { $adapters = @(Get-NetAdapter -Physical -ErrorAction Stop | Where-Object { $_.Status -eq 'Up' }) } catch { }
+    if ($adapters.Count -eq 0) { Write-Log 'Nenhum adaptador de rede ativo.' 'ERRO'; return }
+    foreach ($a in $adapters) {
+        $idx = [int]$a.ifIndex
+        $current = @()
+        try { $current = @((Get-DnsClientServerAddress -InterfaceIndex $idx -AddressFamily IPv4 -ErrorAction Stop).ServerAddresses) } catch { }
+        if ($script:DryRun) { Write-Log ('[DRY-RUN] DNS de ' + $a.Name + ' (' + ($current -join ',') + ') -> ' + ($map[$Provider] -join ',')) 'DRYRUN'; continue }
+        try {
+            if ($map[$Provider].Count -gt 0) { Set-DnsClientServerAddress -InterfaceIndex $idx -ServerAddresses $map[$Provider] -ErrorAction Stop }
+            else { Set-DnsClientServerAddress -InterfaceIndex $idx -ResetServerAddresses -ErrorAction Stop }
+            Write-Log ('DNS de ' + $a.Name + ': ' + ($current -join ', ') + ' -> ' + ($map[$Provider] -join ', ')) 'OK'
+            Save-BackupEntry -Type 'Dns' -Target $a.Name -Before @{ interfaceIndex = $idx; servers = ($current -join ',') } -After @{ interfaceIndex = $idx; servers = ($map[$Provider] -join ',') } `
+                -Gain 'resolucao de nomes mais rapida' -Risk 'nenhum (reversivel)'
+        } catch { Write-Log ('Falha ao alterar DNS de ' + $a.Name + ': ' + $_.Exception.Message) 'ERRO' }
+    }
+    if (-not $script:DryRun) { try { Clear-DnsClientCache -ErrorAction SilentlyContinue } catch { } }
+}
+
+function Invoke-RemoveOneDriveHL {
+    $path = Join-Path $env:SystemRoot 'System32\OneDriveSetup.exe'
+    if (-not (Test-Path -LiteralPath $path)) { $path = Join-Path $env:SystemRoot 'SysWOW64\OneDriveSetup.exe' }
+    if (-not (Test-Path -LiteralPath $path)) { Write-Log 'OneDriveSetup.exe nao encontrado (talvez ja removido).' 'WARN'; return }
+    if (-not (Confirm-Action 'Desinstalar o OneDrive? Seus arquivos na nuvem NAO sao apagados, mas param de sincronizar.')) { return }
+    if ($script:DryRun) { Write-Log '[DRY-RUN] desinstalaria o OneDrive' 'DRYRUN'; return }
+    try {
+        Start-Process -FilePath $path -ArgumentList '/uninstall' -Wait -ErrorAction Stop
+        Write-Log 'OneDrive desinstalado. Reinstale com winget: Microsoft.OneDrive' 'OK'
+        Save-BackupEntry -Type 'Info' -Target 'OneDrive' -Before @{ installed = $true } -After @{ installed = $false } -Gain 'menos um processo em segundo plano' -Risk 'sem sincronizacao' -RevertHint 'winget install Microsoft.OneDrive'
+    } catch { Write-Log ('Falha ao desinstalar OneDrive: ' + $_.Exception.Message) 'ERRO' }
+}
+
+# ==============================================================================
+#  7p. MENUS DE SISTEMA E DIAGNOSTICO
+# ==============================================================================
+function Show-SystemMenu {
+    while ($true) {
+        Write-Section 'SISTEMA'
+        Write-Host '  [1] Apps de inicializacao (startup)' -ForegroundColor Gray
+        Write-Host '  [2] Tarefas agendadas de terceiros' -ForegroundColor Gray
+        Write-Host '  [3] Recursos do Windows / Hyper-V / Virtualizacao' -ForegroundColor Gray
+        Write-Host '  [4] Informacoes detalhadas do hardware' -ForegroundColor Gray
+        Write-Host '  [5] DNS rapido (Cloudflare/Google/Quad9/automatico)' -ForegroundColor Gray
+        Write-Host '  [6] Desinstalar OneDrive' -ForegroundColor Gray
+        Write-Host '  [7] Servicos de fabricante (RGB/audio) - parar' -ForegroundColor Gray
+        Write-Host '  [0] Voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        switch ($in) {
+            '1' { Show-StartupManager }
+            '2' { Show-ScheduledTaskAudit }
+            '3' { Show-FeaturesManager }
+            '4' { Invoke-SystemInfoExtended; Show-Pause }
+            '5' {
+                Write-Host '  [1] Cloudflare  [2] Google  [3] Quad9  [4] Automatico  [0] voltar' -ForegroundColor Gray
+                Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+                $d = (Read-Host).Trim()
+                switch ($d) {
+                    '1' { Set-DnsHL -Provider Cloudflare }
+                    '2' { Set-DnsHL -Provider Google }
+                    '3' { Set-DnsHL -Provider Quad9 }
+                    '4' { Set-DnsHL -Provider Automatic }
+                }
+                Show-Pause
+            }
+            '6' { Invoke-RemoveOneDriveHL; Show-Pause }
+            '7' { Invoke-BloatwarePlan; Show-Summary; Show-Pause }
+            '0' { return }
+            default { }
+        }
+    }
+}
+
+function Show-DiagnosticsMenu {
+    while ($true) {
+        Write-Section 'DIAGNOSTICO E MEDICAO'
+        Write-Host '  [1] Diagnostico completo (gera relatorio)' -ForegroundColor Gray
+        Write-Host '  [2] Benchmark rapido (CPU/disco/RAM, ~20s)' -ForegroundColor Gray
+        Write-Host '  [3] Benchmark comparativo (antes/depois)' -ForegroundColor Gray
+        Write-Host '  [4] Verificacao do ambiente (self-check)' -ForegroundColor Gray
+        Write-Host '  [5] Relatorio HTML com tudo' -ForegroundColor Gray
+        Write-Host '  [0] Voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim()
+        switch ($in) {
+            '1' { Invoke-Diagnostics; Show-Pause }
+            '2' { Invoke-QuickBenchmark; Show-Pause }
+            '3' { Invoke-CompareBenchmark; Show-Pause }
+            '4' { Invoke-SelfCheck; Show-Pause }
+            '5' { Export-HtmlReportHL; Show-Pause }
+            '0' { return }
+            default { }
+        }
+    }
+}
+
+function Invoke-CompareBenchmark {
+    Write-Section 'BENCHMARK COMPARATIVO'
+    $files = @()
+    if (Test-Path -LiteralPath $script:LogDir) {
+        $files = @(Get-ChildItem -LiteralPath $script:LogDir -Filter 'hl-baseline_*.json' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
+    }
+    if ($files.Count -eq 0) {
+        Write-Log 'Nenhuma linha de base ainda. Vamos criar a primeira.' 'INFO'
+        if (-not (Confirm-Action 'Medir a linha de base AGORA (com o PC em repouso, jogos fechados)?')) { return }
+        $before = Measure-LoadSnapshot
+        Show-BenchResult -Data $before -Label 'LINHA DE BASE'
+        $file = Join-Path $script:LogDir ('hl-baseline_' + $script:SessionId + '.json')
+        if (-not $script:DryRun) { try { ($before | ConvertTo-Json) | Set-Content -LiteralPath $file -Encoding UTF8 } catch { } }
+        Write-Log ('Linha de base salva: ' + $file) 'OK'
+        Write-Log 'Aplique um preset (opcao 1) e volte aqui para comparar.' 'INFO'
+        return
+    }
+    $base = $null
+    try { $base = Get-Content -LiteralPath $files[0].FullName -Raw -Encoding UTF8 | ConvertFrom-Json } catch { }
+    if (-not $base) { Write-Log 'Linha de base ilegivel.' 'ERRO'; return }
+    Write-Log ('Comparando com a linha de base de ' + $base.quando) 'INFO'
+    if (-not (Confirm-Action 'Medir AGORA para comparar com a linha de base?')) { return }
+    $now = Measure-LoadSnapshot
+    Show-BenchResult -Data $base -Label 'ANTES'
+    Show-BenchResult -Data $now -Label 'DEPOIS'
+    $dCpu = 0.0; $dRam = 0.0; $dProc = 0; $dSvc = 0
+    if ($base.cpu_medio -gt 0) { $dCpu = [math]::Round((($now.cpu_medio - $base.cpu_medio) / $base.cpu_medio) * 100, 1) }
+    if ($base.ram_livre_mb -gt 0) { $dRam = [math]::Round((($now.ram_livre_mb - $base.ram_livre_mb) / $base.ram_livre_mb) * 100, 1) }
+    $dProc = [int]$now.processos - [int]$base.processos
+    $dSvc = [int]$now.servicos_ativos - [int]$base.servicos_ativos
+    Write-Host ''
+    Write-Host '  DIFERENCA (negativo em CPU = melhor)' -ForegroundColor Cyan
+    Write-Host ('    CPU medio ....... ' + $dCpu + ' %') -ForegroundColor $(if ($dCpu -lt 0) { 'Green' } else { 'Yellow' })
+    Write-Host ('    RAM livre ....... ' + $dRam + ' %') -ForegroundColor $(if ($dRam -gt 0) { 'Green' } else { 'Yellow' })
+    Write-Host ('    Processos ....... ' + $dProc) -ForegroundColor Gray
+    Write-Host ('    Servicos ativos . ' + $dSvc) -ForegroundColor Gray
+    Write-Log ('Comparativo: CPU ' + $dCpu + '% | RAM livre ' + $dRam + '% | processos ' + $dProc + ' | servicos ' + $dSvc) 'INFO'
+    if (Confirm-Action 'Salvar esta medicao como nova linha de base?') {
+        $file = Join-Path $script:LogDir ('hl-baseline_' + $script:SessionId + '.json')
+        if (-not $script:DryRun) { try { ($now | ConvertTo-Json) | Set-Content -LiteralPath $file -Encoding UTF8; Write-Log ('Nova linha de base: ' + $file) 'OK' } catch { } }
+    }
+    Write-Log 'Lembre: isto mede carga do sistema, nao FPS. Para FPS/1% low use CapFrameX ou PresentMon.' 'INFO'
+}
+
+function Measure-LoadSnapshot {
+    $samples = 15
+    $cpu = @(); $disk = @(); $mem = @()
+    for ($i = 1; $i -le $samples; $i++) {
+        Write-Progress -Activity 'HL Optimizer - medindo' -Status ("amostra $i de $samples") -PercentComplete (($i / $samples) * 100)
+        try {
+            $cpu += [double](Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction Stop).CounterSamples[0].CookedValue
+            $disk += [double](Get-Counter '\PhysicalDisk(_Total)\Current Disk Queue Length' -ErrorAction Stop).CounterSamples[0].CookedValue
+            $mem += [double](Get-Counter '\Memory\Available MBytes' -ErrorAction Stop).CounterSamples[0].CookedValue
+        } catch { break }
+        Start-Sleep -Seconds 1
+    }
+    Write-Progress -Activity 'HL Optimizer' -Completed
+    $cMed = 0.0; $cMax = 0.0; $dMed = 0.0; $mMed = 0.0
+    if ($cpu.Count -gt 0) {
+        $cMed = [math]::Round(($cpu | Measure-Object -Average).Average, 1)
+        $cMax = [math]::Round(($cpu | Measure-Object -Maximum).Maximum, 1)
+    }
+    if ($disk.Count -gt 0) { $dMed = [math]::Round(($disk | Measure-Object -Average).Average, 2) }
+    if ($mem.Count -gt 0) { $mMed = [math]::Round(($mem | Measure-Object -Average).Average, 0) }
+    $procs = @(Get-Process).Count
+    $svcs = @(Get-Service | Where-Object { $_.Status -eq 'Running' }).Count
+    return [pscustomobject]@{
+        quando          = (Get-Date).ToString('s')
+        cpu_medio       = $cMed
+        cpu_max         = $cMax
+        disco_fila      = $dMed
+        ram_livre_mb    = $mMed
+        processos       = $procs
+        servicos_ativos = $svcs
+    }
+}
+
+function Show-BenchResult {
+    param($Data, [string]$Label)
+    Write-Host ''
+    Write-Host ('  ' + $Label) -ForegroundColor Cyan
+    Write-Host ('    CPU medio .......... ' + $Data.cpu_medio + ' %   (pico ' + $Data.cpu_max + ' %)') -ForegroundColor Gray
+    Write-Host ('    Fila de disco ...... ' + $Data.disco_fila) -ForegroundColor Gray
+    Write-Host ('    RAM livre .......... ' + $Data.ram_livre_mb + ' MB') -ForegroundColor Gray
+    Write-Host ('    Processos .......... ' + $Data.processos) -ForegroundColor Gray
+    Write-Host ('    Servicos ativos .... ' + $Data.servicos_ativos) -ForegroundColor Gray
+}
+
+# ==============================================================================
 #  8. PERFIS
 # ==============================================================================
 function Test-ProfileIncludes {
@@ -1243,97 +3025,41 @@ function New-RestorePointHL {
 }
 
 # ==============================================================================
-# 12. REVERSÃO
+#  12. REVERSÃO (usa Restore-ChangeEntry: suporta todos os tipos)
 # ==============================================================================
 function Invoke-RevertHL {
+    param([string]$Path)
     $script:Reverting = $true
     Write-Section 'REVERTER (restaurar estado anterior)'
     $dir = $null
-    if ($BackupPath) {
-        if (Test-Path -LiteralPath $BackupPath) { $dir = Get-Item -LiteralPath $BackupPath } 
-    }
+    $target = $Path
+    if (-not $target) { $target = $script:BackupPath }
+    if ($target -and (Test-Path -LiteralPath $target)) { $dir = Get-Item -LiteralPath $target }
     if (-not $dir) {
         $latest = Get-LatestBackup
-        if (-not $latest) { Write-Log 'Nenhum backup encontrado em ' + $script:BackupRoot 'ERRO'; return }
-        if ($script:Interactive) {
+        if (-not $latest) { Write-Log ('Nenhum backup encontrado em ' + $script:BackupRoot) 'ERRO'; return }
+        if ($script:Interactive -and -not $target) {
             Write-Host ('  Backup mais recente: ' + (Split-Path -Leaf $latest.FullName)) -ForegroundColor Cyan
             if (-not (Confirm-Action 'Restaurar este backup?')) { return }
         }
         $dir = $latest
     }
     $stateFile = Join-Path $dir.FullName 'state.json'
-    if (-not (Test-Path -LiteralPath $stateFile)) { Write-Log 'state.json nao encontrado' 'ERRO'; return }
+    if (-not (Test-Path -LiteralPath $stateFile)) { Write-Log 'state.json nao encontrado nesse backup' 'ERRO'; return }
     try { $state = Get-Content -LiteralPath $stateFile -Raw -Encoding UTF8 | ConvertFrom-Json }
     catch { Write-Log ('Backup corrompido: ' + $_.Exception.Message) 'ERRO'; return }
 
     $changes = @($state.changes)
-    Write-Log ('Restaurando ' + $changes.Count + ' alteracao(oes) do backup ' + (Split-Path -Leaf $dir.FullName)) 'ACAO'
+    Write-Log ('Restaurando ' + $changes.Count + ' alteracao(oes) de ' + (Split-Path -Leaf $dir.FullName)) 'ACAO'
     $ok = 0; $fail = 0
-
     for ($i = $changes.Count - 1; $i -ge 0; $i--) {
-        $c = $changes[$i]
-        if ($script:DryRun) { Write-Log ('[DRY-RUN] reverteria ' + $c.type + ' ' + $c.target) 'DRYRUN'; continue }
-        try {
-            switch ($c.type) {
-                'Registry' {
-                    $full = [string]$c.target
-                    $idx = $full.LastIndexOf('\')
-                    if ($idx -gt 0) {
-                        $path = $full.Substring(0, $idx)
-                        $name = $full.Substring($idx + 1)
-                        if ($c.before.exists -eq $true) {
-                            $type = 'DWord'
-                            if ($c.before.type) { $type = [string]$c.before.type }
-                            $val = $c.before.value
-                            if ($type -eq 'DWord') { $val = [int]$val }
-                            if ($type -eq 'QWord') { $val = [int64]$val }
-                            if (-not (Test-Path -LiteralPath $path)) { $null = New-Item -Path $path -Force }
-                            $null = New-ItemProperty -LiteralPath $path -Name $name -Value $val -PropertyType $type -Force -ErrorAction Stop
-                            Write-Log ('  registro restaurado: ' + $name + ' = ' + $val) 'OK'
-                        } else {
-                            if (Test-Path -LiteralPath $path) {
-                                Remove-ItemProperty -LiteralPath $path -Name $name -Force -ErrorAction SilentlyContinue
-                                Write-Log ('  valor criado removido: ' + $name) 'OK'
-                            }
-                        }
-                        $ok++
-                    }
-                }
-                'Service' {
-                    $map = @{ 'Disabled' = 'disabled'; 'Manual' = 'demand'; 'Automatic' = 'auto'; 'AutomaticDelayedStart' = 'delayed-auto' }
-                    $orig = [string]$c.before.startType
-                    if ($map.ContainsKey($orig)) {
-                        $null = & sc.exe config ([string]$c.target) start= $map[$orig] 2>&1
-                        if ([string]$c.before.status -eq 'Running') { Start-Service -Name ([string]$c.target) -ErrorAction SilentlyContinue }
-                        Write-Log ('  servico restaurado: ' + $c.target + ' -> ' + $orig) 'OK'
-                        $ok++
-                    }
-                }
-                'PowerScheme' {
-                    if ($c.before.guid) { $null = & powercfg.exe /setactive ([string]$c.before.guid) 2>&1; Write-Log ('  plano de energia restaurado: ' + $c.before.name) 'OK'; $ok++ }
-                }
-                'BcdEdit' {
-                    if ($c.target -eq 'hypervisorlaunchtype') {
-                        $v = 'auto'; if ($c.before.value) { $v = [string]$c.before.value }
-                        $null = & bcdedit.exe /set hypervisorlaunchtype $v 2>&1
-                        Write-Log ('  hypervisorlaunchtype restaurado: ' + $v + ' (requer reinicio)') 'OK'
-                        $ok++
-                    }
-                }
-                'DefenderExclusion' {
-                    try { Remove-MpPreference -ExclusionPath ([string]$c.target) -ErrorAction Stop; Write-Log ('  exclusao removida: ' + $c.target) 'OK'; $ok++ }
-                    catch { Write-Log ('  falha ao remover exclusao: ' + $c.target) 'WARN'; $fail++ }
-                }
-                default { Write-Log ('  tipo desconhecido ignorado: ' + $c.type) 'WARN' }
-            }
-        } catch { $fail++; Write-Log ('  FALHA ao reverter ' + $c.target + ': ' + $_.Exception.Message) 'ERRO' }
+        if (Restore-ChangeEntry -Entry $changes[$i]) { $ok++ } else { $fail++ }
     }
-
     Write-Section 'Resultado da reversao'
     Write-Host ('  Restaurados: ' + $ok + '   Falhas: ' + $fail) -ForegroundColor $(if ($fail -eq 0) { 'Green' } else { 'Yellow' })
     Write-Log ('Reversao: ' + $ok + ' OK, ' + $fail + ' falha(s)') 'INFO'
     if ($state.rebootRequired) { Write-Log 'Algumas alteracoes exigem REINICIO para valer.' 'WARN' }
-    Write-Log 'Obs.: ajustes de PCIe/USB ficam no plano de energia atual. Use "powercfg -restoredefaultschemes" se quiser zerar.' 'INFO'
+    Write-Log 'Obs.: ajustes de PCIe/USB ficam no plano de energia. Use "powercfg -restoredefaultschemes" para zerar.' 'INFO'
 }
 
 # ==============================================================================
@@ -1407,29 +3133,105 @@ function Show-Summary {
 }
 
 # ==============================================================================
-# 14. MENU
+#  13b. LISTAGENS / MENUS DE TOPO
+# ==============================================================================
+function Show-TweakList {
+    Write-Section 'CATALOGO COMPLETO DE TWEAKS'
+    $lastCat = ''
+    foreach ($t in $script:TweakCatalog) {
+        if ($t.Cat -ne $lastCat) {
+            Write-Host ''
+            Write-Host ('  == ' + $t.Cat.ToUpper() + ' ==') -ForegroundColor Cyan
+            $lastCat = $t.Cat
+        }
+        $st = Get-TweakState -Tweak $t
+        $color = 'Yellow'
+        if ($st -eq 'APLICADO') { $color = 'Green' } elseif ($st -eq 'N/D') { $color = 'DarkGray' } elseif ($st -eq 'PARCIAL') { $color = 'Cyan' }
+        $tags = ''
+        if ($t.Experimental) { $tags += ' [EXP]' }
+        if ($t.Reboot) { $tags += ' [REB]' }
+        Write-Host ('  ' + $t.Id.PadRight(24) + ' ' + $st.PadRight(10) + ' ' + $t.Gain.PadRight(18) + ' ' + $t.Name + $tags) -ForegroundColor $color
+    }
+    Write-Log ('Total: ' + @($script:TweakCatalog).Count + ' tweaks. Aplique por id: -ApplyTweaks "game-dvr,diagtrack"') 'INFO'
+}
+
+function Show-AppList {
+    Write-Section 'CATALOGO DE APPS (winget)'
+    $lastCat = ''
+    foreach ($a in $script:AppCatalog) {
+        if ($a.Cat -ne $lastCat) { Write-Host ''; Write-Host ('  == ' + $a.Cat.ToUpper() + ' ==') -ForegroundColor Cyan; $lastCat = $a.Cat }
+        Write-Host ('  ' + $a.Id.PadRight(42) + $a.Name) -ForegroundColor Gray
+    }
+    Write-Log ('Total: ' + @($script:AppCatalog).Count + ' apps. Instale por id: winget install <id>') 'INFO'
+}
+
+function Show-ProfilesMenu {
+    while ($true) {
+        Write-Section 'PERFIS 1-CLIQUE'
+        $i = 0
+        foreach ($p in $script:Presets) {
+            $i++
+            Write-Host ('  [' + $i + '] ' + $p.Name + '  (' + $p.Tweaks.Count + ' tweaks + perfil ' + $p.Profile + ')') -ForegroundColor Cyan
+            Write-Host ('      ' + $p.Desc) -ForegroundColor DarkGray
+        }
+        Write-Host ''
+        Write-Host '  [S] Perfil SEGURO      (energia, Game DVR, telemetria)' -ForegroundColor Green
+        Write-Host '  [E] Perfil EQUILIBRADO (recomendado: + servicos/bloatware)' -ForegroundColor Cyan
+        Write-Host '  [A] Perfil AGRESSIVO   (hypervisor/HAGS - assume risco)' -ForegroundColor Yellow
+        Write-Host '  [0] Voltar' -ForegroundColor DarkGray
+        Write-Host '  HL> ' -ForegroundColor Cyan -NoNewline
+        $in = (Read-Host).Trim().ToUpper()
+        $n = 0
+        if ($in -eq '0') { return }
+        if ([int]::TryParse($in, [ref]$n) -and $n -ge 1 -and $n -le $script:Presets.Count) {
+            $pr = $script:Presets[$n - 1]
+            Write-Host ''
+            Write-Host ('  ' + $pr.Name + ': ' + $pr.Tweaks.Count + ' tweaks + perfil ' + $pr.Profile) -ForegroundColor White
+            if (-not (Confirm-Action 'Aplicar este preset agora?')) { continue }
+            if (-not $script:SkipRestorePoint -and -not $script:DryRun) { New-RestorePointHL }
+            switch ($pr.Profile) {
+                'Safe' { Invoke-ProfileSafe }
+                'Balanced' { Invoke-ProfileBalanced }
+                'Extreme' { Invoke-ProfileExtreme }
+            }
+            Invoke-TweakSet -Ids $pr.Tweaks
+            if ($pr.Emulator) { Invoke-EmulatorFocus }
+            Show-Summary
+            Show-BrandPanel
+            Show-Pause
+            continue
+        }
+        switch ($in) {
+            'S' { Invoke-ProfileSafe; Show-Summary; Show-BrandPanel; Show-Pause }
+            'E' { Invoke-ProfileBalanced; Show-Summary; Show-BrandPanel; Show-Pause }
+            'A' { Invoke-ProfileExtreme; Show-Summary; Show-BrandPanel; Show-Pause }
+            default { Write-Host '  Opcao invalida.' -ForegroundColor Yellow }
+        }
+    }
+}
+
+# ==============================================================================
+#  14. MENU PRINCIPAL
 # ==============================================================================
 function Show-Menu {
     param([bool]$Refresh)
     if ($Refresh) { Show-BrandPanel }
     Write-Host ''
-    Write-Host '  ┌─ ACOES ' -ForegroundColor Cyan -NoNewline
+    Write-Host '  ┌─ HL OPTIMIZER - MENU ' -ForegroundColor Cyan -NoNewline
     Write-Line '─'
-    Write-Host '  [1]  Diagnostico completo + relatorio' -ForegroundColor Gray
-    Write-Host '  [2]  Perfil SEGURO      ' -ForegroundColor Green -NoNewline
-    Write-Host '  (risco ~zero: energia, Game DVR, telemetria)' -ForegroundColor DarkGray
-    Write-Host '  [3]  Perfil EQUILIBRADO ' -ForegroundColor Cyan -NoNewline
-    Write-Host '  (recomendado: + SysMain/Search/bloatware)' -ForegroundColor DarkGray
-    Write-Host '  [4]  Perfil AGRESSIVO   ' -ForegroundColor Yellow -NoNewline
-    Write-Host '  (hypervisor/HAGS - assume risco)' -ForegroundColor DarkGray
-    Write-Host '  [5]  FOCO EMULADORES    ' -ForegroundColor Magenta -NoNewline
-    Write-Host '  (exclusoes, GPU por app, checklist)' -ForegroundColor DarkGray
-    Write-Host '  [6]  Sessao de jogo     (boost temporario, reverte ao sair)' -ForegroundColor Gray
-    Write-Host '  [7]  Benchmark rapido   (CPU/disco/RAM, ~20s)' -ForegroundColor Gray
-    Write-Host '  [8]  Verificacao do sistema (self-check)' -ForegroundColor Gray
-    Write-Host '  [9]  REVERTER backup' -ForegroundColor Red
-    Write-Host '  [T]  Limpeza de temporarios / cache de shader' -ForegroundColor Gray
-    Write-Host '  [L]  Logs    [B] Backups    [P] Placebos    [A] Sobre    [0] Sair' -ForegroundColor DarkGray
+    Write-Host '  [1]  Perfis 1-clique     ' -ForegroundColor Cyan -NoNewline
+    Write-Host '(Gamer / Emulador / Privacidade / Minimalista / Notebook + manual)' -ForegroundColor DarkGray
+    Write-Host ('  [2]  Tweaks               ' + @($script:TweakCatalog).Count + ' itens em ' + (Get-TweakCategories).Count + ' categorias - aplicar e desfazer') -ForegroundColor Gray
+    Write-Host ('  [3]  Instalar apps        ' + @($script:AppCatalog).Count + ' apps via winget') -ForegroundColor Gray
+    Write-Host '  [4]  Windows Update       buscar, instalar, pausar' -ForegroundColor Gray
+    Write-Host '  [5]  Sistema             startup, tarefas, Hyper-V, DNS, OneDrive' -ForegroundColor Gray
+    Write-Host '  [6]  Diagnostico          relatorio, benchmark, comparativo, self-check' -ForegroundColor Gray
+    Write-Host '  [7]  Emuladores           exclusoes, GPU por app, checklist' -ForegroundColor Magenta
+    Write-Host '  [8]  Sessao de jogo       boost temporario (restaura ao sair)' -ForegroundColor Gray
+    Write-Host '  [9]  Reverter             historico de backups e undo por tweak' -ForegroundColor Red
+    Write-Host '  [T]  Limpeza              temporarios + cache de shader' -ForegroundColor Gray
+    Write-Host '  [R]  Relatorio HTML       [C] Config export/import' -ForegroundColor Gray
+    Write-Host '  [L]  Logs   [B] Backups   [P] Placebos   [A] Sobre   [0] Sair' -ForegroundColor DarkGray
     Write-Host ''
 }
 
@@ -1439,7 +3241,7 @@ function Read-MenuChoice {
 }
 
 # ==============================================================================
-# 15. EXECUÇÃO PRINCIPAL
+#  15. EXECUÇÃO PRINCIPAL
 # ==============================================================================
 $isAdmin = Assert-Admin
 if (-not $isAdmin) { exit 3 }
@@ -1453,12 +3255,44 @@ try { Test-NeverTouchList } catch {
 
 if (-not $NoPanel) { Show-BrandPanel }
 
+# ---------------------------- modos de linha de comando ----------------------
+if ($ListTweaks) { Show-TweakList; exit 0 }
+if ($ListApps) { Show-AppList; exit 0 }
+if ($Report) { Export-HtmlReportHL; exit 0 }
+
+if ($ApplyPreset) {
+    $pr = $script:Presets | Where-Object { $_.Id -eq $ApplyPreset } | Select-Object -First 1
+    if (-not $pr) { Write-Log ('Preset inexistente: ' + $ApplyPreset) 'ERRO'; exit 1 }
+    Write-Log ('Aplicando preset ' + $pr.Name) 'TITULO'
+    switch ($pr.Profile) {
+        'Safe' { Invoke-ProfileSafe }
+        'Balanced' { Invoke-ProfileBalanced }
+        'Extreme' { Invoke-ProfileExtreme }
+    }
+    Invoke-TweakSet -Ids $pr.Tweaks
+    if ($pr.Emulator) { Invoke-EmulatorFocus }
+    Show-Summary
+    exit 0
+}
+
+if ($ApplyTweaks -and $ApplyTweaks.Count -gt 0) {
+    $ids = @()
+    foreach ($chunk in $ApplyTweaks) { foreach ($x in ($chunk -split ',')) { if ($x.Trim()) { $ids += $x.Trim() } } }
+    Write-Log ('Aplicando ' + $ids.Count + ' tweak(s) por linha de comando') 'TITULO'
+    Invoke-TweakSet -Ids $ids
+    Show-Summary
+    exit 0
+}
+
+if ($ImportConfig) { Import-HLConfig -Path $ImportConfig; Show-Summary; exit 0 }
+
 if ($Revert) {
     Invoke-RevertHL
     Show-Summary
     exit 0
 }
 
+# ---------------------------- modo não interativo ----------------------------
 if (-not $script:Interactive) {
     Write-Log ('Modo nao interativo: aplicando perfil ' + $Profile) 'TITULO'
     switch ($Profile) {
@@ -1471,29 +3305,32 @@ if (-not $script:Interactive) {
     exit 0
 }
 
+# ---------------------------- loop do menu -----------------------------------
 :mainLoop while ($true) {
     Show-Menu -Refresh $false
     $choice = Read-MenuChoice
     switch ($choice) {
-        '1' { Invoke-Diagnostics; Show-Pause }
-        '2' { Invoke-ProfileSafe; Show-Summary; Show-Pause }
-        '3' { Invoke-ProfileBalanced; Show-Summary; Show-Pause }
-        '4' { Invoke-ProfileExtreme; Show-Summary; Show-Pause }
-        '5' { Invoke-EmulatorFocus; Show-Summary; Show-Pause }
-        '6' { Invoke-GameSession; Show-Pause }
-        '7' { Invoke-QuickBenchmark; Show-Pause }
-        '8' { Invoke-SelfCheck; Show-Pause }
-        '9' { Invoke-RevertHL; Show-Pause }
+        '1' { Show-ProfilesMenu }
+        '2' { Show-TweakBrowser }
+        '3' { Show-AppInstaller }
+        '4' { Show-UpdateMenu }
+        '5' { Show-SystemMenu }
+        '6' { Show-DiagnosticsMenu }
+        '7' { Invoke-EmulatorFocus; Show-Summary; Show-Pause }
+        '8' { Invoke-GameSession; Show-Pause }
+        '9' { Show-UndoHistory }
         'T' { Invoke-TempCleanup; Show-Pause }
+        'R' { Export-HtmlReportHL; Show-Pause }
+        'C' { Show-ConfigMenu }
         'L' { Open-FolderHL -Path $script:LogDir }
         'B' { Open-FolderHL -Path $script:BackupRoot }
         'P' { Show-PlaceboList; Show-Pause }
         'A' { Show-About; Show-Pause }
         '0' { break mainLoop }
         'Q' { break mainLoop }
-        default { Write-Host '  Opcao invalida.' -ForegroundColor Yellow; Start-Sleep -Milliseconds 600 }
+        default { Write-Host '  Opcao invalida.' -ForegroundColor Yellow; Start-Sleep -Milliseconds 500 }
     }
-    if ($choice -in @('2', '3', '4', '5', '6', '9')) { Show-BrandPanel }
+    if ($choice -in @('1', '2', '7', '8', '9')) { Show-BrandPanel }
 }
 
 Write-Host ''

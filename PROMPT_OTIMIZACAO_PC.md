@@ -330,6 +330,40 @@ Não peça confirmação antes de gerar os arquivos. Gere tudo agora, assumindo 
 - FPS limitado à taxa do monitor.
 ````
 
+## Anexo E — Arquitetura v2 (referência implementada em `HL-Optimizer/`)
+
+Se quiser o mesmo nível do kit pronto deste repositório (3.340 linhas, 119 funções, 51 tweaks, 58 apps), peça também:
+
+**1. Motor de tweaks data-driven (substitui `if` espalhados).**
+Cada tweak é um objeto: `Id, Cat, Name, Desc, Items[], Gain, Risk, Guard, Reboot, Experimental`.
+`Items` só de 5 tipos, com builders (`RegItem`, `SvcItem`, `AppxItem`, `TaskItem`, `KeyItem`):
+- `Reg` → `Path/Name/Value/Type`
+- `RegKey` → só cria a chave (para truques que usam o valor padrão vazio)
+- `Svc` → `Name/Start`
+- `Appx` → nome ou padrão com `*`
+- `Task` → `TaskPath/TaskName`
+Funções obrigatórias do motor: `New-Tweak`, `Get-TweakState` (APLICADO/PENDENTE/PARCIAL/N/D), `Test-TweakGuard` (SSD / NoPrinter / NoBluetooth / NoXbox), `Invoke-TweakItem`, `Invoke-Tweak`, `Invoke-TweakSet`, `Get-TweakById`, `Get-TweakCategories`, `Find-Tweak`, `ConvertTo-IndexList` (aceita `1,3,5` e `2-4`), `Undo-Tweak` (desfaz por alvo consultando o backup mais recente).
+**Performance:** cachear `Get-AppxPackage` e `Get-ScheduledTask` uma vez por sessão (`Get-AppxInstalledHL`, `Get-ScheduledTasksHL`, `Get-TaskHL`) e invalidar após remoção. Sem cache, abrir o catálogo leva ~40 s; com cache, < 2 s.
+
+**2. Catálogo de tweaks (mínimo 45, em 8 categorias).**
+`Gaming` (Game DVR, MMCSS `GPU Priority=8`/`SFIO Priority=High`, `Win32PrioritySeparation=38`, FSE off, HAGS, mouse sem aceleração) · `Telemetria` (AllowTelemetry=0, DiagTrack/dmwappush/WerSvc, advertising ID, activity history, sugestões silenciosas, busca web, 8 tarefas CEIP) · `Debloat` (Appx por padrão `Microsoft.Copilot*`) · `Servicos` (com guardas de contexto) · `UI` (menu clássico via **criação da chave** `CLSID\{86ca1aa0-...}\InprocServer32`, widgets, Copilot, **Recall**) · `Boot` (startup delay, HiberbootEnabled) · `Rede` (throttling multimídia experimental, Delivery Optimization) · `Update` (Store auto-update, drivers automáticos).
+
+**3. Módulos de sistema.**
+`Get-AvailableUpdatesHL` + `Install-UpdatesHL` via COM `Microsoft.Update.Session` (sem módulo externo) · `Set-PauseUpdatesHL` (5 valores em `WindowsUpdate\UX\Settings` com datas ISO) · `Get-StartupItemsHL`/`Set-StartupItemHL` (Run + `StartupApproved` binário `02`=ligado / `03`=desligado) · `Set-ScheduledTaskStateSafe` (Disable/Enable + backup) · `Get-FeatureStateHL`/`Show-FeaturesManager` (`Get-WindowsOptionalFeature`, `-NoRestart`) · `Set-DnsHL` (por interface, com backup dos servidores) · `Invoke-RemoveOneDriveHL`.
+
+**4. Reversão unificada.**
+`Restore-ChangeEntry -Entry` trata **todos** os tipos (`Registry`, `RegKey`, `Service`, `PowerScheme`, `BcdEdit`, `DefenderExclusion`, `Appx` via `Add-AppxPackage -Register <InstallLocation>\AppxManifest.xml`, `ScheduledTask`, `Startup`, `Dns`, `Info`) e devolve `$true/$false`. `Invoke-RevertHL` só itera o backup de trás para frente; `Undo-Tweak` reusa a mesma função.
+
+**5. Instalador de apps (58).**
+`$script:AppCatalog` com `Cat/Id/Name`; `winget install --id <id> -e --silent --accept-package-agreements --accept-source-agreements`; **uma** chamada `winget list` para marcar instalados (nunca uma por app); falha de um ID não interrompe a fila. Sem winget → avisa e não faz nada.
+
+**6. Relatórios, config e automação.**
+`Export-HtmlReportHL` (HTML dark inline com 4 KPIs, badges, hardware e tabela de alterações; escapar HTML com `ConvertTo-HtmlSafe`) · `Export-HLConfig`/`Import-HLConfig` (JSON com `appliedTweaks`) · `Measure-LoadSnapshot` + `Invoke-CompareBenchmark` (linha de base → delta de CPU/RAM/processos/serviços) · flags CLI `-ListTweaks`, `-ListApps`, `-ApplyTweaks`, `-ApplyPreset`, `-ImportConfig`, `-Report`, `-AllowExperimental`.
+
+**Critérios de aceite extras da v2:** abrir o catálogo em < 2 s · aplicar/desfazer um tweak sem sair do menu · reverter um Appx removido · importar config em outra máquina · relatório HTML legível · nenhum tweak experimental aplicado sem `-AllowExperimental` ou escolha explícita no menu.
+
+---
+
 ---
 
 ## Bloco 3 — Anexo B: contrato de dados (opcional, aumente a precisão)
