@@ -14,6 +14,7 @@ Documento-spec para gerar (com qualquer IA de código, ou direto com um agente) 
 
 1. **Copie o Bloco 1** (Prompt principal) e cole em uma IA com capacidade de gerar arquivos longos (Claude, GPT, Gemini, etc.).
 2. **Copie também o Anexo A** (base técnica das otimizações) e cole **junto**, no fim do prompt. É ele que impede a IA de inventar tweaks placebo.
+   - Saída esperada: `HL-Optimizer.ps1`, `HL-Optimizer.cmd`, `HL-Reverter.cmd`, `HL-Simular.cmd` e `README-HL.md` (implementação de referência já incluída em [HL-Optimizer/](HL-Optimizer/)).
 3. Peça os arquivos, salve no PC, **rode primeiro com `-DryRun`**, e leia o log antes de aplicar. Depois rode o prompt de auditoria (Anexo D) para revisar o código gerado.
 
 **Teste em VM ou com Ponto de Restauração.** O script já cria um, mas cinto e suspensório.
@@ -29,16 +30,32 @@ Você é um engenheiro Windows sênior especializado em tuning de latência e es
 
 # OBJETIVO
 
-Gerar um KIT DE OTIMIZAÇÃO PARA WINDOWS 10/11 (x64) composto por 4 arquivos, que o usuário possa rodar com um duplo clique, ver o que será alterado ANTES de alterar, aplicar em perfis progressivos de agressividade, e REVERTER TUDO com um comando.
+Gerar um KIT DE OTIMIZAÇÃO PARA WINDOWS 10/11 (x64) com a marca **HL Optimizer**, composto por 5 arquivos, que o usuário possa rodar com um duplo clique, ver o que será alterado ANTES de alterar, aplicar em perfis progressivos de agressividade, e REVERTER TUDO com um comando.
 
 Foco: FPS médio, 1% low (stutter) e tempo de carregamento em jogos e emuladores. Não é "debloat" de privacidade — é desempenho, com telemetria incluída apenas porque é barata de desligar.
 
 # ENTREGÁVEIS (nesta ordem, arquivos completos, sem reticências, sem "resto do código igual")
 
-1. `Optimize.ps1` — script principal (PowerShell 5.1 nativo do Windows, sem módulos externos, sem internet).
-2. `Optimize.cmd` — launcher que eleva privilégio (UAC) e chama o .ps1 com `-ExecutionPolicy Bypass`.
-3. `Reverter.cmd` — launcher que chama `Optimize.ps1 -Revert` com o backup mais recente.
-4. `README.md` — como usar, o que cada perfil faz, como reverter, avisos.
+1. `HL-Optimizer.ps1` — script principal com **painel de início da marca** (PowerShell 5.1 nativo, sem módulos externos, sem internet). **> 45 funções** (lista obrigatória abaixo).
+2. `HL-Optimizer.cmd` — launcher que eleva privilégio (UAC) e abre o painel; só ASCII.
+3. `HL-Reverter.cmd` — launcher que chama `HL-Optimizer.ps1 -Revert -NoPanel`.
+4. `HL-Simular.cmd` — launcher de `-DryRun` (mostra tudo sem alterar nada).
+5. `README-HL.md` — marca, como usar, o que cada perfil faz, como reverter, avisos, troubleshooting.
+
+# MARCA E PAINEL DE INÍCIO (obrigatório)
+
+- Produto: **HL Optimizer**. Marca/proprietária do arquivo: **HL**. Versão `1.0.0`, build `AAAA.MM`, tagline `FPS / Games / Emulators`.
+- A marca deve aparecer em **6 lugares**: (1) painel de início, (2) cabeçalho de comentário no topo dos 4 arquivos, (3) título da janela do console (`$Host.UI.RawUI.WindowTitle`), (4) primeira linha do log, (5) descrição do ponto de restauração, (6) README.
+- O painel deve ser desenhado por uma função própria (`Show-BrandPanel`) e reimpresso após cada ação que altere o sistema.
+- Estrutura obrigatória do painel (largura adaptativa 50–78 colunas):
+  1. Borda `╔═╗`, título centralizado `H  L     O  P  T  I  M  I  Z  E  R`, subtítulo com tagline/versão/build.
+  2. Linha `Host / Usuario` e linha `OS / Build`.
+  3. **8 badges de saúde** com valor + cor semântica: **VT-x/SVM**, **Hyper-V/hypervisor**, **VBS/HVCI**, **Game DVR**, **plano de energia**, **tipo de disco (SSD/HDD)**, **emuladores detectados**, **exclusões no Defender**.
+  4. Rodapé: último backup encontrado, id da sessão, indicador de `DryRun`.
+- Cores: ciano (estrutura), verde (ok), amarelo (aviso), vermelho (crítico), cinza (neutro). Nunca indicar erro só por texto.
+- Fechamento do programa com a assinatura: `HL Optimizer v1.0.0 - encerrado. Bom jogo!`.
+- Se o console tiver menos de 50 colunas, degradar para layout simples (sem caixa, uma linha por badge) em vez de quebrar.
+- **Encoding:** o `.ps1` deve ser salvo em **UTF-8 com BOM** (senão o PS 5.1 corrompe as bordas e acentos); os `.cmd` devem ser **100% ASCII** com CRLF.
 
 # REQUISITOS NÃO NEGOCIÁVEIS (segurança)
 
@@ -53,6 +70,8 @@ Foco: FPS médio, 1% low (stutter) e tempo de carregamento em jogos e emuladores
 9. Nunca reiniciar/desligar o PC automaticamente: no máximo avisar "requer reinício" e registrar no log.
 10. Lista de bloqueio hardcoded (`Assert-NeverTouchList`) que aborta o script se algum item proibido aparecer na lista de mudanças — ver Anexo A, seção "NUNCA desativar".
 11. Compatível com caminhos com acento/ espaço e com OneDrive; não usar `%TEMP%` do usuário para logs do sistema.
+12. Encoding: `.ps1` em UTF-8 **com BOM**; `.cmd` em ASCII puro com CRLF (sem acentos, sem blocos `if` complexos).
+13. Toda mensagem ao usuário em **português do Brasil**, sem jargão não explicado; erros sempre com "o que fazer agora".
 
 # ARQUITETURA OBRIGATÓRIA do Optimize.ps1
 
@@ -72,25 +91,62 @@ param(
 )
 ```
 
-## Funções mínimas (assinatura e responsabilidade)
-- `Assert-Admin`
-- `Write-Log [-Level Info|Warn|Error|Change|Verify] [-Message]` — grava em `_logs\optimize_AAAA-MM-DD_HH-mm-ss.log` **e** no console, com timestamp e seção.
-- `New-BackupSession` / `Save-Backup` / `Complete-Backup`
-- `Get-ServiceState -Name` / `Set-ServiceStateSafe -Name -StartupType -Stop` (retorna objeto com antes/depois/ok)
-- `Get-RegValue -Path -Name` / `Set-RegValueSafe -Path -Name -Value -Type` (cria chave se faltar, distingue "ausente" de "vazio")
-- `Test-IsSsd -DriveLetter` (via `Get-PhysicalDisk` / `MSFT_PhysicalDisk`, fallback WMI)
-- `Test-HyperVInUse` (Hyper-V, WSL2, Docker Desktop, WSA, Sandbox, virtualização de máquina — detecta features habilitadas e processos/serviços em execução e RETORNA motivo em texto)
-- `Get-VbsStatus` (`Get-CimInstance -Namespace root\Microsoft\Windows\DeviceGuard -Class Win32_DeviceGuard`) → VirtualizationBasedSecurityStatus, SecurityServicesRunning (HVCI)
-- `Get-GameDvrStatus` / `Set-GameDvr -Enable $false`
-- `Get-GpuVendor` (NVIDIA/AMD/Intel via `Win32_VideoController`) e um array de "dicas" específicas por vendor — o script NÃO altera driver, apenas orienta.
-- `Confirm-Action -Message` (respeita `-NonInteractive`: em modo não interativo, só prossegue se a ação for do perfil permitido)
-- `Show-Menu` (menu numerado em português, opção `0 = Sair`)
-- `Invoke-Profile -Name`
-- `Invoke-Revert`
-- `Show-Diagnostics` (só leitura, nunca altera nada)
+## Funções obrigatórias — mínimo 45, agrupadas por responsabilidade
+
+### Núcleo, UI e marca
+- `Initialize-HLEnvironment` — valida admin, cria `_logs` e `_HL-Backup`, define título da janela, id da sessão e snapshot do sistema.
+- `Show-BrandPanel` — **painel de início da marca HL Optimizer** (seção Marca acima). Reimpresso após ações.
+- `Get-PanelWidth`, `Format-Center`, `Write-PanelRow`, `Write-Line`, `Write-Section`, `Format-Badge` — layout do painel, com degradação para console estreito.
+- `Write-Log -Message -Level` — níveis `INFO|OK|WARN|ERRO|ACAO|VERIF|DRYRUN|TITULO`; console colorido **e** arquivo.
+- `Show-Menu`, `Read-MenuChoice`, `Show-Pause`, `Show-About`, `Show-PlaceboList`, `Show-Summary`.
+- `Get-HealthBadges` — retorna lista de `{ Label, Value, State = good|warn|bad }` usada no painel.
+- `Open-FolderHL -Path` — abre `_logs`/`_HL-Backup` no Explorer.
+
+### Segurança e backup
+- `Assert-Admin [-Silent]`, `Test-NeverTouchList` (aborta com código 4 se a lista de proteção estiver incompleta).
+- `Confirm-Action -Message` (em `-DryRun` simula "sim" para gerar preview completo; em `-NonInteractive` nunca pergunta).
+- `New-BackupSession`, `Save-BackupSession -Meta`, `Get-BackupObject`, `Get-LatestBackup`.
+- `Save-BackupEntry -Type -Target -Before -After -Gain -Risk -RevertHint -RequiresReboot`.
+- `New-RestorePointHL` (Checkpoint-Computer; avisa se a Proteção do Sistema estiver off).
+
+### Serviços
+- `Get-ServiceState -Name` — StartType lido do registro (`Boot|System|Automatic|AutomaticDelayedStart|Manual|Disabled`) **+** Status.
+- `Set-ServiceStateSafe -Name -StartType -StopService -Gain -Risk -Why` — usa `sc.exe config` (mais confiável que `Set-Service` no 5.1), relê e confirma.
+- `Find-ServiceByPattern -Patterns` — descoberta de bloatware por padrão de nome/DisplayName.
+
+### Registro
+- `Get-RegValueState -Path -Name` — `Exists/Value/Type`, distinguindo **AUSENTE** de vazio (via `GetValueKind`).
+- `Set-RegValueSafe -Path -Name -Value -Type [-RequiresReboot] -Gain -Risk` — cria a chave se faltar.
+- `Remove-RegValueSafe -Path -Name` — usado para desfazer valores criados do zero.
+
+### Detecção
+- `Get-SystemSnapshot` (CPU, RAM, GPU, OS/build, VBS, Game DVR, HAGS, energia, disco, emuladores, exclusões).
+- `Get-DiskType -DriveLetter`, `Test-IsSsd`.
+- `Get-VbsStatus` (namespace `root\Microsoft\Windows\DeviceGuard` → `Win32_DeviceGuard`), `Get-GameDvrStatus`, `Get-HagsStatus`.
+- `Get-ActivePowerScheme` (`powercfg /getactivescheme` + mapa de GUIDs), `Get-GpuVendor`.
+- `Test-HyperVInUse` — retorna **array de motivos** (serviços `vmms/vmcompute/WslService/LxssManager`, processos `vmmem/wsl/docker/VBoxSVC`, WSA instalado).
+- `Get-InstalledEmulators` (catálogo BlueStacks/LDPlayer/MuMu/MEmu/PCSX2/Dolphin/RPCS3/Ryujinx), `Get-DefenderExclusions`, `Get-DefenderExclusionCount`.
+
+### Ações
+- `Set-PowerPlanHigh` (plano + PCIe ASPM off + USB selective suspend off no AC).
+- `Set-GameDvrOff`, `Set-DefenderEmulatorExclusions -Paths`, `Set-GpuPreferenceHigh -ExePath`.
+- `Invoke-ServicePlan`, `Invoke-BloatwarePlan`, `Invoke-RegistryPlan`.
+- `Test-ProfileIncludes -ItemProfile -Target` (composição de camadas sem duplicar código).
+- `Invoke-ProfileSafe`, `Invoke-ProfileBalanced`, `Invoke-ProfileExtreme`.
+
+### Módulos do menu
+- `Invoke-Diagnostics` — relatório completo em `_logs\hl-diagnostico_*.txt` + top 8 processos.
+- `Invoke-EmulatorFocus` — exclusões, GPU por app, diagnóstico de emulador e checklist em `_logs\hl-checklist-emulador_*.txt`.
+- `Invoke-GameSession` — boost **temporário**: pausa serviços de fabricante, plano Alto desempenho, `PriorityClass = High` no jogo; **restaura tudo ao fechar** (inclusive se o jogo travar: usar try/finally).
+- `Invoke-QuickBenchmark` — 20 amostras de CPU, fila de disco e RAM livre → `_logs\hl-benchmark_*.csv` (deixar explícito que **não é FPS**).
+- `Invoke-SelfCheck` — 8 checagens PASS/FAIL (admin, cmdlets Defender/Storage, powercfg, bcdedit, pastas).
+- `Invoke-TempCleanup` — limpeza de temporários (usuário/Windows) e cache de shader (NVIDIA/AMD/DirectX), arquivos com mais de 1 dia, **confirmação por pasta**, relata MB liberados; nunca toca em `_HL-Backup`, `_logs` ou pastas de jogos.
+- `Invoke-RevertHL` — restauração em ordem inversa, por tipo.
 
 ## Comportamento
-- Sem parâmetro → abre **menu interativo**: 1) Diagnóstico, 2) Perfil Seguro, 3) Perfil Equilibrado, 4) Perfil Agressivo, 5) Foco Emuladores, 6) Experimental, 7) Reverter, 0) Sair.
+- Sem parâmetro → **painel da marca** + menu interativo:
+  `1` Diagnóstico · `2` Perfil Seguro · `3` Perfil Equilibrado · `4` Perfil Agressivo · `5` Foco Emuladores · `6` Sessão de jogo · `7` Benchmark rápido · `8` Self-check · `9` Reverter · `L` logs · `B` backups · `P` placebos · `A` sobre · `0` sair.
+- O painel é reimpresso depois das opções 2–6 e 9 (o usuário vê o estado mudando em tempo real).
 - Sempre mostrar um **preview** ("Vou fazer X, Y, Z — 14 alterações. Continuar? [s/N]") antes de aplicar, exceto com `-NonInteractive -Force`.
 - `-DryRun`: executa toda a lógica, faz o backup, e loga `[DRY-RUN] faria: ...` sem alterar nada. Nenhuma escrita em serviço/registro/energia.
 - Ao final: resumo em tabela (`Item | Antes | Depois | Status`), caminho do log, caminho do backup, e "para reverter: Reverter.cmd" + se precisa reiniciar.
@@ -143,6 +199,18 @@ Tudo isso deve ser **opt-in explícito**, com aviso em vermelho no console e reg
 - Desativar `Superfetch` em HDD já está coberto (pular), desativar paginação **NUNCA**.
 - Nenhum "timer resolution", "HPET", "MSI mode", "prioridade de IRQ", "registro mágico" — proibido neste kit, mesmo em Extreme (justificar no README como "não incluído por falta de evidência").
 
+## Camada 4 — Boost temporário (`Invoke-GameSession`, opção 6 do menu)
+- Pede o caminho do `.exe` (ENTER usa o 1º emulador detectado).
+- Pausa serviços de fabricante (RGB/monitoramento) **só durante a sessão**, em try/finally.
+- Muda para plano Alto desempenho e define `PriorityClass = High` no processo do jogo.
+- Ao fechar o jogo — ou se o script for interrompido — **restaura** serviços e plano de energia. Nunca deixa o PC no estado de boost.
+
+## Camada 5 — Medição e verificação (não altera nada)
+- `Invoke-Diagnostics` → relatório com VT-x, Hyper-V, VBS, Game DVR, HAGS, energia, disco, emuladores, exclusões, contadores de 10 s e top 8 processos.
+- `Invoke-QuickBenchmark` → 20 amostras (CPU/fila de disco/RAM livre) em CSV, com o aviso explícito "isto não é FPS; use CapFrameX/PresentMon".
+- `Invoke-SelfCheck` → 8 checagens PASS/FAIL de ambiente antes de aplicar.
+- `Show-PlaceboList` → o que o kit recusa fazer e por quê.
+
 ## Módulo `-EmulatorFocus` (transversal)
 - Detecta emuladores instalados (caminhos/pastas) e **apenas orienta** o que fazer DENTRO do emulador (não é possível via script): resolução 1280x720/960x540, 4 núcleos, 4 GB RAM, renderer Vulkan → OpenGL → DirectX, FPS travado igual ao monitor, desligar gravação de tela, alto desempenho.
 - Checa e reporta: VT-x/SVM na BIOS (via CPU/`VirtualizationFirmwareEnabled`), Hyper-V ativo, VBS ativo, HAGS, % de disco ocupado, RAM disponível (alerta se < 2 GB livre).
@@ -175,6 +243,10 @@ Tudo isso deve ser **opt-in explícito**, com aviso em vermelho no console e reg
 6. Em uma máquina com Hyper-V/WSL2 ativo, o perfil Extreme **recusa** desativar e explica o motivo.
 7. Em uma máquina só com HDD, `SysMain` é preservado e o log explica.
 8. Nenhum reboot automático; aviso de "requer reinício" aparece no resumo quando houver mudança que exija.
+9. **Painel:** abre em < 1 s, mostra os **8 badges** corretos em uma VM limpa (VT-x desligado, VBS on, Game DVR on, energia Equilibrado) e não quebra com janela de 50 colunas.
+10. **Marca:** `README-HL.md`, nome do produto, tagline, versão e assinatura final aparecem nos 6 lugares exigidos; nenhum arquivo ficou com nome `Optimize.ps1`.
+11. **Encoding:** o `.ps1` está em UTF-8 com BOM (bordas do painel legíveis no PS 5.1) e os `.cmd` são ASCII puro.
+12. **Sessão de jogo:** fechar o jogo (ou matar o script) devolve os serviços pausados e o plano de energia original.
 
 # FORMATO DA SUA RESPOSTA
 
@@ -302,7 +374,9 @@ Rodapé: log, backup, "reinício necessário: sim", "reverter: Reverter.cmd"
 ## Bloco 4 — Variante curta (para contexto pequeno ou chat rápido)
 
 ````text
-Gere um kit Windows 10/11 para FPS em jogos/emuladores: `Optimize.ps1`, `Optimize.cmd`, `Reverter.cmd`, `README.md`.
+Gere um kit Windows 10/11 para FPS em jogos/emuladores com a marca **HL Optimizer** (proprietária: HL, v1.0.0, tagline "FPS / Games / Emulators"): `HL-Optimizer.ps1`, `HL-Optimizer.cmd`, `HL-Reverter.cmd`, `HL-Simular.cmd`, `README-HL.md`.
+
+O .ps1 abre com um PAINEL DE INÍCIO da marca: caixa `╔═╗` com título centralizado "H L O P T I M I Z E R", subtítulo de versão, host/usuario, OS/build e 8 badges coloridos (VT-x/SVM, Hyper-V, VBS/HVCI, Game DVR, plano de energia, SSD/HDD, emuladores, exclusoes Defender) + rodapé com ultimo backup e sessao. Reimprime o painel após cada ação. Marca também no cabeçalho dos arquivos, título da janela, log, nome do ponto de restauração e README. .ps1 em UTF-8 com BOM; .cmd só ASCII. Menu: 1 Diagnostico, 2 Seguro, 3 Equilibrado, 4 Agressivo, 5 Foco Emuladores, 6 Sessao de jogo (boost temporario que restaura ao sair), 7 Benchmark rapido, 8 Self-check, 9 Reverter, L/B/P/A, 0 sair. Minimo de 45 funcoes nomeadas (UI/painel, backup, servico, registro, deteccao, acoes, modulos, reversao).
 
 Optimize.ps1: PS 5.1, admin, `param([ValidateSet('Safe','Balanced','Extreme')]$Profile='Balanced',[switch]$EmulatorFocus,[switch]$IncludeExperimental,[switch]$Revert,[switch]$DryRun,[switch]$NonInteractive)`. Menu interativo + modo não interativo.
 
