@@ -1,0 +1,119 @@
+;/*++
+;
+; PrecisionCurve - mouse class upper filter
+;
+; Module:
+;     PrecisionCurve.inf
+;
+; Abstract:
+;     Installs PrecisionCurve.sys as an UPPER FILTER of a specific HID mouse.
+;
+;     The driver does not replace msmouse/mouclass: it sits above them and
+;     hooks the service callback they exchange, so the mouse keeps working
+;     normally if the filter fails to load.
+;
+; IMPORTANT - you must edit the hardware IDs below before installing:
+;
+;   1. Open Device Manager, find your mouse, right click > Properties >
+;      Details > "Hardware Ids".
+;   2. Copy the first line, e.g.
+;          HID\VID_046D&PID_C08E&REV_0100&MI_00
+;   3. Replace the VID/PID placeholders in [PrecisionCurve.NT$ARCH$] with
+;      yours (case does not matter, the trailing REV/MI may be dropped).
+;
+;     Installing the same INF for several mice is fine - add one line per
+;     hardware ID.
+;
+;     A filter INF cannot be attached to *every* mouse at once; that is a
+;     Windows limitation, not a driver limitation. Use
+;     scripts/install-driver.ps1 -AllMice for the registry-based "attach to
+;     every currently present mouse" workflow instead.
+;
+;--*/
+
+[Version]
+Signature="$Windows NT$"
+Provider=%ProviderName%
+Class=Mouse
+ClassGUID={4D36E96F-E325-11CE-BFC1-08002BE10318}
+DriverVer=10/27/2026,1.0.0.0
+CatalogFile=PrecisionCurve.cat
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12                    ; DIRID_DRIVERS (System32\drivers)
+PrecisionCurve_CopyFiles = 12
+
+[ControlFlags]
+; Not installable from the "Add legacy hardware" wizard.
+ExcludeFromSelect = *
+
+; ---------------------------------------------------------------------------
+; Manufacturer / models
+; ---------------------------------------------------------------------------
+
+[Manufacturer]
+%ManufacturerName%=PrecisionCurve,NT$ARCH$
+
+[PrecisionCurve.NT$ARCH$]
+; ---- EDIT THESE -----------------------------------------------------------
+%PrecisionCurve.DeviceDesc%=PrecisionCurve_Inst, HID\VID_046D&PID_C08E&REV_0100&MI_00
+%PrecisionCurve.DeviceDesc%=PrecisionCurve_Inst, HID\VID_1532&PID_007E&REV_0100&MI_00
+%PrecisionCurve.DeviceDesc%=PrecisionCurve_Inst, HID\VID_045E&PID_0047&REV_0100&MI_00
+; ---------------------------------------------------------------------------
+
+; ---------------------------------------------------------------------------
+; Install
+; ---------------------------------------------------------------------------
+
+[PrecisionCurve_Inst.NT]
+; Pull in the standard HID mouse installation so the device keeps its real
+; function driver.
+Include=msmouse.inf
+Needs=HID_Mouse_Inst.NT
+CopyFiles=PrecisionCurve_CopyFiles
+
+[PrecisionCurve_Inst.NT.HW]
+Include=msmouse.inf
+Needs=HID_Mouse_Inst.NT.Hw
+AddReg=PrecisionCurve_HW_AddReg
+
+[PrecisionCurve_HW_AddReg]
+; 0x00010000 = REG_MULTI_SZ. The value is a list; SetupAPI appends if present.
+HKR,,"UpperFilters",0x00010000,"PrecisionCurve"
+
+[PrecisionCurve_Inst.NT.Services]
+Include=msmouse.inf
+Needs=HID_Mouse_Inst.NT.Services
+AddService=PrecisionCurve,,PrecisionCurve_Service_Inst
+
+[PrecisionCurve_Service_Inst]
+DisplayName    = %PrecisionCurve.SvcDesc%
+ServiceType    = 1                     ; SERVICE_KERNEL_DRIVER
+StartType      = 3                     ; SERVICE_DEMAND_START (PnP loads it)
+ErrorControl   = 1                     ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\PrecisionCurve.sys
+
+[PrecisionCurve_CopyFiles]
+PrecisionCurve.sys
+
+; ---------------------------------------------------------------------------
+; Source media (for a real distribution; pnputil does not need this)
+; ---------------------------------------------------------------------------
+
+[SourceDisksNames]
+1 = %DiskName%,,,
+
+[SourceDisksFiles]
+PrecisionCurve.sys = 1
+
+; ---------------------------------------------------------------------------
+; Strings
+; ---------------------------------------------------------------------------
+
+[Strings]
+ProviderName       = "PrecisionCurve"
+ManufacturerName   = "PrecisionCurve Project"
+PrecisionCurve.DeviceDesc = "PrecisionCurve Mouse Filter"
+PrecisionCurve.SvcDesc    = "PrecisionCurve mouse input filter"
+DiskName           = "PrecisionCurve Installation"
