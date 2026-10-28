@@ -1,0 +1,20 @@
+# build output
+bin/
+obj/
+tests/build/
+build/
+*.user
+*.suo
+*.vcxproj.filters
+
+# driver build artefacts
+*.sys
+*.pdb
+*.cat
+*.inf.bak
+*.cer
+*.pfx
+
+# app runtime
+selftest.log
+*.tmp

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    PrecisionCurve - headless profile supervisor
+
+    Runs as a Windows service so profile switching keeps working when the tray
+    application is not running (for example on a shared gaming machine, or when
+    the user closes the UI).
+
+    It deliberately has no NuGet dependencies: the service host is implemented
+    with StartServiceCtrlDispatcherW / RegisterServiceCtrlHandlerExW, and the
+    shared Core classes are linked in from app/Core.
+
+    Build:  dotnet build service/PrecisionCurve.Service -c Release
+    Install: sc.exe create PrecisionCurve binPath= "...\PrecisionCurve.Service.exe"
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>PrecisionCurve.Service</AssemblyName>
+    <RootNamespace>PrecisionCurve.Service</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared with the GUI: one implementation of the ABI and the math. -->
+    <Compile Include="..\..\app\Core\NativeMethods.cs" Link="Core\NativeMethods.cs" />
+    <Compile Include="..\..\app\Core\CurveMath.cs" Link="Core\CurveMath.cs" />
+    <Compile Include="..\..\app\Core\Profile.cs" Link="Core\Profile.cs" />
+    <Compile Include="..\..\app\Core\ProfileStore.cs" Link="Core\ProfileStore.cs" />
+    <Compile Include="..\..\app\Core\ConfigBuilder.cs" Link="Core\ConfigBuilder.cs" />
+    <Compile Include="..\..\app\Core\DriverClient.cs" Link="Core\DriverClient.cs" />
+  </ItemGroup>
+
+</Project>
