@@ -240,6 +240,13 @@ Resumo (detalhes e o "porquê" em [`docs/REALITY_CHECK.md`](docs/REALITY_CHECK.m
 
 ---
 
+## Ferramentas extras
+
+- **[`blueboost/`](blueboost/README.md)** — BlueBoost: otimizador independente para PC
+  fraco com foco em configurar o BlueStacks 5 (presets no `bluestacks.conf` com backup
+  automático, tweaks reversíveis do Windows e tutorial embutido). PowerShell + WinForms,
+  zero dependências — basta clicar em `BlueBoost.bat`.
+
 ## Aviso
 
 Projeto educacional/de engenharia. Carregar drivers não assinados exige desativar proteções
