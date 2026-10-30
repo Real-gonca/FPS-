@@ -105,11 +105,16 @@ O workflow pronto está em `ci/bsboost-workflow.yml`. Copie para
 # 2) Aplicar (fecha o BlueStacks antes; ele relê o conf ao iniciar)
 .\Optimize-BlueStacks.ps1 -Preset balanced
 
-# 3) Subir a prioridade do emulador já aberto e vigiar reaberturas
+# 3) Emulador com 5 GB de RAM
+.\Optimize-BlueStacks.ps1 -RamGb 5
+#    ou, em MB:  .\Optimize-BlueStacks.ps1 -RamMb 4096
+#    todas as instâncias, sem mexer no resto:  .\Optimize-BlueStacks.ps1 -RamGb 5 -Instance Rvc64
+
+# 4) Subir a prioridade do emulador já aberto e vigiar reaberturas
 .\bsboostctl.exe apply
 .\bsboostctl.exe watch --interval 2000
 
-# 4) Conferir / desfazer
+# 5) Conferir / desfazer
 .\bsboostctl.exe status
 .\bsboostctl.exe restore
 .\Optimize-BlueStacks.ps1 -Rollback
@@ -126,6 +131,34 @@ Presets do script:
 O script só altera **chaves que já existem** no `bluestacks.conf` — nada de inventar
 nome de opção. Ele guarda backup do arquivo inteiro em
 `%ProgramData%\BsBoost\backup\` e um `state.json` com cada mudança, para rollback exato.
+
+### RAM da instância (5 GB, por exemplo)
+
+A RAM da VM **não** é ajustável pela DLL: ela é um parâmetro do hipervisor lido na
+inicialização da instância (`bst.instance.<Nome>.ram`, em MB). Por isso o caminho é o
+script, e o BlueStacks precisa ser **fechado por completo** e reaberto.
+
+```powershell
+.\Optimize-BlueStacks.ps1 -RamGb 5 -DryRun   # mostra 4096 -> 5120
+.\Optimize-BlueStacks.ps1 -RamGb 5          # aplica
+```
+
+Detalhe que importa: a UI do BlueStacks 5 limita a RAM da instância a **4096 MB**;
+acima disso o único caminho é o `bluestacks.conf` — que é exatamente o que este script
+faz. O valor é em **MB**, sem sufixo (`ram="5120"`).
+
+Guardrails embutidos:
+
+| Situação | O que o script faz |
+|---|---|
+| 5 GB num PC de 16 GB | aplica direto (sobra ~11 GB para o host) |
+| valor maior que `RAM total − 2 GB` | reduz e avisa — o Windows precisa respirar |
+| valor abaixo de 2 GB | sobe para 2048 MB (mínimo do BlueStacks) |
+| acima de 6 GB com host < 16 GB | avisa sobre swap |
+| chave `ram` ausente no conf | não inventa nome de opção; lista as chaves de memória encontradas e manda usar *Configurações → Avançado → Memória* |
+
+Depois de aplicar, o arquivo é relido do disco e cada chave alterada é conferida
+(`verificado: bst.instance.Rvc64.ram = 5120`).
 
 ---
 

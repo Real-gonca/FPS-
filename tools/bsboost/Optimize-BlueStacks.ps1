@@ -25,9 +25,17 @@
 .PARAMETER Instance
     Nome da instancia do BlueStacks (ex.: Rvc64, Pie64). Padrao: todas.
 
+.PARAMETER RamGb
+    RAM da instancia em GB (ex.: -RamGb 5 para 5 GB). Tem prioridade sobre -RamMb.
+    Sem nenhum dos dois, usa 4 GB (ou metade da RAM do PC, se for menor).
+
+.PARAMETER RamMb
+    RAM da instancia em MB (ex.: -RamMb 5120). Mesma coisa que -RamGb, em MB.
+
 .EXAMPLE
     .\Optimize-BlueStacks.ps1 -DryRun
-    .\Optimize-BlueStacks.ps1
+    .\Optimize-BlueStacks.ps1 -RamGb 5          # emulador com 5 GB de RAM
+    .\Optimize-BlueStacks.ps1 -RamGb 5 -Fps 60 -Preset balanced
     .\Optimize-BlueStacks.ps1 -Rollback
 #>
 [CmdletBinding()]
@@ -38,7 +46,8 @@ param(
     [ValidateSet('low','balanced','quality')]
     [string]$Preset = 'balanced',
     [int]$MaxCores = 4,
-    [int]$RamMb = 4096,
+    [double]$RamGb = 0,
+    [int]$RamMb = 0,
     [int]$Fps = 60,
     [switch]$SkipPowerPlan,
     [switch]$DisableFullscreenOptimizations
@@ -46,6 +55,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $script:Changed = [ordered]@{}
+$script:Missing = @()
 $script:Notes = New-Object System.Collections.Generic.List[string]
 
 $stateDir = Join-Path $env:ProgramData 'BsBoost'
@@ -134,8 +144,38 @@ foreach ($g in $gpus) {
     Write-Info "GPU: $($g.Name) (VRAM reportada: $vram)"
 }
 
-$ramGb = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 1)
-Write-Info "RAM total: $ramGb GB"
+$hostRamGb = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 1)
+Write-Info "RAM total: $hostRamGb GB"
+
+# RAM alvo da instancia: -RamGb/-RamMb explicitos vencem; senao 4 GB (ou metade do PC).
+$ramTotalMb  = [int]((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1MB)
+$ramExplicit = $false
+if ($RamGb -gt 0)      { $ramTarget = [int]($RamGb * 1024); $ramExplicit = $true }
+elseif ($RamMb -gt 0)  { $ramTarget = $RamMb;                $ramExplicit = $true }
+else                   { $ramTarget = [Math]::Min(4096, [int]($ramTotalMb / 2)) }
+
+# Deixa obrigatoriamente RAM para o Windows: o host precisa de ~2 GB + o resto.
+$ramCeiling = [Math]::Max(2048, $ramTotalMb - 2048)
+if ($ramTarget -gt $ramCeiling) {
+    if ($ramExplicit) {
+        $msg = ("{0} MB nao caberia: com {1} GB no PC o maximo seguro e {2} MB " -f `
+                $ramTarget, $hostRamGb, $ramCeiling)
+        $msg += ('(o host ficaria sem memoria). Ajustando para {0} MB.' -f $ramCeiling)
+        Write-Warn2 $msg
+        $script:Notes.Add("RAM ajustada para $ramCeiling MB (limite do host)")
+    }
+    $ramTarget = $ramCeiling
+}
+if ($ramTarget -lt 2048) {
+    $ramTarget = 2048
+    Write-Warn2 'RAM da instancia abaixo de 2 GB nao e suportada; usando 2048 MB.'
+}
+if ($ramTarget -gt 6144 -and $hostRamGb -lt 16) {
+    $msg = ("{0} MB de RAM na instancia com {1} GB no host tende a gerar swap. " -f $ramTarget, $hostRamGb)
+    $msg += 'Fique de olho no Gerenciador de Tarefas.'
+    Write-Warn2 $msg
+}
+Write-Info "RAM alvo da instancia: $ramTarget MB ($([math]::Round($ramTarget/1024,1)) GB)"
 
 # ------------------------------------------------------------------ #
 # 2. bluestacks.conf                                                   #
@@ -167,12 +207,13 @@ else {
         'display_width'                  = $res[0]
         'display_height'                 = $res[1]
         'dpi'                            = $dpi
-        'fps'                            = $fpsTarget
+        'max_fps'                        = $fpsTarget
+        'enable_high_fps'                = 1
         'enable_high_definition_graphics'= $hd
         'enable_gl_optimizations'        = 1
         'enable_vsync'                   = 0
         'cpus'                           = [Math]::Min($MaxCores, [Math]::Max(2, $physicalCores - 2))
-        'ram'                            = [Math]::Min($RamMb, [int]($ramGb * 1024 * 0.5))
+        'ram'                            = $ramTarget,
         'enable_root_access'             = 0   # root ligado custa pouco, mas nao ajuda em nada
     }
 
@@ -193,13 +234,17 @@ else {
         }
         Write-Info "instancias: $($instances -join ', ')"
 
+        $missing = @()
         foreach ($inst in $instances) {
             foreach ($suffix in $wanted.Keys) {
                 $key = "bst.instance.$inst.$suffix"
                 $pattern = '(?m)^' + [regex]::Escape($key) + '="?([^"\r\n]*)"?\s*$'
                 $m = [regex]::Match($content, $pattern)
                 if (-not $m.Success) {
-                    continue   # chave nao existe nesta versao: nao inventamos nenhuma
+                    # Chave nao existe nesta versao do BlueStacks: nao inventamos
+                    # nome de opcao. Registramos para avisar no fim.
+                    $script:Missing += @{ instance = $inst; suffix = $suffix; key = $key }
+                    continue
                 }
                 $old = $m.Groups[1].Value
                 $new = [string]$wanted[$suffix]
@@ -212,6 +257,48 @@ else {
                     $replacement = "$key=`"$new`""
                     $content = $content.Remove($m.Index, $m.Length).Insert($m.Index, $replacement)
                 }
+            }
+        }
+
+        # Chaves globais: forcar GPU dedicada vale para todas as instancias e e o
+        # ajuste que mais importa em notebook com iGPU + dGPU.
+        $globalWanted = [ordered]@{ 'bst.prefer_dedicated_gpu' = 1 }
+        foreach ($gkey in $globalWanted.Keys) {
+            $pattern = '(?m)^' + [regex]::Escape($gkey) + '="?([^"\r\n]*)"?\s*$'
+            $gm = [regex]::Match($content, $pattern)
+            if (-not $gm.Success) { continue }
+            $gold = $gm.Groups[1].Value
+            $gnew = [string]$globalWanted[$gkey]
+            if ($gold -eq $gnew) { continue }
+            Write-Info ("{0}: {1} -> {2}" -f $gkey, $gold, $gnew)
+            $script:Changed[$gkey] = @{ old = $gold; new = $gnew }
+            if (-not $DryRun) {
+                $greplacement = "$gkey=`"$gnew`""
+                $content = $content.Remove($gm.Index, $gm.Length).Insert($gm.Index, $greplacement)
+            }
+        }
+
+        # RAM e o unico ajuste em que "chave ausente" e um problema real: sem ela o
+        # emulador fica preso no valor configurado na UI. Procura nomes alternativos
+        # (o BlueStacks ja mudou esse nome entre versoes) e mostra o que existe.
+        if ($script:Missing | Where-Object { $_.suffix -eq 'ram' }) {
+            $alt = [regex]::Matches($content, 'bst\.instance\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]*ram[A-Za-z0-9_]*)=("?)([^"\r\n]*)') |
+                ForEach-Object { "   {0} = {1} MB" -f $_.Groups[0].Value.Split('=')[0], $_.Groups[4].Value }
+            if ($alt) {
+                Write-Warn2 "chave 'ram' nao existe nesta versao. Chaves de memoria encontradas:"
+                $alt | ForEach-Object { Write-Info $_ }
+            } else {
+                Write-Warn2 'nenhuma chave de RAM no bluestacks.conf (versao antiga?).'
+            }
+            Write-Warn2 'Ajuste a RAM em BlueStacks > Configuracoes > Avancado > Memoria (RAM).'
+            $script:Notes.Add('RAM nao pode ser definida por arquivo nesta versao: use a UI')
+        }
+
+        if ($DryRun -and $script:Missing.Count -gt 0) {
+            $other = $script:Missing | Where-Object { $_.suffix -ne 'ram' } |
+                     Select-Object -ExpandProperty key
+            if ($other) {
+                Write-Info "chaves ausentes (ignoradas): $($other -join ', ')"
             }
         }
 
@@ -230,6 +317,14 @@ else {
             [System.IO.File]::WriteAllText($confPath, $content, $utf8NoBom)
             Write-Ok "escrito: $($script:Changed.Count) chave(s) alterada(s)"
             $script:ConfBackup = $backup
+
+            # Relê o arquivo do disco e confirma o valor final de cada chave mexida.
+            $check = Get-Content -Path $confPath -Raw -Encoding UTF8
+            foreach ($k in $script:Changed.Keys) {
+                $vm = [regex]::Match($check, '(?m)^' + [regex]::Escape($k) + '="?([^"\r\n]*)"?\s*$')
+                $final = if ($vm.Success) { $vm.Groups[1].Value } else { '(ausente!)' }
+                Write-Info ("verificado: {0} = {1}" -f $k, $final)
+            }
         }
     }
 }
@@ -331,6 +426,10 @@ if (-not $DryRun) {
 # Resumo                                                              #
 # ------------------------------------------------------------------ #
 Write-Step 'Resumo'
+Write-Host ("   RAM da instancia: {0} MB ({1} GB)" -f $ramTarget, [math]::Round($ramTarget / 1024, 1)) -ForegroundColor White
+if (-not $DryRun -and ($script:Changed.Keys | Where-Object { $_ -like '*.ram' })) {
+    Write-Host '   A RAM e aplicada na INICIALIZACAO da VM: feche o BlueStacks por completo e abra de novo.' -ForegroundColor Yellow
+}
 if ($DryRun) {
     Write-Host '   DRY-RUN: nada foi alterado. Rode sem -DryRun para aplicar.' -ForegroundColor Yellow
 } elseif ($script:Changed.Count -eq 0 -and $gpuPrefsAdded.Count -eq 0) {
