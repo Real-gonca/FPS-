@@ -1,0 +1,49 @@
+name: bsboost
+
+on:
+  push:
+    paths:
+      - 'tools/bsboost/**'
+      - 'tools/bsboost/ci/bsboost-workflow.yml'
+  pull_request:
+    paths:
+      - 'tools/bsboost/**'
+      - 'tools/bsboost/ci/bsboost-workflow.yml'
+  workflow_dispatch:
+
+jobs:
+  # Smoke test rapido: compila DLL + CLI para Windows com zig em Linux,
+  # com -Wall -Wextra -Werror. Nao gera o binario final de release.
+  crosscheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar zig
+        run: pip install ziglang
+      - name: Compilar e checar exports
+        run: |
+          ZIG="$(python3 -c 'import os,ziglang;print(os.path.join(os.path.dirname(ziglang.__file__),"zig"))')"
+          ZIG="$ZIG" ./tools/bsboost/verify-linux.sh
+
+  # Build de release com o toolchain de verdade (MSVC x64).
+  msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (MSVC x64)
+        shell: pwsh
+        run: |
+          ./tools/bsboost/build.ps1 -Configuration Release
+      - name: Upload artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: bsboost-x64
+          path: |
+            tools/bsboost/bin/bsboost.dll
+            tools/bsboost/bin/bsboostctl.exe
+            tools/bsboost/Optimize-BlueStacks.ps1
+            tools/bsboost/README.md
+          if-no-files-found: error

@@ -245,3 +245,14 @@ Resumo (detalhes e o "porquê" em [`docs/REALITY_CHECK.md`](docs/REALITY_CHECK.m
 Projeto educacional/de engenharia. Carregar drivers não assinados exige desativar proteções
 do Windows; fazer isso em máquina de terceiros é uma péssima ideia. Nenhuma licença foi
 definida neste repositório — escolha uma antes de distribuir.
+
+---
+
+## Ferramenta extra: `tools/bsboost` (desempenho no BlueStacks 5)
+
+Ferramenta separada, sem relação com a pilha do mouse: uma DLL Win32 x64 + CLI que
+ajusta o processo do emulador **por fora** (`SetPriorityClass`, CPU Sets, EcoQoS,
+preferência de GPU) e um script PowerShell que configura `bluestacks.conf` com backup,
+dry-run e rollback. Nenhuma injeção de código no emulador ou no jogo.
+
+Ver [`tools/bsboost/README.md`](tools/bsboost/README.md).

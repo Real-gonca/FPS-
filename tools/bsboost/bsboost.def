@@ -1,0 +1,12 @@
+LIBRARY bsboost
+EXPORTS
+    BsBoostVersion
+    BsBoostOptionsInit
+    BsBoostSetLogCallback
+    BsBoostAttach
+    BsBoostRestore
+    BsBoostRelease
+    BsBoostApplySelf
+    BsBoostSetGpuPreference
+    BsBoostClearGpuPreference
+    BsBoostFindProcess
