@@ -89,6 +89,11 @@ Windows. Útil como smoke test rápido:
 ./verify-linux.sh
 ```
 
+O workflow pronto está em `ci/bsboost-workflow.yml`. Copie para
+`.github/workflows/bsboost.yml` com uma conta que tenha permissão de `workflows`
+(o token do agente desta sessão não tem, por isso o arquivo fica fora do
+`.github/`).
+
 ---
 
 ## Uso
