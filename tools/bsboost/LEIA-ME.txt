@@ -1,0 +1,99 @@
+bsboost 1.0.0 — DLL de desempenho para BlueStacks 5 / Free Fire
+===============================================================
+
+O QUE TEM AQUI
+--------------
+  bsboost.dll              DLL x64 (pre-compilada, sem instalador)
+  bsboostctl.exe           programa de linha de comando que usa a DLL
+  Optimize-BlueStacks.ps1  ajusta o emulador (RAM, resolucao, FPS, GPU)
+  README.md                explicacao completa do que cada coisa faz
+  LEIA-ME.txt              este arquivo
+  SHA256SUMS.txt           checksums para voce conferir o download
+  src/                     o codigo-fonte inteiro (C + PowerShell + build)
+
+REQUISITOS
+----------
+  Windows 10 ou 11, 64 bits (a DLL e x64 - nao funciona em Windows 32 bits)
+  BlueStacks 5 instalado
+  Nada mais. Nao precisa instalar runtime, nao precisa de admin para os
+  ajustes de processo na maioria dos casos.
+
+COMECE ASSIM (2 minutos)
+------------------------
+1. Abra o PowerShell na pasta onde voce extraiu este zip.
+   (Shift + clique direito na pasta > "Abrir janela do PowerShell aqui")
+
+2. Veja o que mudaria, SEM alterar nada:
+
+       powershell -ExecutionPolicy Bypass -File .\Optimize-BlueStacks.ps1 -DryRun
+
+3. Aplique, com 5 GB de RAM para o emulador:
+
+       powershell -ExecutionPolicy Bypass -File .\Optimize-BlueStacks.ps1 -RamGb 5
+
+4. FECHE o BlueStacks por completo (inclusive o icone perto do relogio)
+   e abra de novo. So assim a nova RAM e resolucao entram em vigor.
+
+5. Opcional - prioridade e GPU dedicada, com o emulador ja aberto:
+
+       .\bsboostctl.exe apply
+       .\bsboostctl.exe status
+
+   Para reaplicar automaticamente toda vez que voce abrir o emulador:
+
+       .\bsboostctl.exe watch
+
+DESFAZER TUDO
+-------------
+       powershell -ExecutionPolicy Bypass -File .\Optimize-BlueStacks.ps1 -Rollback
+       .\bsboostctl.exe restore
+
+O script guarda backup do bluestacks.conf em %ProgramData%\BsBoost\backup\
+e um state.json com cada mudanca feita.
+
+O QUE ESTA DLL NAO FAZ (LEIA)
+-----------------------------
+  - Nao e injetada dentro do emulador nem do jogo. Ela nao hooka d3d11.dll,
+    nao escreve na memoria do Free Fire e nao altera nenhum arquivo do jogo.
+    Ela recebe um HANDLE do processo e ajusta o escalonamento pelo Windows.
+  - Nao usa internet. Nenhuma linha de rede no codigo.
+  - Nao pede root, nao instala servico, nao cria driver.
+
+  Motivo: injeção no processo do emulador nao aumenta FPS (o gargalo e GPU,
+  virtualizacao, resolucao e limite de FPS) e e exatamente o padrao que
+  anti-cheat de jogo competitivo pune. O ganho real esta no que o script faz:
+  RAM, resolucao, nucleos, limite de FPS e GPU correta.
+
+AVISO DO WINDOWS
+----------------
+  A DLL nao tem assinatura digital (assinar custa dinheiro e exige
+  certificado). O SmartScreen pode mostrar "applications from an unknown
+  publisher". Isso e esperado. Se quiser, compile do zero com o codigo em
+  src/ (build.ps1, precisa do Visual Studio com C++).
+
+  O Defender pode reclamar de bsboostctl.exe apenas por ser um .exe novo, sem
+  reputacao. Codigo-fonte completo esta no zip para conferencia.
+
+VERIFICAR O DOWNLOAD
+--------------------
+       certutil -hashfile bsboost.dll SHA256
+
+  Compare com a linha correspondente de SHA256SUMS.txt.
+
+PROBLEMAS COMUNS
+----------------
+  "A RAM nao mudou"
+      Feche o BlueStacks por completo, incluindo o icone na bandeja, e abra.
+      Confira em Configuracoes > Avancado > Memoria.
+
+  "OpenProcess falhou: erro 5"
+      O BlueStacks esta rodando como administrador. Rode o PowerShell como
+      administrador tambem.
+
+  "SetProcessAffinityMask falhou"
+      Algunas politicas de Windows bloqueiam afinidade. Ignore: prioridade e
+      EcoQoS continuam valendo.
+
+  "chave 'ram' nao existe nesta versao"
+      A versao do seu BlueStacks usa outro nome de chave. O script lista as
+      chaves de memoria que encontrou e voce ajusta pela UI.
