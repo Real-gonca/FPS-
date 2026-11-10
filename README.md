@@ -1,3 +1,8 @@
+> **Novo desenvolvimento — HL OPTIMIZER PRO:** aplicação WPF independente em
+> [`HL.Optimizer.Pro/`](HL.Optimizer.Pro/README.md). Inclui serviços reais, limpeza conservadora
+> e ajustes com Undo. É uma versão de desenvolvimento; compilação Windows/Release ainda por validar.
+> Consulte o [plano de migração](docs/HL_MIGRATION.md). O PrecisionCurve abaixo foi preservado.
+
 # PrecisionCurve
 
 **Aceleração de mouse em modo kernel, estágios de DPI por software e snap de eixos — para Windows 10/11 x64.**
