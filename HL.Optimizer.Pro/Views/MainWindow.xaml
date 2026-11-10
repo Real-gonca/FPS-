@@ -1,0 +1,133 @@
+<?xml version="1.0" ?>
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="HL.Optimizer.Views.MainWindow" Title="HL OPTIMIZER PRO — Windows Performance &amp; System Control" Width="1280" Height="840" MinWidth="980" MinHeight="640" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Background="#0D1625" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="22,26,18,22">
+                    <Border Width="38" Height="36" Background="{StaticResource Accent}" CornerRadius="7" HorizontalAlignment="Left" Margin="0,0,0,14">
+                        <TextBlock Text="HL" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="HL OPTIMIZER" FontSize="18" FontWeight="Bold"/>
+                    <TextBlock Text="PRO  /  SYSTEM CONTROL" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="22,14">
+                    <TextBlock Text="●  LOCAL &amp; PRIVATE" Foreground="#65D7AA" FontSize="10"/>
+                    <TextBlock Text="Development build · 0.1" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,7,0,0"/>
+                </StackPanel>
+                <ListBox IsEnabled="{Binding IsIdle}" ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}" AutomationProperties.Name="Page navigation"/>
+            </DockPanel>
+        </Border>
+        <Grid Grid.Column="1" Margin="30,22,30,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid Margin="0,0,0,22">
+                <StackPanel>
+                    <TextBlock Text="WORKSPACE / HL PRO" FontSize="10" Foreground="{StaticResource Muted}"/>
+                    <TextBlock Text="{Binding SelectedPage}" FontSize="30" FontWeight="SemiBold" Margin="0,7,0,0"/>
+                </StackPanel>
+                <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="{StaticResource Surface}" CornerRadius="15" Padding="12,7">
+                    <TextBlock Text="●  On-device processing" Foreground="#65D7AA" FontSize="11"/>
+                </Border>
+            </Grid>
+            <TextBlock Grid.Row="1" Text="{Binding Description}" Foreground="{StaticResource Muted}" LineHeight="21" Margin="0,0,0,18"/>
+            <WrapPanel Grid.Row="2">
+                <Button Content="Refresh / Analyze" Command="{Binding Refresh}"/>
+                <Button Content="Scan PC" Command="{Binding Scan}" Visibility="{Binding ShowScan, Converter={StaticResource Visible}}"/>
+                <Button Content="Export report" Command="{Binding Export}"/>
+                <Button Content="Clean selected files" Background="#204E8C" Command="{Binding Clean}" Visibility="{Binding ShowCleaner, Converter={StaticResource Visible}}"/>
+            </WrapPanel>
+            <Grid Grid.Row="3" Margin="0,10,0,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <ItemsControl ItemsSource="{Binding Metrics}" Visibility="{Binding ShowMetrics, Converter={StaticResource Visible}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Width="210" MinHeight="133" Background="{StaticResource Surface}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="7" Margin="0,0,12,12" Padding="17">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" Foreground="{StaticResource Muted}" FontSize="11"/>
+                                    <TextBlock Text="{Binding Value}" FontSize="25" FontWeight="SemiBold" Margin="0,8,0,5"/>
+                                    <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Muted}" FontSize="11"/>
+                                    <ProgressBar Value="{Binding Percent, TargetNullValue=0}" Maximum="100" Margin="0,12,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding Rows}" IsReadOnly="True" Visibility="{Binding ShowRows, Converter={StaticResource Visible}}" EnableRowVirtualization="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="NAME / CHECK" Binding="{Binding Name}" Width="1.1*"/>
+                        <DataGridTextColumn Header="VALUE / RESULT" Binding="{Binding Value}" Width="1.4*"/>
+                        <DataGridTextColumn Header="DETAILS / RECOMMENDATION" Binding="{Binding Detail}" Width="2*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <DataGrid Grid.RowSpan="2" ItemsSource="{Binding Files}" Visibility="{Binding ShowCleaner, Converter={StaticResource Visible}}" EnableRowVirtualization="True">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="Select" Binding="{Binding Selected, UpdateSourceTrigger=PropertyChanged}" Width="65"/>
+                        <DataGridTextColumn Header="PATH" Binding="{Binding Path}" Width="3*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="SIZE" Binding="{Binding Size}" Width="100" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="CATEGORY" Binding="{Binding Category}" Width="*" IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <StackPanel Grid.RowSpan="2" Visibility="{Binding ShowTweaks, Converter={StaticResource Visible}}">
+                    <ListBox ItemsSource="{Binding Tweaks}" SelectedItem="{Binding SelectedTweak}" DisplayMemberPath="Definition.Title" Height="100"/>
+                    <TextBlock Text="{Binding SelectedTweak.Definition.Description}" Margin="12,20" Foreground="{StaticResource Muted}"/>
+                    <TextBlock Text="{Binding SelectedTweak.Definition.ExpectedBenefit}" Margin="12,0,12,20"/>
+                    <WrapPanel>
+                        <Button Content="Apply with backup" Command="{Binding Apply}"/>
+                        <Button Content="Undo saved change" Command="{Binding Undo}"/>
+                    </WrapPanel>
+                </StackPanel>
+                <Grid Grid.RowSpan="2" Visibility="{Binding ShowTools, Converter={StaticResource Visible}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ListBox ItemsSource="{Binding Tools}" SelectedItem="{Binding SelectedTool}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Description}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button Grid.Row="1" Content="Open selected tool" Command="{Binding LaunchTool}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                </Grid>
+                <StackPanel Grid.RowSpan="2" Visibility="{Binding ShowSettings, Converter={StaticResource Visible}}">
+                    <TextBlock Text="MONITORING" FontSize="12" FontWeight="SemiBold" Margin="0,10,0,16"/>
+                    <TextBlock Text="Sampling interval (seconds). Monitoring pauses outside Dashboard and Hardware Monitor." Foreground="{StaticResource Muted}"/>
+                    <ComboBox ItemsSource="{Binding Intervals}" SelectedItem="{Binding Interval}" Width="140" HorizontalAlignment="Left" Margin="0,14,0,20"/>
+                    <Button Content="Save preferences" Command="{Binding SaveSettings}" HorizontalAlignment="Left"/>
+                    <TextBlock Text="HL OPTIMIZER PRO · Windows Performance &amp; System Control" FontWeight="SemiBold" Margin="0,32,0,8"/>
+                    <TextBlock Text="Local history and per-value backups: %LOCALAPPDATA%\HL.Optimizer.Pro. No telemetry or automatic update downloads. This build does not require administrator rights." Foreground="{StaticResource Muted}"/>
+                </StackPanel>
+            </Grid>
+            <Border Grid.Row="4" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
+                <StackPanel>
+                    <ProgressBar IsIndeterminate="True" Visibility="{Binding Busy, Converter={StaticResource Visible}}" Margin="0,0,0,10"/>
+                    <TextBlock Text="{Binding Status}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap"/>
+                    <Expander Header="Recent activity" Foreground="{StaticResource Muted}" Margin="0,10,0,0">
+                        <ListBox ItemsSource="{Binding Activity}" MaxHeight="100"/>
+                    </Expander>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

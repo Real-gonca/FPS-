@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>0.1.0</Version>
+        <Product>HL OPTIMIZER PRO</Product>
+        <Description>Windows Performance &amp; System Control</Description>
+        <AssemblyName>HL.Optimizer.Pro</AssemblyName>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>Resources/Icons/hl.ico</ApplicationIcon>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Remove="Core/**/*.cs;Tests/**/*.cs"/>
+        <Page Remove="Tests/**/*.xaml"/>
+        <ProjectReference Include="Core/HL.Optimizer.Core.csproj"/>
+    </ItemGroup>
+</Project>

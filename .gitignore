@@ -18,3 +18,7 @@ build/
 # app runtime
 selftest.log
 *.tmp
+
+# HL publish packages and machine-local operation records
+artifacts/
+HL.Optimizer.Pro/Logs/
